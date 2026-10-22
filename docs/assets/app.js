@@ -30,7 +30,7 @@ function lib(name) {
 const KINDS = {
   image: { label: 'Images', color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp'], note: 'HEIC photos from iPhones work too. SVGs are rasterised.' },
   pdf:   { label: 'PDF', color: '--c-doc', exts: ['pdf'], targets: ['png','jpg','txt'], note: 'Each page becomes an image. Multi-page files come back as a .zip.' },
-  doc:   { label: 'Documents', color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'], note: 'Word files keep headings, lists and tables. PDFs are text-only.' },
+  doc:   { label: 'Documents', color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'], note: 'Headings, lists, tables, bold, italics, links and images are kept.' },
   data:  { label: 'Spreadsheets & data', color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'], note: 'Workbooks with several sheets give one CSV per sheet.' },
   audio: { label: 'Audio', color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'], note: 'Decoding uses your browser, so formats vary slightly by browser.' },
   video: { label: 'Video', color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'], note: 'Make a GIF from the opening seconds, pull the soundtrack, or grab a frame.' }
@@ -298,44 +298,223 @@ async function imagesToPDF(canvases, quality) {
   }
   return doc.output('blob');
 }
-function blockText(el) { return (el.textContent || '').replace(/\s+/g, ' ').trim(); }
+// ---------- rich text -> PDF ----------
+// Inline styling survives the trip: bold, italic, code, links, sub/superscript,
+// line breaks, images and real table columns.
+const PDF_INK = [26, 29, 38], PDF_LINK = [22, 82, 172], PDF_RULE = [205, 209, 219], PDF_MUTED = [120, 124, 134];
+const EMPH = { B: 'bold', STRONG: 'bold', I: 'italic', EM: 'italic', CITE: 'italic', VAR: 'italic', DFN: 'italic' };
+const MONO = /^(CODE|KBD|SAMP|TT)$/, SKIP = /^(SCRIPT|STYLE|NOSCRIPT)$/;
+const BLOCKISH = /^(DIV|SECTION|ARTICLE|MAIN|BODY|HEADER|FOOTER|ASIDE|NAV|FIGURE|FIGCAPTION|DL|DD|DT|FORM|LABEL|ADDRESS|DETAILS|SUMMARY)$/;
+const BULLETS = ['•', '–', '·'];
+
+function runsOf(node, st, out = []) {
+  for (const n of node.childNodes) {
+    if (n.nodeType === 3) { const t = st.pre ? n.nodeValue : n.nodeValue.replace(/\s+/g, ' '); if (t) out.push({ ...st, text: t }); continue; }
+    if (n.nodeType !== 1) continue;
+    const tag = n.tagName;
+    if (SKIP.test(tag)) continue;
+    if (tag === 'BR') { out.push({ br: true }); continue; }
+    if (tag === 'IMG') { out.push({ img: n.getAttribute('src') || '', alt: n.getAttribute('alt') || '' }); continue; }
+    const s = { ...st };
+    if (EMPH[tag]) s[EMPH[tag]] = true;
+    if (MONO.test(tag)) { s.font = 'courier'; s.size = st.size * .94; }
+    if (tag === 'U' || tag === 'INS') s.underline = true;
+    if (tag === 'S' || tag === 'DEL' || tag === 'STRIKE') s.strike = true;
+    if (tag === 'SMALL') s.size = st.size * .85;
+    if (tag === 'SUP' || tag === 'SUB') { s.rise = (tag === 'SUP' ? .34 : -.16) * s.size; s.size *= .72; }
+    if (tag === 'A') { const h = n.getAttribute('href'); if (h && !/^\s*javascript:/i.test(h)) { s.href = h; s.color = PDF_LINK; s.underline = true; } }
+    runsOf(n, s, out);
+  }
+  return out;
+}
+// Only inline data is drawn; the page never reaches out to the network for an image.
+async function pdfImage(src) {
+  if (!/^(data:image\/|blob:)/i.test(src)) return null;
+  const img = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+  if (!img || !img.naturalWidth) return null;
+  const jpeg = /^data:image\/jpe?g/i.test(src), [w, h] = fit(img.naturalWidth, img.naturalHeight, 1600);
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  if (jpeg) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); }
+  ctx.drawImage(img, 0, 0, w, h);
+  try { return { data: c.toDataURL(jpeg ? 'image/jpeg' : 'image/png', .92), fmt: jpeg ? 'JPEG' : 'PNG', w: img.naturalWidth, h: img.naturalHeight }; }
+  catch (e) { return null; }
+}
 async function htmlToPDF(html, title) {
   const doc = await newPDF('a4', 'p');
-  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 56, maxW = W - M * 2;
-  let y = M;
-  const put = (text, { size = 11, style = 'normal', font = 'helvetica', indent = 0, gap = 6, lh = 1.4 } = {}) => {
-    if (!text) return;
-    doc.setFont(font, style); doc.setFontSize(size);
-    const lines = doc.splitTextToSize(text, maxW - indent);
-    for (const ln of lines) { if (y + size * lh > H - M) { doc.addPage(); y = M; } doc.text(ln, M + indent, y + size); y += size * lh; }
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 56, maxW = W - M * 2, bottom = H - M;
+  const body = new DOMParser().parseFromString(html, 'text/html').body;
+  body.querySelectorAll('script,style,noscript').forEach(n => n.remove());
+  const images = new Map();
+  for (const el of body.querySelectorAll('img')) { const s = el.getAttribute('src'); if (s && !images.has(s)) images.set(s, await pdfImage(s)); }
+
+  let y = M, off = 0;
+  const left = () => M + off, avail = () => maxW - off;
+  const face = r => { doc.setFont(r.font || 'helvetica', ((r.bold ? 'bold' : '') + (r.italic ? 'italic' : '')) || 'normal'); doc.setFontSize(r.size || 11); };
+  const widthOf = r => { face(r); return doc.getTextWidth(r.text); };
+  const room = h => { if (y + h > bottom && y > M) { doc.addPage(); y = M; } };
+  const page = () => { try { return doc.internal.getCurrentPageInfo().pageNumber; } catch (e) { return doc.internal.getNumberOfPages(); } };
+  const rule = (x, from, atPage, color) => { doc.setDrawColor(color[0], color[1], color[2]); doc.setLineWidth(2.5); doc.line(x, (page() === atPage ? from : M) + 2, x, y - 8); };
+
+  // a word with no break opportunity (a long URL, say) is cut to the column
+  const chop = (r, piece, w) => {
+    const out = []; let s = piece;
+    while (s) {
+      const full = widthOf({ ...r, text: s });
+      if (full <= w) { out.push(s); break; }
+      let i = Math.max(1, Math.floor(s.length * w / full));
+      while (i > 1 && widthOf({ ...r, text: s.slice(0, i) }) > w) i--;
+      while (i < s.length && widthOf({ ...r, text: s.slice(0, i + 1) }) <= w) i++;
+      out.push(s.slice(0, i)); s = s.slice(i);
+    }
+    return out;
+  };
+  // word-wrap a run list into lines of tokens
+  const flow = (runs, w) => {
+    const lines = []; let line = [], used = 0;
+    const wrap = () => { while (line.length && line[line.length - 1].space) line.pop(); lines.push(line); line = []; used = 0; };
+    for (const r of runs) {
+      if (r.br) { wrap(); continue; }
+      if (r.img) { if (line.length) wrap(); lines.push([r]); continue; }
+      if (!r.text) continue;
+      r.text.replace(/\t/g, '    ').split('\n').forEach((part, i) => {
+        if (i) wrap();
+        for (const piece of part.split(/( +)/)) {
+          if (!piece) continue;
+          const space = piece[0] === ' ';
+          const pieces = !space && widthOf({ ...r, text: piece }) > w ? chop(r, piece, w) : [piece];
+          for (const text of pieces) {
+            const tok = { ...r, text, space };
+            if (space && !line.length && !r.pre) continue;
+            const tw = widthOf(tok);
+            if (!space && line.length && used + tw > w) wrap();
+            line.push(tok); used += tw;
+          }
+        }
+      });
+    }
+    if (line.length) wrap();
+    return lines;
+  };
+  const lineSize = line => line.reduce((m, t) => Math.max(m, t.size || 11), 0) || 11;
+  const paint = (line, x, top, lh) => {
+    const sz = lineSize(line), baseY = top + sz;
+    let cx = x;
+    for (const t of line) {
+      face(t);
+      const tw = doc.getTextWidth(t.text), c = t.color || PDF_INK, ts = t.size || 11, by = baseY - (t.rise || 0);
+      doc.setTextColor(c[0], c[1], c[2]);
+      doc.text(t.text, cx, by);
+      if (t.underline || t.strike) {
+        doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(Math.max(.4, ts * .045));
+        const uy = by + (t.strike ? -ts * .28 : ts * .13);
+        doc.line(cx, uy, cx + tw, uy);
+      }
+      if (t.href) doc.link(cx, baseY - sz, tw, sz * 1.15, { url: t.href });
+      cx += tw;
+    }
+    return sz * lh;
+  };
+  const drawImage = (t, x, w) => {
+    const im = images.get(t.img);
+    if (!im) { if (t.alt) block([{ font: 'helvetica', size: 10, italic: true, color: PDF_MUTED, text: t.alt }], x, w, 1.4, 6); return; }
+    let iw = im.w * .75, ih = im.h * .75;
+    if (iw > w) { ih *= w / iw; iw = w; }
+    if (ih > bottom - M) { iw *= (bottom - M) / ih; ih = bottom - M; }
+    room(ih);
+    try { doc.addImage(im.data, im.fmt, x, y, iw, ih); y += ih + 8; } catch (e) { y += 2; }
+  };
+  const block = (runs, x, w, lh, gap, marker) => {
+    flow(runs, w).forEach((line, i) => {
+      if (line.length === 1 && line[0].img) { drawImage(line[0], x, w); return; }
+      const sz = lineSize(line);
+      room(sz * lh);
+      if (!i && marker) { face(marker); doc.setTextColor(PDF_INK[0], PDF_INK[1], PDF_INK[2]); doc.text(marker.text, x - doc.getTextWidth(marker.text) - 6, y + sz); }
+      y += paint(line, x, y, lh);
+    });
     y += gap;
   };
-  const sizes = { H1: 22, H2: 17, H3: 14, H4: 12.5, H5: 11.5, H6: 11 };
+  const emit = (el, o = {}) => {
+    const size = o.size || 11, indent = o.indent || 0;
+    const runs = runsOf(el, { font: o.font || 'helvetica', size, bold: !!o.bold, italic: !!o.italic, pre: !!o.pre });
+    if (!runs.some(r => r.img || (r.text && r.text.trim()))) return;
+    block(runs, left() + indent, avail() - indent, o.lh || 1.45, o.gap ?? 7, o.marker ? { font: 'helvetica', size, text: o.marker } : null);
+  };
+  const list = (el, depth, ordered) => {
+    let n = parseInt(el.getAttribute('start') || '1', 10) || 1;
+    for (const li of el.children) {
+      if (li.tagName !== 'LI') continue;
+      const clone = li.cloneNode(true), nests = [...clone.children].filter(c => c.tagName === 'UL' || c.tagName === 'OL');
+      nests.forEach(x => x.remove());
+      emit(clone, { indent: 20 + depth * 18, gap: 3, marker: ordered ? (n++) + '.' : BULLETS[depth % 3] });
+      nests.forEach(x => list(x, depth + 1, x.tagName === 'OL'));
+    }
+    y += 5;
+  };
+  const pre = el => {
+    const at = page(), top = y;
+    off += 14;
+    block(runsOf(el, { font: 'courier', size: 9.5, pre: true }), left(), avail(), 1.32, 12);
+    off -= 14;
+    rule(left() + 5, top, at, [214, 218, 228]);
+  };
+  const quote = (el, depth) => {
+    const at = page(), top = y;
+    off += 18;
+    if (el.children.length) walk(el, depth); else emit(el, { italic: true });
+    off -= 18;
+    rule(left() + 6, top, at, [190, 196, 208]);
+  };
+  const table = el => {
+    const trs = [...el.querySelectorAll('tr')].filter(tr => tr.children.length);
+    if (!trs.length) return;
+    const cols = Math.max(...trs.map(tr => tr.children.length)), size = 10, pad = 5, lh = 1.35, w0 = avail();
+    const rows = trs.map(tr => Array.from({ length: cols }, (_, i) => tr.children[i] || null));
+    const head = trs[0].querySelector('th') ? rows[0] : null;
+    const nat = Array(cols).fill(24);
+    rows.forEach(r => r.forEach((td, i) => {
+      if (!td) return;
+      face({ size, bold: td.tagName === 'TH' });
+      nat[i] = Math.max(nat[i], Math.min(doc.getTextWidth((td.textContent || '').replace(/\s+/g, ' ').trim()) + pad * 2, w0 * .55));
+    }));
+    const total = nat.reduce((a, b) => a + b, 0) || 1, widths = nat.map(n => n / total * w0);
+    const drawRow = (row, isHead) => {
+      const laid = row.map((td, i) => td ? flow(runsOf(td, { font: 'helvetica', size, bold: isHead || td.tagName === 'TH' }), widths[i] - pad * 2) : []);
+      const h = Math.max(size * lh, ...laid.map(ls => ls.length * size * lh)) + pad * 2;
+      if (y + h > bottom && y > M) { doc.addPage(); y = M; if (head && !isHead) drawRow(head, true); }
+      let x = left();
+      row.forEach((td, i) => {
+        if (isHead) { doc.setFillColor(240, 242, 247); doc.rect(x, y, widths[i], h, 'F'); }
+        doc.setDrawColor(PDF_RULE[0], PDF_RULE[1], PDF_RULE[2]); doc.setLineWidth(.5); doc.rect(x, y, widths[i], h);
+        let ty = y + pad;
+        for (const line of laid[i]) ty += paint(line, x + pad, ty, lh);
+        x += widths[i];
+      });
+      y += h;
+    };
+    y += 2;
+    rows.forEach((row, i) => drawRow(row, !!head && i === 0));
+    y += 12;
+  };
+  const SIZES = { H1: 21, H2: 17, H3: 14.5, H4: 12.5, H5: 11.5, H6: 11 };
   const walk = (node, depth) => {
-    for (const el of node.children) {
-      const t = el.tagName;
-      if (sizes[t]) { y += 6; put(blockText(el), { size: sizes[t], style: 'bold', gap: 4 }); }
-      else if (t === 'P') put(blockText(el));
-      else if (t === 'UL' || t === 'OL') {
-        let n = 1;
-        for (const li of el.children) {
-          const nested = [...li.children].filter(c => c.tagName === 'UL' || c.tagName === 'OL');
-          const clone = li.cloneNode(true); clone.querySelectorAll('ul,ol').forEach(x => x.remove());
-          put((t === 'OL' ? (n++) + '. ' : '• ') + blockText(clone), { indent: 14 + depth * 14, gap: 2 });
-          nested.forEach(x => walk({ children: [x] }, depth + 1));
-        }
-        y += 4;
-      }
-      else if (t === 'PRE') { (el.textContent || '').split('\n').forEach(l => put(l || ' ', { font: 'courier', size: 9.5, gap: 0, lh: 1.3 })); y += 6; }
-      else if (t === 'BLOCKQUOTE') put(blockText(el), { style: 'italic', indent: 16 });
-      else if (t === 'TABLE') { for (const tr of el.querySelectorAll('tr')) put([...tr.children].map(blockText).join('   |   '), { size: 10, gap: 2, style: tr.querySelector('th') ? 'bold' : 'normal' }); y += 6; }
-      else if (t === 'HR') { y += 6; doc.setDrawColor(180); doc.line(M, y, W - M, y); y += 12; }
-      else if (el.children.length && /^(DIV|SECTION|ARTICLE|MAIN|BODY|HEADER|FOOTER)$/.test(t)) walk(el, depth);
-      else if (t !== 'SCRIPT' && t !== 'STYLE') put(blockText(el));
+    for (const n of node.childNodes) {
+      if (n.nodeType === 3) { const t = n.nodeValue.replace(/\s+/g, ' ').trim(); if (t) block([{ font: 'helvetica', size: 11, text: t }], left(), avail(), 1.45, 7); continue; }
+      if (n.nodeType !== 1) continue;
+      const el = n, t = el.tagName;
+      if (SKIP.test(t)) continue;
+      if (SIZES[t]) { y += t === 'H1' ? 6 : 10; room(SIZES[t] * 2.8); emit(el, { size: SIZES[t], bold: true, gap: 5, lh: 1.3 }); }
+      else if (t === 'P') emit(el);
+      else if (t === 'UL' || t === 'OL') list(el, depth, t === 'OL');
+      else if (t === 'PRE') pre(el);
+      else if (t === 'BLOCKQUOTE') quote(el, depth);
+      else if (t === 'TABLE') table(el);
+      else if (t === 'HR') { room(20); y += 6; doc.setDrawColor(PDF_RULE[0], PDF_RULE[1], PDF_RULE[2]); doc.setLineWidth(.7); doc.line(left(), y, W - M, y); y += 14; }
+      else if (t === 'IMG') drawImage({ img: el.getAttribute('src') || '', alt: el.getAttribute('alt') || '' }, left(), avail());
+      else if (BLOCKISH.test(t) && el.children.length) walk(el, depth);
+      else emit(el);
     }
   };
-  const body = new DOMParser().parseFromString(html, 'text/html').body;
-  if (!body.children.length && body.textContent.trim()) put(body.textContent.trim());
   walk(body, 0);
   doc.setProperties({ title });
   return doc.output('blob');
