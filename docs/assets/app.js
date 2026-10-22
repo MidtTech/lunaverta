@@ -315,6 +315,8 @@ function runsOf(node, st, out = []) {
     if (SKIP.test(tag)) continue;
     if (tag === 'BR') { out.push({ br: true }); continue; }
     if (tag === 'IMG') { out.push({ img: n.getAttribute('src') || '', alt: n.getAttribute('alt') || '' }); continue; }
+    // jsPDF's base fonts only cover WinAnsi, so a checkbox glyph here must stay plain ASCII.
+    if (tag === 'INPUT' && (n.getAttribute('type') || '').toLowerCase() === 'checkbox') { out.push({ ...st, font: 'courier', text: (n.hasAttribute('checked') ? '[x]' : '[ ]') + ' ' }); continue; }
     const s = { ...st };
     if (EMPH[tag]) s[EMPH[tag]] = true;
     if (MONO.test(tag)) { s.font = 'courier'; s.size = st.size * .94; }
@@ -466,34 +468,53 @@ async function htmlToPDF(html, title) {
     rule(left() + 6, top, at, [190, 196, 208]);
   };
   const table = el => {
+    const size = 10, pad = 5, lh = 1.35, w0 = avail();
     const trs = [...el.querySelectorAll('tr')].filter(tr => tr.children.length);
     if (!trs.length) return;
-    const cols = Math.max(...trs.map(tr => tr.children.length)), size = 10, pad = 5, lh = 1.35, w0 = avail();
-    const rows = trs.map(tr => Array.from({ length: cols }, (_, i) => tr.children[i] || null));
-    const head = trs[0].querySelector('th') ? rows[0] : null;
+    // Walk the rows accounting for colspan/rowspan so a merged cell doesn't
+    // shift every column after it out of alignment on the rows below it.
+    // A rowspan cell is drawn once, at its own row's height only — tall
+    // merges won't visually stretch, but the grid stays correctly aligned.
+    const placed = [], carry = [];
+    let cols = 0;
+    for (const tr of trs) {
+      const row = []; let col = 0;
+      for (const td of tr.children) {
+        while (carry[col] > 0) col++;
+        const span = Math.max(1, td.colSpan || 1), rspan = Math.max(1, td.rowSpan || 1);
+        row.push({ td, col, span });
+        for (let k = 0; k < span; k++) carry[col + k] = Math.max(carry[col + k] || 0, rspan - 1);
+        col += span;
+      }
+      cols = Math.max(cols, col);
+      placed.push(row);
+      for (let c = 0; c < carry.length; c++) if (carry[c] > 0) carry[c]--;
+    }
+    const headRow = trs[0].querySelector('th') ? placed[0] : null;
     const nat = Array(cols).fill(24);
-    rows.forEach(r => r.forEach((td, i) => {
-      if (!td) return;
+    placed.forEach(row => row.forEach(({ td, col, span }) => {
       face({ size, bold: td.tagName === 'TH' });
-      nat[i] = Math.max(nat[i], Math.min(doc.getTextWidth((td.textContent || '').replace(/\s+/g, ' ').trim()) + pad * 2, w0 * .55));
+      const w = Math.min(doc.getTextWidth((td.textContent || '').replace(/\s+/g, ' ').trim()) + pad * 2, w0 * .55) / span;
+      for (let k = 0; k < span; k++) nat[col + k] = Math.max(nat[col + k], w);
     }));
     const total = nat.reduce((a, b) => a + b, 0) || 1, widths = nat.map(n => n / total * w0);
+    const colX = c => left() + widths.slice(0, c).reduce((a, b) => a + b, 0);
+    const spanW = (c, span) => widths.slice(c, c + span).reduce((a, b) => a + b, 0);
     const drawRow = (row, isHead) => {
-      const laid = row.map((td, i) => td ? flow(runsOf(td, { font: 'helvetica', size, bold: isHead || td.tagName === 'TH' }), widths[i] - pad * 2) : []);
+      const laid = row.map(({ td, col, span }) => flow(runsOf(td, { font: 'helvetica', size, bold: isHead || td.tagName === 'TH' }), spanW(col, span) - pad * 2));
       const h = Math.max(size * lh, ...laid.map(ls => ls.length * size * lh)) + pad * 2;
-      if (y + h > bottom && y > M) { doc.addPage(); y = M; if (head && !isHead) drawRow(head, true); }
-      let x = left();
-      row.forEach((td, i) => {
-        if (isHead) { doc.setFillColor(240, 242, 247); doc.rect(x, y, widths[i], h, 'F'); }
-        doc.setDrawColor(PDF_RULE[0], PDF_RULE[1], PDF_RULE[2]); doc.setLineWidth(.5); doc.rect(x, y, widths[i], h);
+      if (y + h > bottom && y > M) { doc.addPage(); y = M; if (headRow && !isHead) drawRow(headRow, true); }
+      row.forEach(({ col, span }, i) => {
+        const x = colX(col), w = spanW(col, span);
+        if (isHead) { doc.setFillColor(240, 242, 247); doc.rect(x, y, w, h, 'F'); }
+        doc.setDrawColor(PDF_RULE[0], PDF_RULE[1], PDF_RULE[2]); doc.setLineWidth(.5); doc.rect(x, y, w, h);
         let ty = y + pad;
         for (const line of laid[i]) ty += paint(line, x + pad, ty, lh);
-        x += widths[i];
       });
       y += h;
     };
     y += 2;
-    rows.forEach((row, i) => drawRow(row, !!head && i === 0));
+    placed.forEach((row, i) => drawRow(row, !!headRow && i === 0));
     y += 12;
   };
   const SIZES = { H1: 21, H2: 17, H3: 14.5, H4: 12.5, H5: 11.5, H6: 11 };
