@@ -1,4 +1,4 @@
-// Copies the browser builds of every helper library and font into public/,
+// Copies the browser builds of every helper library and font into docs/,
 // so the live site never loads anything from a third-party server.
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,13 +23,13 @@ const FONTS = [
   ['ibm-plex-mono', [400, 500]]
 ];
 
-mkdirSync('public/vendor', { recursive: true });
-mkdirSync('public/fonts', { recursive: true });
-for (const [out, src] of Object.entries(VENDOR)) copyFileSync(src, join('public/vendor', out));
+mkdirSync('docs/vendor', { recursive: true });
+mkdirSync('docs/fonts', { recursive: true });
+for (const [out, src] of Object.entries(VENDOR)) copyFileSync(src, join('docs/vendor', out));
 for (const [fam, weights] of FONTS)
   for (const w of weights)
     for (const sub of ['latin', 'latin-ext']) {
       const f = `${fam}-${sub}-${w}-normal.woff2`;
-      copyFileSync(nm('@fontsource', fam, 'files', f), join('public/fonts', f));
+      copyFileSync(nm('@fontsource', fam, 'files', f), join('docs/fonts', f));
     }
-console.log('Copied', Object.keys(VENDOR).length, 'libraries and fonts into public/');
+console.log('Copied', Object.keys(VENDOR).length, 'libraries and fonts into docs/');

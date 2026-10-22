@@ -7,7 +7,7 @@ Live site (once deployed): https://lunaverta.com
 ## What's in the box
 
 ```
-public/                 ← the whole website. Deploy this folder, nothing else.
+docs/                   ← the whole website. Deploy this folder, nothing else.
   index.html            converter
   privacy.html          GDPR-style privacy notice (no cookies, no uploads)
   licenses.html         open-source credits
@@ -21,8 +21,7 @@ public/                 ← the whole website. Deploy this folder, nothing else.
   _headers              security and caching headers (Netlify, Cloudflare Pages)
   robots.txt, sitemap.xml
 vercel.json             same headers for Vercel
-netlify.toml            tells Netlify to publish public/
-.github/workflows/      GitHub Pages deploy
+netlify.toml            tells Netlify to publish docs/
 scripts/                vendor.mjs (refresh libraries), stamp.mjs (cache version)
 ```
 
@@ -31,8 +30,8 @@ There is no build step and no server code. Any static host works.
 ## Before you go live
 
 1. **Register the domain.** `lunaverta.com` showed no registration in the .com registry on 22 October 2026. Register it before anything else.
-2. **Set up the privacy mailbox.** `public/privacy.html` lists `privacy@lunaverta.com`. Create that address, or change it.
-3. **If you use a different domain**, search and replace `lunaverta.com` in `public/index.html`, `public/robots.txt` and `public/sitemap.xml`.
+2. **Set up the privacy mailbox.** `docs/privacy.html` lists `privacy@lunaverta.com`. Create that address, or change it.
+3. **If you use a different domain**, search and replace `lunaverta.com` in `docs/index.html`, `docs/robots.txt` and `docs/sitemap.xml`.
 4. **Stamp the cache version** each time you change files: `npm run build` (or `node scripts/stamp.mjs`). This makes returning visitors pick up the new version.
 
 ## Run it locally
@@ -50,21 +49,21 @@ Pick one. All are free for a site this size and serve HTTPS automatically.
 **Cloudflare Pages** (EU-friendly, fast everywhere)
 1. Push this folder to a GitHub repository.
 2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git.
-3. Build command: leave empty. Build output directory: `public`.
+3. Build command: leave empty. Build output directory: `docs`.
 4. Add your custom domain under the project's Custom domains tab.
-Or from the command line: `npx wrangler pages deploy public --project-name lunaverta`
+Or from the command line: `npx wrangler pages deploy docs --project-name lunaverta`
 
 **Netlify**
-1. Netlify → Add new site → Import from Git (it reads `netlify.toml`), or drag the `public` folder onto app.netlify.com/drop.
+1. Netlify → Add new site → Import from Git (it reads `netlify.toml`), or drag the `docs` folder onto app.netlify.com/drop.
 2. Domain settings → Add custom domain.
 
 **Vercel**
-1. Vercel → Add New → Project → import the repository. It reads `vercel.json` (output directory `public`).
+1. Vercel → Add New → Project → import the repository. It reads `vercel.json` (output directory `docs`).
 2. Settings → Domains → add your domain.
 
-**GitHub Pages**
-1. Push to a repository on the `main` branch.
-2. Settings → Pages → Source: **GitHub Actions**. The included workflow deploys `public/`.
+**GitHub Pages** (current setup)
+1. Push to the `main` branch.
+2. Settings → Pages → Source: **Deploy from a branch**, Branch: `main`, folder: `/docs`, then Save.
 3. Settings → Pages → Custom domain. GitHub Pages can't send custom headers, so the security policy comes from the `<meta>` tag in each page instead. Everything still works.
 
 ## Updating the libraries
@@ -73,7 +72,7 @@ Versions are pinned in `package.json`. To update:
 
 ```
 npm install
-npm run build        # copies fresh files into public/vendor and public/fonts, stamps the cache
+npm run build        # copies fresh files into docs/vendor and docs/fonts, stamps the cache
 ```
 
 Test HEIC, PDF, Word, Excel and MP3 conversions afterwards.
