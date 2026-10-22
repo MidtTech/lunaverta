@@ -523,11 +523,10 @@ let uid = 0;
 
 function addFiles(list, opts = {}) {
   const added = [];
-  if (!opts.sample && list.length) tray = tray.filter(x => !x.sample); // real files replace the examples
   for (const file of list) {
     const kind = kindOf(file);
     if (!kind) { toast(`${file.name} isn't a format Lunaverta can convert yet.`); continue; }
-    const item = { id: ++uid, file, kind, sample: !!opts.sample };
+    const item = { id: ++uid, file, kind };
     tray.push(item); added.push(item);
   }
   renderTray();
@@ -536,11 +535,11 @@ function addFiles(list, opts = {}) {
 function renderTray() {
   const t = $('tray');
   t.innerHTML = '';
-  if (!tray.length) { t.innerHTML = '<span class="tray-empty">No files yet.</span>'; }
+  if (!tray.length) { t.innerHTML = '<span class="tray-empty">No files yet. Drop some here, paste them, or use Choose files.</span>'; }
   for (const it of tray) {
     const el = document.createElement('span');
     el.className = 'chip'; el.style.setProperty('--k', kv(KINDS[it.kind].color));
-    el.innerHTML = `<span class="dot"></span><span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${fmtSize(it.file.size)}</span>${it.sample ? '<span class="badge">sample</span>' : ''}<button type="button" aria-label="Remove ${esc(it.file.name)}">&times;</button>`;
+    el.innerHTML = `<span class="dot"></span><span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${fmtSize(it.file.size)}</span><button type="button" aria-label="Remove ${esc(it.file.name)}">&times;</button>`;
     el.querySelector('button').onclick = () => { tray = tray.filter(x => x !== it); renderTray(); };
     t.appendChild(el);
   }
@@ -798,24 +797,6 @@ $('refGrid').innerHTML = Object.values(KINDS).map(k => `<div class="kind" style=
 let toastT;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 
-// ---------- sample files, so the tool shows what it does ----------
-async function samples() {
-  const c = document.createElement('canvas'); c.width = 960; c.height = 640;
-  const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 960, 640); g.addColorStop(0, '#1f3bb3'); g.addColorStop(1, '#e0603f');
-  x.fillStyle = g; x.fillRect(0, 0, 960, 640);
-  for (let i = 0; i < 7; i++) { x.beginPath(); x.arc(700, 330, 60 + i * 34, -1.2, 1.9); x.strokeStyle = `rgba(255,255,255,${0.5 - i * 0.06})`; x.lineWidth = 14; x.stroke(); }
-  x.fillStyle = '#fff'; x.font = '700 76px "Bricolage Grotesque", sans-serif'; x.fillText('Harbour', 64, 300);
-  x.font = '500 30px "IBM Plex Mono", monospace'; x.fillText('ferry schedule · autumn', 68, 352);
-  const png = await canvasToBlob(c, 'image/png');
-  const csv = 'route,departure,arrival,passengers,on_time\nAarhus–Odden,06:15,07:05,412,yes\nOdden–Aarhus,07:40,08:30,388,yes\nKøge–Rønne,08:30,14:00,951,no\nRønne–Ystad,10:00,11:20,602,yes\nHelsingør–Helsingborg,10:20,10:40,214,yes\n';
-  const md = '# Autumn timetable notes\n\nThe winter schedule starts **1 November**. Changes this season:\n\n- Extra early sailing on Aarhus–Odden\n- Rønne–Ystad moves to a 10:00 departure\n- Bikes travel free on weekdays\n\n## Contact\n\nQuestions go to the harbour office, open 07:00–19:00.\n';
-  addFiles([
-    new File([png], 'harbour-poster.png', { type: 'image/png' }),
-    new File([csv], 'sailings.csv', { type: 'text/csv' }),
-    new File([md], 'timetable-notes.md', { type: 'text/markdown' })
-  ], { sample: true });
-}
 renderTray(); updateFoot();
 
 // ---------- installed app: open files from the OS ("Open with Lunaverta") ----------
@@ -829,7 +810,6 @@ if ('launchQueue' in window) {
     if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: innerWidth / 2, y: innerHeight / 2, count: added.length, subtitle: added.length === 1 ? 'file' : 'files', modal: true });
   });
 }
-(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { if (!launched && !tray.length) samples(); });
 
 // ---------- install button ----------
 let installEvt = null;
