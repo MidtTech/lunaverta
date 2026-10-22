@@ -1,0 +1,27 @@
+{
+  "name": "lunaverta",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private file converter that runs entirely in the browser.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "build": "node scripts/vendor.mjs && node scripts/stamp.mjs",
+    "serve": "npx --yes serve@14.2.4 public -l 8080"
+  },
+  "devDependencies": {
+    "@fontsource/bricolage-grotesque": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "libheif-js": "1.23.5",
+    "jspdf": "2.5.1",
+    "jszip": "3.10.1",
+    "lamejs": "1.2.1",
+    "mammoth": "1.6.0",
+    "marked": "9.1.6",
+    "pdfjs-dist": "3.11.174",
+    "turndown": "7.1.2",
+    "xlsx": "0.18.5"
+  }
+}

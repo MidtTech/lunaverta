@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lunaverta · Private file converter</title>
+<meta name="description" content="Convert images, PDFs, Word documents, spreadsheets, audio and video right in your browser. Free, private and offline-ready: your files are never uploaded.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://lunaverta.com/">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/mask-icon.svg" color="#2f45c9">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#e9ecf1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141b" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Lunaverta">
+<meta property="og:title" content="Lunaverta · Private file converter">
+<meta property="og:description" content="Drop files on a ring of formats and convert them in your browser. Nothing is uploaded.">
+<meta property="og:url" content="https://lunaverta.com/">
+<meta property="og:image" content="https://lunaverta.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/app.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Lunaverta","url":"https://lunaverta.com/","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Private file converter that runs entirely in your browser."}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><mask id="lm"><rect width="64" height="64" fill="#fff"/><circle cx="37" cy="27.5" r="9.5" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="14 4.8" transform="rotate(-80 32 32)"/><circle cx="32" cy="32" r="12" fill="var(--moon)" mask="url(#lm)"/></svg>
+      <h1>Lunaverta</h1>
+    </div>
+    <p class="tag">Drop files, pick a format from the ring, save the result. Everything converts on your own device.</p>
+    <div class="head-actions">
+      <span class="net" id="net" hidden>Offline</span>
+      <button class="btn sm" id="install" type="button" hidden>Install app</button>
+      <span class="privacy">Nothing is uploaded</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="panel" aria-labelledby="h-dock">
+      <div class="panel-head">
+        <h2 id="h-dock">Files to convert</h2>
+        <button class="btn sm ghost" id="clearTray" type="button">Clear</button>
+      </div>
+      <div class="dock" id="dock">
+        <div class="dock-hint">
+          <p><strong>Drag files anywhere on the page.</strong> A ring of formats opens under your cursor. Drop on a format to convert straight away, or drop in the middle to keep them here. You can also paste files.</p>
+          <button class="btn primary" id="pick" type="button">Choose files</button>
+          <input type="file" id="fileInput" multiple hidden>
+        </div>
+        <div class="tray" id="tray" aria-live="polite"></div>
+        <div class="targets" id="targets" hidden>
+          <span class="targets-label">Convert all to</span>
+          <div class="target-row" id="targetRow"></div>
+        </div>
+      </div>
+      <div class="options" aria-label="Conversion settings">
+        <label class="opt">Image quality <output id="qOut">90%</output>
+          <input type="range" id="optQuality" min="40" max="100" step="5" value="90">
+        </label>
+        <label class="opt">Longest side
+          <select id="optSize">
+            <option value="0">Keep original</option><option value="4096">4096 px</option><option value="2048">2048 px</option><option value="1280">1280 px</option><option value="512">512 px</option>
+          </select>
+        </label>
+        <label class="opt">MP3 bitrate
+          <select id="optKbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
+        </label>
+        <label class="opt">GIF from video
+          <select id="optGif"><option value="3">First 3 s</option><option value="5" selected>First 5 s</option><option value="10">First 10 s</option></select>
+        </label>
+        <label class="opt check"><input type="checkbox" id="optMerge" checked> Merge images into one PDF</label>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-out">
+      <div class="panel-head">
+        <h2 id="h-out">Converted</h2>
+        <span class="targets-label" id="outCount"></span>
+      </div>
+      <div class="manifest" id="manifest">
+        <div class="empty-manifest" id="emptyOut">Converted files appear here, ready to save. Try the examples: click <b>PDF</b> under the files on the left.</div>
+      </div>
+      <div class="manifest-foot">
+        <button class="btn" id="saveAll" type="button" disabled>Save all as .zip</button>
+        <button class="btn ghost" id="clearOut" type="button" disabled>Clear list</button>
+      </div>
+    </section>
+  </main>
+
+  <section class="ref" aria-labelledby="h-ref">
+    <h2 id="h-ref">What converts to what</h2>
+    <div class="ref-grid" id="refGrid"></div>
+  </section>
+
+  <section class="faq" aria-labelledby="h-faq">
+    <h2 id="h-faq">Questions</h2>
+    <div class="faq-list">
+      <details><summary>Are my files uploaded anywhere?</summary><p>No. Lunaverta has no server that receives files. Every conversion runs in your browser, on your device, and the result is saved straight to your downloads.</p></details>
+      <details><summary>Does it work offline?</summary><p>Yes. After your first visit the app is stored on your device. Helpers for PDF, Word, Excel, MP3 and HEIC are saved the first time you use them, then work offline too.</p></details>
+      <details><summary>Can I install it?</summary><p>In Chrome, Edge and other Chromium browsers, use <b>Install app</b> at the top of the page. Once installed, you can open files with Lunaverta from your file manager. On iPhone and iPad, use Share, then Add to Home Screen.</p></details>
+      <details><summary>Is there a size limit?</summary><p>Only your device's memory. Large videos and long audio take longer and use more memory, so convert them a few at a time.</p></details>
+      <details><summary>What does it cost?</summary><p>Nothing. There are no accounts, ads, cookies or trackers.</p></details>
+      <details><summary>Why can't it convert video to MP4 or open DOC files?</summary><p>Those need large engines like FFmpeg and LibreOffice that are heavy to run in a browser. Lunaverta sticks to conversions that run quickly and reliably on any device.</p></details>
+    </div>
+  </section>
+
+  <footer>
+    <span>Lunaverta · Free, private file conversion</span>
+    <nav aria-label="Site"><a href="privacy.html">Privacy</a><a href="licenses.html">Open-source licenses</a></nav>
+  </footer>
+</div>
+
+<div id="scrim"></div>
+<div id="ring" role="menu" aria-label="Choose a format"><svg viewBox="0 0 320 320" id="ringSvg"></svg></div>
+<div id="toast" role="status"></div>
+<noscript><p style="padding:16px">Lunaverta converts files with JavaScript inside your browser. Turn JavaScript on to use it.</p></noscript>
+<script src="assets/app.js"></script>
+</body>
+</html>

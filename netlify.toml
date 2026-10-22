@@ -1,0 +1,4 @@
+# Headers live in public/_headers. No build step is needed: the site is plain files.
+[build]
+  publish = "public"
+  command = ""
