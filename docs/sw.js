@@ -1,6 +1,6 @@
 // LunaVerta service worker: keeps the app working offline.
 // The app shell is stored on install; helper libraries are stored the first time they are used.
-const VERSION = 'd43e464a81';
+const VERSION = 'c2a7dcb881';
 const CACHE = 'lunaverta-' + VERSION;
 const SHELL = [
   './', 'index.html', 'privacy.html', 'licenses.html', 'assets/app.css', 'assets/app.js', 'manifest.webmanifest',

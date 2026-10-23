@@ -1267,12 +1267,7 @@ if ('launchQueue' in window) {
   });
 }
 
-// ---------- install button ----------
-let installEvt = null;
-const installBtn = $('install');
-addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; installBtn.hidden = false; });
-installBtn.onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; installBtn.hidden = true; };
-addEventListener('appinstalled', () => { installBtn.hidden = true; toast('LunaVerta is installed. You can open files with it from your computer.'); });
+addEventListener('appinstalled', () => { toast('LunaVerta is installed. You can open files with it from your computer.'); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
