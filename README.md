@@ -1,6 +1,6 @@
 # LunaVerta
 
-A private file converter that runs entirely in the browser. It also edits PDFs (reorder, rotate and delete pages, add text, fill in forms), merges, splits and shrinks PDFs, removes hidden location data from photos, and is available in English and Danish (following the browser's language, with a switch at the top). Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
+A private file converter that runs entirely in the browser. It also edits PDFs (reorder, rotate and delete pages, correct existing text, add text, fill in forms), merges, splits and shrinks PDFs, removes hidden location data from photos, and is available in English and Danish (following the browser's language, with a switch at the top). Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
 
 Live site (once deployed): https://lunaverta.com
 

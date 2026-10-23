@@ -150,7 +150,7 @@ function renderGrid() {
 
 // ---------- one page: add text, fill in forms ----------
 function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; renderPage(); }
-function showGrid() { S.adding = false; renderGrid(); }
+function showGrid() { S.adding = false; S.editing = false; renderGrid(); }
 async function renderPage() {
   const live = S.pages.filter(p => !p.deleted), pos = live.findIndex(p => p.id === S.current);
   const pg = live[pos]; if (!pg) return renderGrid();
@@ -159,13 +159,15 @@ async function renderPage() {
     <span class="ed-pager"><button class="ed-ico" type="button" id="edPrev" aria-label="${esc(T('ed.prev'))}" ${pos ? '' : 'disabled'}>‹</button>
       <span>${esc(T('ed.of', { n: pos + 1, total: live.length }))}</span>
       <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}" ${pos < live.length - 1 ? '' : 'disabled'}>›</button></span>
+    <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${S.adding}">${esc(T('ed.addText'))}</button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
   $('#edPrev').onclick = () => openPage(live[pos - 1].id);
   $('#edNext').onclick = () => openPage(live[pos + 1].id);
-  $('#edAddText').onclick = () => { S.adding = !S.adding; renderPage(); };
+  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; renderPage(); };
+  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
 
   const body = $('#edBody');
@@ -187,8 +189,10 @@ async function renderPage() {
   const layer = $('#edLayer');
   let fields = 0;
   if (pg.doc === 0) fields = await formFields(page, vp, layer);
+  let runs = 0;
+  if (S.editing || S.edits.some(x => x.pageId === pg.id)) runs = await textRuns(page, pg, vp, layer, canvas, dpr);
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
-  $('#edPageHint').textContent = S.adding ? T('ed.addTextHint') : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
+  $('#edPageHint').textContent = S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 
   stage.addEventListener('click', e => {
     if (!S.adding || e.target !== layer) return;
@@ -201,6 +205,98 @@ async function renderPage() {
     stage.classList.remove('adding'); $('#edPageHint').textContent = T('ed.pageHint');
     textBox(t, vp, layer, rot).querySelector('textarea').focus();
   });
+}
+// ---------- correcting existing text ----------
+// Text in a PDF is drawn at fixed positions, so a correction covers the old
+// line with its background colour and writes the new text in the same spot,
+// in the closest standard font, size and colour. The old text is covered,
+// not removed.
+function fontStyle(page, fontName, styles) {
+  let name = '';
+  try { if (page.commonObjs.has(fontName)) { const f = page.commonObjs.get(fontName); name = (f && (f.name || f.loadedName)) || ''; } } catch (e) {}
+  const all = name + ' ' + ((styles[fontName] && styles[fontName].fontFamily) || '');
+  const mono = /courier|mono|consol/i.test(all);
+  const serif = !mono && /times|georgia|garamond|cambria|minion|palatino|book|serif/i.test(all) && !/sans/i.test(all);
+  return { family: mono ? 'mono' : serif ? 'serif' : 'sans', bold: /bold|black|heavy|semibold|demi/i.test(name), italic: /italic|oblique/i.test(name) };
+}
+function lineRuns(items) {
+  const runs = [];
+  for (const it of items) {
+    if (it.str === undefined || !it.transform) continue;
+    const [a, b, c, d, e, f] = it.transform;
+    if (Math.abs(b) > .01 || Math.abs(c) > .01 || a <= 0 || d <= 0) continue; // straight, upright text only
+    const size = d, last = runs[runs.length - 1];
+    const sameLine = last && Math.abs(last.y - f) < size * .2 && Math.abs(last.size - size) < .6 && last.fontName === it.fontName;
+    const gap = last ? e - (last.x + last.w) : 0;
+    if (sameLine && gap > -size * .3 && gap < size * .9) {
+      last.str += (gap > size * .15 && !/\s$/.test(last.str) && !/^\s/.test(it.str) ? ' ' : '') + it.str;
+      last.w = Math.max(last.w, e + it.width - last.x);
+    } else if (it.str.trim()) runs.push({ str: it.str, x: e, y: f, w: it.width, size, fontName: it.fontName });
+  }
+  return runs.map(r => ({ ...r, str: r.str.replace(/\s+$/, '') })).filter(r => r.str.trim() && r.w > 0);
+}
+function sampleColours(canvas, dpr, box) {
+  const ctx = canvas.getContext('2d');
+  const x = Math.max(0, Math.floor(box.left * dpr) - 2), y = Math.max(0, Math.floor(box.top * dpr) - 2);
+  const w = Math.min(canvas.width - x, Math.ceil(box.width * dpr) + 4), h = Math.min(canvas.height - y, Math.ceil(box.height * dpr) + 4);
+  if (w < 3 || h < 3) return { ink: [0, 0, 0], bg: [255, 255, 255] };
+  const d = ctx.getImageData(x, y, w, h).data, lum = i => d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11;
+  let darkest = 0, dl = 999;
+  for (let i = 0; i < d.length; i += 4) { const l = lum(i); if (l < dl) { dl = l; darkest = i; } }
+  const edge = [];
+  for (let i = 0; i < w; i++) edge.push((i) * 4, ((h - 1) * w + i) * 4);
+  for (let j = 0; j < h; j++) edge.push((j * w) * 4, (j * w + w - 1) * 4);
+  edge.sort((p, q) => lum(q) - lum(p));
+  const m = edge[Math.floor(edge.length * .3)]; // a light, typical edge pixel
+  return { ink: [d[darkest], d[darkest + 1], d[darkest + 2]], bg: [d[m], d[m + 1], d[m + 2]] };
+}
+const CSS_FONT = { sans: 'Helvetica, Arial, sans-serif', serif: '"Times New Roman", Times, serif', mono: '"Courier New", Courier, monospace' };
+async function textRuns(page, pg, vp, layer, canvas, dpr) {
+  let tc;
+  try { tc = await page.getTextContent(); } catch (e) { return 0; }
+  const runs = lineRuns(tc.items);
+  for (const r of runs) {
+    const key = `${pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
+    const [x1, y1, x2, y2] = vp.convertToViewportRectangle([r.x - 1, r.y - r.size * .25, r.x + r.w + 1, r.y + r.size * .95]);
+    const box = { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) };
+    let edit = S.edits.find(x => x.key === key);
+    if (!edit && !S.editing) continue;
+    const show = () => {
+      const el = document.createElement('input');
+      el.type = 'text'; el.className = 'ed-edit'; el.value = edit.text; el.spellcheck = true;
+      el.setAttribute('aria-label', T('ed.editLabel', { text: edit.orig }));
+      Object.assign(el.style, {
+        left: box.left + 'px', top: box.top + 'px', minWidth: box.width + 'px', height: box.height + 'px',
+        fontFamily: CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
+        fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`
+      });
+      const fit = () => { el.style.width = `calc(${Math.max(edit.text.length, 2)}ch * .62 + 12px)`; };
+      el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); };
+      el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
+      const undo = document.createElement('button');
+      undo.type = 'button'; undo.className = 'ed-ico ed-undo'; undo.innerHTML = ICON.undo;
+      undo.title = undo.ariaLabel = T('ed.undoEdit'); undo.setAttribute('aria-label', T('ed.undoEdit'));
+      Object.assign(undo.style, { left: (box.left + Math.max(box.width, el.offsetWidth || box.width) + 4) + 'px', top: (box.top - 4) + 'px' });
+      undo.onclick = () => { S.edits = S.edits.filter(x => x !== edit); S.dirty = true; renderPage(); };
+      layer.append(el, undo); fit();
+      requestAnimationFrame(() => { undo.style.left = (box.left + el.offsetWidth + 4) + 'px'; });
+      return el;
+    };
+    if (edit) { show(); continue; }
+    const hit = document.createElement('button');
+    hit.type = 'button'; hit.className = 'ed-run';
+    hit.setAttribute('aria-label', T('ed.editLabel', { text: r.str }));
+    Object.assign(hit.style, { left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' });
+    hit.onclick = () => {
+      const c = sampleColours(canvas, dpr, box);
+      edit = { key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: r.str, font: fontStyle(page, r.fontName, tc.styles), ink: c.ink, bg: c.bg };
+      S.edits.push(edit); S.dirty = true;
+      hit.remove();
+      const el = show(); el.focus(); el.select();
+    };
+    layer.appendChild(hit);
+  }
+  return runs.length;
 }
 function textBox(t, vp, layer, rot) {
   const scale = vp.scale;
@@ -326,11 +422,28 @@ async function save() {
     }
     for (let i = out.getPageCount() - 1; i >= 0; i--) out.removePage(i);
     for (const { page } of final) out.addPage(page);
-    // 3. rotation and added text
+    // 3. rotation, corrected text and added text
     const font = await out.embedFont(StandardFonts.Helvetica);
+    const STD = { sans: ['Helvetica', 'HelveticaBold', 'HelveticaOblique', 'HelveticaBoldOblique'], serif: ['TimesRoman', 'TimesRomanBold', 'TimesRomanItalic', 'TimesRomanBoldItalic'], mono: ['Courier', 'CourierBold', 'CourierOblique', 'CourierBoldOblique'] };
+    const fonts = {};
+    const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
+    const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
     for (const { pg, page } of final) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
       if (pg.rotate) page.setRotation(degrees(turn));
+      const mb = page.getMediaBox();
+      for (const ed of S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig)) {
+        page.drawRectangle({ x: ed.x - 1, y: ed.y - ed.size * .25, width: ed.w + 2, height: ed.size * 1.2, color: col(ed.bg) });
+        if (!ed.text.trim()) continue;
+        const f = await fontFor(ed.font), text = ed.text.replace(app().WIN_ANSI, '?');
+        // Size the standard font so the original line would have had its original width.
+        const natural = f.widthOfTextAtSize(ed.orig.replace(app().WIN_ANSI, '?'), ed.size);
+        const size = natural ? ed.size * Math.min(1.1, Math.max(.75, ed.w / natural)) : ed.size;
+        // Keep centred lines centred.
+        const mid = ed.x + ed.w / 2, centred = Math.abs(mid - (mb.x + mb.width / 2)) < mb.width * .03 && ed.w < mb.width * .8;
+        const x = centred ? mid - f.widthOfTextAtSize(text, size) / 2 : ed.x;
+        page.drawText(text, { x, y: ed.y, size, font: f, color: col(ed.ink) });
+      }
       // Text is drawn turned with the page, so it reads upright however the page is shown.
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });
@@ -349,7 +462,7 @@ async function save() {
 
 // ---------- open ----------
 async function open(files) {
-  S = { docs: [], pages: [], texts: [], values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+  S = { docs: [], pages: [], texts: [], edits: [], editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;

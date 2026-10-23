@@ -255,3 +255,9 @@ input.ed-field[type="checkbox"], input.ed-field[type="radio"] { accent-color: #2
 .ed-x svg { width: 14px; height: 14px; }
 .ed-text:hover .ed-grip, .ed-text:focus-within .ed-grip, .ed-text:hover .ed-x, .ed-text:focus-within .ed-x { opacity: 1; }
 @media (max-width: 640px) { .ed-name { max-width: 100%; } .ed-actions { margin-left: 0; width: 100%; } .ed-actions .btn { flex: 1; justify-content: center; } }
+.ed-run { position: absolute; border: 1px solid transparent; background: transparent; padding: 0; cursor: text; border-radius: 2px; }
+.ed-run:hover, .ed-run:focus-visible { border-color: #2f45c9; background: rgba(47, 69, 201, .08); outline: none; }
+.ed-edit { position: absolute; box-sizing: border-box; border: 1px dashed #2f45c9; padding: 0 2px; margin: 0; line-height: 1; border-radius: 2px; }
+.ed-edit:focus { outline: 2px solid #2f45c9; outline-offset: 1px; }
+.ed-undo { position: absolute; background: #fff; width: 24px; height: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); color: #2f45c9; }
+.ed-undo svg { width: 14px; height: 14px; }
