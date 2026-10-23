@@ -604,6 +604,109 @@ function fixSymbolBullets(styles, pages) {
   const walker = document.createTreeWalker(pages, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) if (/[-]/.test(n.data)) n.data = swap(n.data);
 }
+// Word hides everything inside a field's code (between its begin and separate
+// marks), including paragraph breaks. Mail-merge documents often have IF fields
+// whose code spans several paragraphs; left alone, those show up as empty lines
+// and duplicated text. Remove the hidden parts so only what Word shows remains.
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+function stripFieldCodes(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) return xml;
+  const stack = []; // one entry per open field: true while inside its code
+  const hidden = () => stack.some(Boolean);
+  const paras = [...doc.getElementsByTagNameNS(W_NS, 'p')], joins = [];
+  let changed = false;
+  for (const p of paras) {
+    for (const r of [...p.getElementsByTagNameNS(W_NS, 'r')]) {
+      for (const el of [...r.childNodes]) {
+        if (el.nodeType !== 1) continue;
+        if (el.localName === 'fldChar') {
+          const t = el.getAttributeNS(W_NS, 'fldCharType') || el.getAttribute('w:fldCharType');
+          if (t === 'begin') stack.push(true); else if (t === 'separate') { if (stack.length) stack[stack.length - 1] = false; } else if (t === 'end') stack.pop();
+        } else if (el.localName !== 'rPr' && hidden()) { el.remove(); changed = true; }
+      }
+    }
+    // This paragraph's break is inside a field code, so Word joins it with the next one.
+    if (hidden()) joins.push(p);
+  }
+  // Join only after reading everything, so no field mark is counted twice.
+  for (const p of joins.reverse()) {
+    const next = p.nextSibling && p.nextSibling.localName === 'p' ? p.nextSibling : null;
+    if (!next) continue;
+    const ppr = [...next.childNodes].find(n => n.localName === 'pPr'), at = ppr ? ppr.nextSibling : next.firstChild;
+    [...p.childNodes].filter(n => n.localName !== 'pPr').forEach(n => next.insertBefore(n, at));
+    p.remove(); changed = true;
+  }
+  return changed ? new XMLSerializer().serializeToString(doc) : xml;
+}
+// The renderer starts every section on a new page, but Word continues a
+// "continuous" section on the same page. Join such a section into the one
+// before it when the page size matches, keeping that section's header/footer.
+function joinContinuousSections(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) return xml;
+  const sects = [...doc.getElementsByTagNameNS(W_NS, 'sectPr')].filter(el => el.parentNode.localName === 'pPr' || el.parentNode.localName === 'body');
+  const child = (el, name) => [...el.childNodes].find(n => n.localName === name);
+  const attr = (el, name) => el && (el.getAttributeNS(W_NS, name) || el.getAttribute('w:' + name));
+  let changed = false;
+  for (let i = sects.length - 1; i > 0; i--) {
+    const b = sects[i], a = sects[i - 1];
+    if (attr(child(b, 'type'), 'val') !== 'continuous') continue;
+    const pa = child(a, 'pgSz'), pb = child(b, 'pgSz');
+    if (pa && pb && (attr(pa, 'w') !== attr(pb, 'w') || attr(pa, 'h') !== attr(pb, 'h'))) continue;
+    const hasRefs = [...b.childNodes].some(n => /^(header|footer)Reference$/.test(n.localName));
+    if (!hasRefs) [...a.childNodes].filter(n => /^(header|footer)Reference$|^titlePg$/.test(n.localName)).reverse().forEach(n => b.insertBefore(n, b.firstChild));
+    for (const name of ['pgSz', 'pgMar']) if (!child(b, name) && child(a, name)) b.appendChild(child(a, name));
+    const t = child(b, 'type'); if (t) t.remove();
+    const at = child(a, 'type'); if (at) b.insertBefore(at, b.firstChild); // the joined section starts the way the first one did
+    a.remove(); changed = true;
+  }
+  return changed ? new XMLSerializer().serializeToString(doc) : xml;
+}
+// Word draws consecutive paragraphs with identical borders as one bordered
+// block: a top line above the first, a bottom line below the last. The renderer
+// draws every paragraph's own lines, so remove the ones Word leaves out.
+function groupParagraphBorders(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) return xml;
+  const ser = new XMLSerializer();
+  const props = p => { const ppr = [...p.childNodes].find(n => n.localName === 'pPr'); return ppr ? [...ppr.childNodes] : []; };
+  const key = p => { const kids = props(p), b = kids.find(n => n.localName === 'pBdr'); if (!b) return null; const ind = kids.find(n => n.localName === 'ind'); return ser.serializeToString(b) + '|' + (ind ? ser.serializeToString(ind) : ''); };
+  const drop = (p, side) => { const b = props(p).find(n => n.localName === 'pBdr'); const el = b && [...b.childNodes].find(n => n.localName === side); if (el) el.remove(); };
+  let changed = false;
+  for (const p of [...doc.getElementsByTagNameNS(W_NS, 'p')]) {
+    const next = p.nextSibling;
+    if (!next || next.localName !== 'p') continue;
+    const k = key(p);
+    if (k && k === key(next)) { drop(p, 'bottom'); drop(next, 'top'); changed = true; }
+  }
+  return changed ? ser.serializeToString(doc) : xml;
+}
+async function prepareDocx(file) {
+  try {
+    const zip = await JSZip.loadAsync(file);
+    const parts = Object.keys(zip.files).filter(n => /^word\/(document|header\d*|footer\d*)\.xml$/.test(n));
+    let touched = false;
+    for (const n of parts) {
+      const xml = await zip.file(n).async('string');
+      let out = stripFieldCodes(xml);
+      if (n === 'word/document.xml') out = groupParagraphBorders(joinContinuousSections(out));
+      if (out !== xml) { zip.file(n, out); touched = true; }
+    }
+    return touched ? await zip.generateAsync({ type: 'blob' }) : file;
+  } catch (e) { return file; }
+}
+// docx-preview finishes some layout (tab stops) after it reports done, so wait
+// until the page heights stop changing before measuring anything.
+async function settleLayout(box) {
+  const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 40)));
+  let last = '', same = 0;
+  for (let i = 0; i < 50 && same < 3; i++) {
+    await frame();
+    const now = [...box.querySelectorAll('section')].map(s => s.scrollHeight + 'x' + s.scrollWidth).join(',');
+    same = now === last ? same + 1 : 0; last = now;
+  }
+}
 async function docxToPDF(file, title, progress) {
   await lib('jszip'); // docx-preview reads the .docx with JSZip
   await Promise.all([lib('docx'), lib('h2c'), lib('jspdf')]);
@@ -615,14 +718,15 @@ async function docxToPDF(file, title, progress) {
   stage.append(styles, pagesBox);
   document.body.appendChild(stage);
   try {
-    await docx.renderAsync(file, pagesBox, styles, {
+    await docx.renderAsync(await prepareDocx(file), pagesBox, styles, {
       className: 'lvdocx', inWrapper: false, breakPages: true, ignoreLastRenderedPageBreak: true,
-      ignoreWidth: false, ignoreHeight: false, experimental: true, useBase64URL: true,
+      ignoreWidth: false, ignoreHeight: false, experimental: false, useBase64URL: true,
       renderHeaders: true, renderFooters: true, renderFootnotes: true, renderEndnotes: true
     });
     fixSymbolBullets(styles, pagesBox);
     await Promise.all([...pagesBox.querySelectorAll('img')].map(i => i.decode().catch(() => {})));
     if (document.fonts) await document.fonts.ready;
+    await settleLayout(pagesBox);
     const sections = [...pagesBox.querySelectorAll('section.lvdocx')];
     if (!sections.length) throw new Error('No pages were rendered.');
     progress(.15);
@@ -660,6 +764,21 @@ async function docxToPDF(file, title, progress) {
           { y: foot, height: footH, at: h - footH, alias: 'foot' + si }
         ], words });
         start = end;
+      }
+      // Never end on a page with no text (just a signature line or empty
+      // paragraphs): move the last line of the page before onto it.
+      const mine = plan.filter(pg => pg.sec === sec);
+      if (mine.length > 1) {
+        const last = mine[mine.length - 1].parts[1], prev = mine[mine.length - 2].parts[1];
+        const inPart = (b, part) => b.y >= part.y && b.y < part.y + part.height;
+        if (!words.some(b => inPart(b, last))) {
+          const lineTop = Math.max(...words.filter(b => inPart(b, prev)).map(b => b.y));
+          if (isFinite(lineTop) && lineTop > prev.y && (last.y + last.height) - lineTop <= room) {
+            const cut = lineTop - 1;
+            prev.height = cut - prev.y;
+            last.height = last.y + last.height - cut; last.y = cut;
+          }
+        }
       }
     });
 
