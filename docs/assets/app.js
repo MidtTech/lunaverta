@@ -33,7 +33,7 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['merge','split','shrink','png','jpg','txt'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','merge','split','shrink','png','jpg','txt'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -41,14 +41,14 @@ const KINDS = {
 };
 const OUT = {
   png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
-  pdf: { k: '--c-doc' }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true },
+  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['merge','split','shrink','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
+const ORDER = ['edit','merge','split','shrink','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -1245,6 +1245,11 @@ function runBatch(files, target) {
   const items = files.map(f => ({ f, kind: kindOf(f) })).filter(x => x.kind);
   const ok = items.filter(x => targetsFor(x.f).includes(target));
   const skipped = items.length - ok.length;
+  if (target === 'edit') { // opens the PDF editor with every selected PDF
+    const pdfs = ok.filter(x => x.kind === 'pdf').map(x => x.f);
+    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs);
+    return;
+  }
   if (target === 'merge') {
     if (!canMerge(ok.map(x => x.kind))) { toast(T('toast.mergeTwo')); return; }
     const j = newJob(`${ok.length} ${T('job.files')}`, 'merge');
@@ -1466,6 +1471,11 @@ renderRef();
 let toastT;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 
+// The PDF editor (editor.js) uses these.
+window.LVApp = {
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m),
+  addResult(srcName, target, outs) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; finishJob(j, outs).catch(e => failJob(j, e)); }
+};
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
 gifLabels();
 renderTray(); updateFoot();
