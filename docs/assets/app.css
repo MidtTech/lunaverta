@@ -62,7 +62,7 @@ button, select, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.wrap > header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand h1 { font: 700 34px/1 var(--f-display); letter-spacing: -.02em; margin: 0; }
 .brand svg { width: 38px; height: 38px; flex: none; }
@@ -179,9 +179,9 @@ kbd { font: 500 12px var(--f-mono); border: 1px solid var(--line); border-bottom
 .faq details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .faq summary { font-weight: 600; cursor: pointer; }
 .faq details p { margin: 8px 0 2px; color: var(--muted); max-width: 65ch; }
-footer { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; color: var(--muted); font-size: 13px; }
-footer nav { display: flex; gap: 16px; flex-wrap: wrap; }
-footer a, .prose a { color: var(--accent); }
+.wrap > footer { border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; color: var(--muted); font-size: 13px; }
+.wrap > footer nav { display: flex; gap: 16px; flex-wrap: wrap; }
+.wrap > footer a, .prose a { color: var(--accent); }
 .prose { max-width: 68ch; display: grid; gap: 6px; }
 .prose h1 { font: 700 34px/1.1 var(--f-display); margin: 0 0 8px; letter-spacing: -.02em; }
 .prose h2 { font: 600 18px/1.3 var(--f-body); margin: 18px 0 0; }
@@ -189,3 +189,6 @@ footer a, .prose a { color: var(--accent); }
 .prose .muted { color: var(--muted); }
 .brand a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 12px; }
 @media (max-width: 520px) { .faq-list { grid-template-columns: minmax(0, 1fr); } }
+
+/* Off-screen stage where Word documents are laid out for PDF export: keep the site's styles out of it. */
+.docx-stage, .docx-stage * { box-sizing: content-box; }

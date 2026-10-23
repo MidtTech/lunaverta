@@ -15,7 +15,9 @@ const VENDOR = {
   'lame.min.js': nm('lamejs/lame.min.js'),
   'turndown.js': nm('turndown/dist/turndown.js'),
   'libheif.js': nm('libheif-js/libheif-wasm/libheif.js'),
-  'libheif.wasm': nm('libheif-js/libheif-wasm/libheif.wasm')
+  'libheif.wasm': nm('libheif-js/libheif-wasm/libheif.wasm'),
+  'docx-preview.min.js': nm('docx-preview/dist/docx-preview.min.js'),
+  'html2canvas.min.js': nm('html2canvas/dist/html2canvas.min.js')
 };
 const FONTS = [
   ['bricolage-grotesque', [500, 700]],

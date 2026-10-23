@@ -12,7 +12,9 @@ const LIBS = {
   marked: 'marked.min.js',
   lame: 'lame.min.js',
   turndown: 'turndown.js',
-  heif: 'libheif.js'
+  heif: 'libheif.js',
+  docx: 'docx-preview.min.js',
+  h2c: 'html2canvas.min.js'
 };
 const loaded = {};
 function lib(name) {
@@ -30,7 +32,7 @@ function lib(name) {
 const KINDS = {
   image: { label: 'Images', color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp'], note: 'HEIC photos from iPhones work too. SVGs are rasterised.' },
   pdf:   { label: 'PDF', color: '--c-doc', exts: ['pdf'], targets: ['png','jpg','txt'], note: 'Each page becomes an image. Multi-page files come back as a .zip.' },
-  doc:   { label: 'Documents', color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'], note: 'Headings, lists, tables, bold, italics, links and images are kept.' },
+  doc:   { label: 'Documents', color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'], note: 'Word to PDF keeps the page layout, fonts, colours, tables, images, headers and footers, and the text stays searchable.' },
   data:  { label: 'Spreadsheets & data', color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'], note: 'Workbooks with several sheets give one CSV per sheet.' },
   audio: { label: 'Audio', color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'], note: 'Decoding uses your browser, so formats vary slightly by browser.' },
   video: { label: 'Video', color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'], note: 'Make a GIF from the opening seconds, pull the soundtrack, or grab a frame.' }
@@ -563,7 +565,142 @@ async function readDoc(file) {
   if (e === 'html' || e === 'htm') return { html: text };
   return { html: text.split(/\n{2,}/).map(p => '<p>' + esc(p).replace(/\n/g, '<br>') + '</p>').join('\n'), text, md: text };
 }
-async function convertDoc(file, target) {
+// ---------- Word -> PDF, laid out the way Word lays it out ----------
+// docx-preview reproduces Word's page size, margins, fonts, colours, alignment,
+// tables, images, headers and footers in the page. Each page is then drawn into
+// the PDF as an image, with an invisible text layer on top so the PDF can still
+// be searched and copied from.
+const PAGE_SCALE = 2; // about 190 dpi
+const WIN_ANSI = /[^\x20-\x7e\xa0-\xff\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u20ac]/g;
+function wordBoxes(section) {
+  const top = section.getBoundingClientRect(), out = [];
+  const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const el = n.parentElement;
+    if (!el || !n.data.trim()) continue;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+    const size = parseFloat(cs.fontSize) || 14;
+    for (const m of n.data.matchAll(/\S+/g)) {
+      range.setStart(n, m.index); range.setEnd(n, m.index + m[0].length);
+      const r = range.getClientRects()[0];
+      if (!r || !r.width) continue;
+      out.push({ text: m[0], x: r.left - top.left, y: r.top - top.top, w: r.width, h: r.height, size });
+    }
+  }
+  return out;
+}
+// Word draws most bullets with private characters from the Symbol and Wingdings
+// fonts, which only show up when those fonts are installed. Swap them for the
+// Unicode characters they stand for.
+const SYMBOL_BULLETS = { '': '•', '': '▪', '': '➢', '': '❖', '': '✔', '': '□', '': '■', '': '➤', '': '▸' };
+function fixSymbolBullets(styles, pages) {
+  const re = /[-]/g, swap = t => t.replace(re, c => SYMBOL_BULLETS[c] || '•');
+  for (const st of styles.querySelectorAll('style')) {
+    if (!/[\uf020-\uf0ff]/.test(st.textContent)) continue;
+    st.textContent = st.textContent.replace(/content:\s*"([^"]*)"([^}]*?)font-family:\s*(?:Symbol|Wingdings[^;]*)/g, (m, c, mid) => `content: "${swap(c)}"${mid}font-family: inherit`).replace(re, c => SYMBOL_BULLETS[c] || '•');
+  }
+  const walker = document.createTreeWalker(pages, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) if (/[-]/.test(n.data)) n.data = swap(n.data);
+}
+async function docxToPDF(file, title, progress) {
+  await lib('jszip'); // docx-preview reads the .docx with JSZip
+  await Promise.all([lib('docx'), lib('h2c'), lib('jspdf')]);
+  const stage = document.createElement('div');
+  stage.className = 'docx-stage';
+  stage.setAttribute('aria-hidden', 'true');
+  stage.style.cssText = 'position:absolute;left:-30000px;top:0;background:#fff;color:#000;color-scheme:light;line-height:normal;font:initial';
+  const styles = document.createElement('div'), pagesBox = document.createElement('div');
+  stage.append(styles, pagesBox);
+  document.body.appendChild(stage);
+  try {
+    await docx.renderAsync(file, pagesBox, styles, {
+      className: 'lvdocx', inWrapper: false, breakPages: true, ignoreLastRenderedPageBreak: true,
+      ignoreWidth: false, ignoreHeight: false, experimental: true, useBase64URL: true,
+      renderHeaders: true, renderFooters: true, renderFootnotes: true, renderEndnotes: true
+    });
+    fixSymbolBullets(styles, pagesBox);
+    await Promise.all([...pagesBox.querySelectorAll('img')].map(i => i.decode().catch(() => {})));
+    if (document.fonts) await document.fonts.ready;
+    const sections = [...pagesBox.querySelectorAll('section.lvdocx')];
+    if (!sections.length) throw new Error('No pages were rendered.');
+    progress(.15);
+
+    const ptToPx = v => { const m = /([\d.]+)pt/.exec(v || ''); return m ? +m[1] * 96 / 72 : 0; };
+    // Plan the PDF pages. Word only stores some page breaks in the file, so a
+    // section taller than one page is split between lines of text, and its
+    // header and footer are repeated on every page it covers.
+    const plan = [];
+    sections.forEach((sec, si) => {
+      const w = sec.offsetWidth, h = ptToPx(sec.style.minHeight) || Math.round(w * 1.4142);
+      const total = Math.max(sec.scrollHeight, sec.offsetHeight), words = wordBoxes(sec);
+      const article = sec.querySelector(':scope > article'), footer = sec.querySelector(':scope > footer');
+      if (total <= h + 2 || !article) { plan.push({ sec, si, w, h, parts: [{ y: 0, height: total, at: 0 }], words }); return; }
+      const header = sec.querySelector(':scope > header');
+      // Keep the whole header line, including letters that hang below its box.
+      const headerBottom = header ? Math.max(...[...header.querySelectorAll('*')].map(el => {
+        const r = el.getBoundingClientRect(), t = sec.getBoundingClientRect(); return r.bottom - t.top;
+      }), header.offsetTop + header.offsetHeight) + 3 : 0;
+      const head = Math.ceil(Math.max(article.offsetTop, headerBottom)), foot = footer ? footer.offsetTop : article.offsetTop + article.offsetHeight;
+      const footH = total - foot, room = Math.max(h * .4, h - head - footH);
+      for (let start = article.offsetTop; start < foot - 2;) {
+        let end = Math.min(start + room, foot);
+        if (end < foot) {
+          for (let i = 0; i < 60; i++) {
+            const cut = words.find(b => b.y > start && b.y < end && b.y + b.h > end);
+            if (!cut) break;
+            end = cut.y - 1;
+          }
+          if (end - start < room * .5) end = Math.min(start + room, foot);
+        }
+        plan.push({ sec, si, w, h, parts: [
+          { y: 0, height: head, at: 0, alias: 'head' + si },
+          { y: start, height: end - start, at: head },
+          { y: foot, height: footH, at: h - footH, alias: 'foot' + si }
+        ], words });
+        start = end;
+      }
+    });
+
+    let doc;
+    const shots = {};
+    for (let i = 0; i < plan.length; i++) {
+      const pg = plan[i], wPt = pg.w * .75, hPt = pg.h * .75, orient = wPt > hPt ? 'l' : 'p';
+      if (!doc) doc = await newPDF([wPt, hPt], orient); else doc.addPage([wPt, hPt], orient);
+      for (const part of pg.parts) {
+        if (part.height < 1) continue;
+        let img = part.alias && shots[part.alias];
+        if (!img) {
+          const shot = await html2canvas(pg.sec, { scale: PAGE_SCALE, backgroundColor: '#ffffff', logging: false, x: 0, y: part.y, width: pg.w, height: Math.ceil(part.height) });
+          img = shot.toDataURL('image/jpeg', .92);
+          if (part.alias) shots[part.alias] = img;
+        }
+        doc.addImage(img, 'JPEG', 0, part.at * .75, wPt, part.height * .75, part.alias ? part.alias + '-' + pg.si : undefined, 'FAST');
+        doc.setFont('helvetica', 'normal');
+        for (const b of pg.words) {
+          if (b.y < part.y || b.y >= part.y + part.height) continue;
+          const text = b.text.replace(WIN_ANSI, '?');
+          doc.setFontSize(b.size * .75);
+          const natural = doc.getTextWidth(text);
+          doc.text(text + ' ', b.x * .75, (b.y - part.y + part.at + b.h * .8) * .75, {
+            renderingMode: 'invisible', horizontalScale: natural ? Math.min(4, Math.max(.25, (b.w * .75) / natural)) : 1
+          });
+        }
+      }
+      progress(.15 + .85 * (i + 1) / plan.length);
+      await new Promise(r => setTimeout(r));
+    }
+    doc.setProperties({ title });
+    return doc.output('blob');
+  } finally { stage.remove(); }
+}
+
+async function convertDoc(file, target, o, progress = () => {}) {
+  if (target === 'pdf' && ext(file.name) === 'docx') {
+    try { return [{ name: base(file.name) + '.pdf', blob: await docxToPDF(file, base(file.name), progress) }]; }
+    catch (err) { console.warn('Exact Word layout failed, using the simplified layout instead.', err); }
+  }
   const d = await readDoc(file), title = base(file.name);
   if (target === 'html') return [{ name: title + '.html', blob: new Blob([standaloneHTML(title, d.html)], { type: 'text/html' }) }];
   if (target === 'txt') {
@@ -704,7 +841,7 @@ async function convertVideo(file, target, o, progress) {
     return [{ name: b + '.gif', blob: gif }];
   } finally { URL.revokeObjectURL(v.src); }
 }
-const CONVERT = { image: convertImage, pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t) => convertDoc(f, t), data: (f, t) => convertData(f, t) };
+const CONVERT = { image: convertImage, pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t, o, p) => convertDoc(f, t, o, p), data: (f, t) => convertData(f, t) };
 
 async function zipOf(files, onProgress) {
   await lib('jszip');
