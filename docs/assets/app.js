@@ -107,7 +107,7 @@ function heif() {
 async function decodeHEIC(file) {
   const m = await heif();
   const images = new m.HeifDecoder().decode(new Uint8Array(await file.arrayBuffer()));
-  if (!images || !images.length) throw new Error('This HEIC file contains no image Lunaverta can read.');
+  if (!images || !images.length) throw new Error('This HEIC file contains no image LunaVerta can read.');
   const im = images[0], w = im.get_width(), h = im.get_height();
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d'), data = ctx.createImageData(w, h);
@@ -862,7 +862,7 @@ function addFiles(list, opts = {}) {
   const added = [];
   for (const file of list) {
     const kind = kindOf(file);
-    if (!kind) { toast(`${file.name} isn't a format Lunaverta can convert yet.`); continue; }
+    if (!kind) { toast(`${file.name} isn't a format LunaVerta can convert yet.`); continue; }
     const item = { id: ++uid, file, kind };
     tray.push(item); added.push(item);
   }
@@ -1136,7 +1136,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 
 renderTray(); updateFoot();
 
-// ---------- installed app: open files from the OS ("Open with Lunaverta") ----------
+// ---------- installed app: open files from the OS ("Open with LunaVerta") ----------
 let launched = false;
 if ('launchQueue' in window) {
   launchQueue.setConsumer(async params => {
@@ -1153,7 +1153,7 @@ let installEvt = null;
 const installBtn = $('install');
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; installBtn.hidden = false; });
 installBtn.onclick = async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; installBtn.hidden = true; };
-addEventListener('appinstalled', () => { installBtn.hidden = true; toast('Lunaverta is installed. You can open files with it from your computer.'); });
+addEventListener('appinstalled', () => { installBtn.hidden = true; toast('LunaVerta is installed. You can open files with it from your computer.'); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -1161,7 +1161,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !navigator.serviceWorker.controller) return;
-    refreshing = true; toast('Lunaverta was updated. It will use the new version next time you open it.');
+    refreshing = true; toast('LunaVerta was updated. It will use the new version next time you open it.');
   });
 }
 const net = $('net');

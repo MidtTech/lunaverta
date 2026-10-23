@@ -1,4 +1,4 @@
-# Lunaverta
+# LunaVerta
 
 A private file converter that runs entirely in the browser. Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
 
@@ -80,6 +80,6 @@ Test HEIC, PDF, Word, Excel and MP3 conversions afterwards.
 ## Notes
 
 - **Security policy:** scripts only load from the site itself. `'wasm-unsafe-eval'` is allowed so the HEIC decoder (WebAssembly) can run; plain `eval` is not.
-- **Licenses:** Lunaverta's code is MIT. lamejs and libheif are LGPL-3.0 and are served as separate, unmodified files, which LGPL allows. See `THIRD_PARTY_NOTICES.md`.
-- **Browser support:** current Chrome, Edge, Firefox and Safari. "Open with Lunaverta" from the file manager needs an installed app in Chrome or Edge on desktop.
+- **Licenses:** LunaVerta's code is MIT. lamejs and libheif are LGPL-3.0 and are served as separate, unmodified files, which LGPL allows. See `THIRD_PARTY_NOTICES.md`.
+- **Browser support:** current Chrome, Edge, Firefox and Safari. "Open with LunaVerta" from the file manager needs an installed app in Chrome or Edge on desktop.
 - **Not included:** video-to-video re-encoding and legacy Office formats (DOC, PPT). Those need FFmpeg or LibreOffice, which are very heavy in a browser.

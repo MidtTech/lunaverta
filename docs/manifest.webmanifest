@@ -1,6 +1,6 @@
 {
-  "name": "Lunaverta",
-  "short_name": "Lunaverta",
+  "name": "LunaVerta",
+  "short_name": "LunaVerta",
   "description": "Private file converter. Images, PDFs, documents, spreadsheets, audio and video, converted on your device.",
   "id": "/",
   "start_url": "./",
@@ -19,7 +19,7 @@
   ],
   "screenshots": [
     { "src": "icons/screenshot-wide.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Converting files with the format ring" },
-    { "src": "icons/screenshot-phone.png", "sizes": "800x1600", "type": "image/png", "form_factor": "narrow", "label": "Lunaverta on a phone" }
+    { "src": "icons/screenshot-phone.png", "sizes": "800x1600", "type": "image/png", "form_factor": "narrow", "label": "LunaVerta on a phone" }
   ],
   "file_handlers": [
     {

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Lunaverta serves the following open-source files unmodified from `public/vendor/` and `public/fonts/`. Their license texts follow.
+LunaVerta serves the following open-source files unmodified from `docs/vendor/` and `docs/fonts/`. Their license texts follow.
 
 
 ## pdfjs-dist 3.11.174
