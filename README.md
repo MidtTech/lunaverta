@@ -30,7 +30,7 @@ There is no build step and no server code. Any static host works.
 ## Before you go live
 
 1. **Register the domain.** `lunaverta.com` showed no registration in the .com registry on 22 October 2026. Register it before anything else.
-2. **Set up the privacy mailbox.** `docs/privacy.html` lists `privacy@lunaverta.com`. Create that address, or change it.
+2. **Company details.** The footer and privacy page name Midt-Tech (CVR 34256276) with contact lee@midttech.com. Update both if they change.
 3. **If you use a different domain**, search and replace `lunaverta.com` in `docs/index.html`, `docs/robots.txt` and `docs/sitemap.xml`.
 4. **Stamp the cache version** each time you change files: `npm run build` (or `node scripts/stamp.mjs`). This makes returning visitors pick up the new version.
 
