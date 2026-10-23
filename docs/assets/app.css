@@ -261,3 +261,11 @@ input.ed-field[type="checkbox"], input.ed-field[type="radio"] { accent-color: #2
 .ed-edit:focus { outline: 2px solid #2f45c9; outline-offset: 1px; }
 .ed-undo { position: absolute; background: #fff; width: 24px; height: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); color: #2f45c9; }
 .ed-undo svg { width: 14px; height: 14px; }
+
+/* One-time note: no cookies */
+.cookie-note { position: fixed; z-index: 55; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(440px, calc(100vw - 32px)); display: flex; align-items: center; gap: 12px 16px; padding: 12px 14px 12px 16px; background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
+.cookie-note p { margin: 0; line-height: 1.45; }
+.cookie-note a { color: var(--accent); white-space: nowrap; }
+.cookie-note .btn { flex: none; }
+html.ed-open .cookie-note { display: none; }
+@media (max-width: 520px) { .cookie-note { right: max(16px, env(safe-area-inset-right, 0px)); max-width: none; } }

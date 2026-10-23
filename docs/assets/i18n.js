@@ -54,6 +54,10 @@ const STR = {
     'nav.converter': 'Converter',
     'nav.privacy': 'Privacy',
     'nav.licenses': 'Open-source licenses',
+    'notice.aria': 'About cookies',
+    'notice.text': 'LunaVerta uses no cookies. Your language and settings are stored only on your device.',
+    'notice.more': 'Read more',
+    'notice.ok': 'OK',
     'tray.empty': 'No files yet. Drop some here, paste them, or use Choose files.',
     'tray.remove': 'Remove {name}',
     'tray.drag': 'Drag to change the order',
@@ -197,6 +201,10 @@ const STR = {
     'nav.converter': 'Konverter',
     'nav.privacy': 'Privatliv',
     'nav.licenses': 'Open source-licenser',
+    'notice.aria': 'Om cookies',
+    'notice.text': 'LunaVerta bruger ingen cookies. Dit sprog og dine indstillinger gemmes kun på din enhed.',
+    'notice.more': 'Læs mere',
+    'notice.ok': 'OK',
     'tray.empty': 'Ingen filer endnu. Slip nogle her, indsæt dem, eller brug Vælg filer.',
     'tray.remove': 'Fjern {name}',
     'tray.drag': 'Træk for at ændre rækkefølgen',
@@ -327,6 +335,22 @@ function setLang(l) {
   document.dispatchEvent(new CustomEvent('lv-lang', { detail: l }));
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-set-lang]'); if (b) setLang(b.dataset.setLang); });
+// A one-time note that the site uses no cookies. Nothing to consent to: the
+// only things stored are the visitor's own settings and the offline copy.
+const NOTICE = 'lunaverta-notice';
+function notice() {
+  try { if (localStorage.getItem(NOTICE)) return; } catch (e) {}
+  if (document.getElementById('cookieNote')) return;
+  const el = document.createElement('div');
+  el.id = 'cookieNote'; el.className = 'cookie-note'; el.setAttribute('role', 'region'); el.setAttribute('data-i18n-attr', 'aria-label:notice.aria');
+  el.innerHTML = '<p><span data-i18n="notice.text"></span> <a href="privacy.html" data-i18n="notice.more"></a></p><button type="button" class="btn sm primary" data-i18n="notice.ok"></button>';
+  el.querySelector('button').addEventListener('click', () => {
+    try { localStorage.setItem(NOTICE, '1'); } catch (e) {}
+    el.remove();
+  });
+  document.body.appendChild(el);
+}
 window.LV = { t, apply, setLang, get lang() { return lang; } };
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => apply()); else apply();
+function start() { notice(); apply(); }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
