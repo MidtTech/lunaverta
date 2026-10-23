@@ -3,7 +3,9 @@
 // ---------- libraries, loaded on demand ----------
 // Self-hosted copies (see scripts/vendor.mjs). Nothing loads from third parties.
 const VENDOR = new URL('../vendor/', document.currentScript ? document.currentScript.src : location.href).href;
+const T = (k, v) => (window.LV ? window.LV.t(k, v) : k);
 const LIBS = {
+  pdflib: 'pdf-lib.min.js',
   pdfjs: 'pdf.min.js',
   jspdf: 'jspdf.umd.min.js',
   jszip: 'jszip.min.js',
@@ -22,7 +24,7 @@ function lib(name) {
     const s = document.createElement('script');
     s.src = VENDOR + LIBS[name];
     s.onload = res;
-    s.onerror = () => { delete loaded[name]; rej(new Error(navigator.onLine ? 'A helper for this conversion failed to load. Reload the page and try again.' : 'This conversion needs a helper that is not saved for offline use yet. Go online once and try again.')); };
+    s.onerror = () => { delete loaded[name]; rej(new Error(T(navigator.onLine ? 'err.lib.online' : 'err.lib.offline'))); };
     document.head.appendChild(s);
   });
   return loaded[name];
@@ -30,20 +32,23 @@ function lib(name) {
 
 // ---------- formats ----------
 const KINDS = {
-  image: { label: 'Images', color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp'], note: 'HEIC photos from iPhones work too. SVGs are rasterised.' },
-  pdf:   { label: 'PDF', color: '--c-doc', exts: ['pdf'], targets: ['png','jpg','txt'], note: 'Each page becomes an image. Multi-page files come back as a .zip.' },
-  doc:   { label: 'Documents', color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'], note: 'Word to PDF keeps the page layout, fonts, colours, tables, images, headers and footers, and the text stays searchable.' },
-  data:  { label: 'Spreadsheets & data', color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'], note: 'Workbooks with several sheets give one CSV per sheet.' },
-  audio: { label: 'Audio', color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'], note: 'Decoding uses your browser, so formats vary slightly by browser.' },
-  video: { label: 'Video', color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'], note: 'Make a GIF from the opening seconds, pull the soundtrack, or grab a frame.' }
+  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['merge','split','shrink','png','jpg','txt'] },
+  doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
+  data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
+  audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
+  video: { color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'] }
 };
 const OUT = {
-  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' },
-  pdf: { k: '--c-doc' }, html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
+  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
+  pdf: { k: '--c-doc' }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true },
+  html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
-const ORDER = ['png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp'];
+// Tools (merge, split, shrink, clean) are named in words; formats by extension.
+const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
+const ORDER = ['merge','split','shrink','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -56,14 +61,20 @@ function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) i
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
-  return KINDS[k].targets.filter(t => t !== e);
+  const list = KINDS[k].targets.filter(t => t !== e);
+  if (k === 'image') list.push('merge'); // images can join a PDF merge
+  return list;
 }
+// Merging needs at least one PDF and at least two PDFs or images in total.
+const canMerge = kinds => kinds.includes('pdf') && kinds.filter(k => k === 'pdf' || k === 'image').length > 1;
 function unionTargets(kinds) {
   const s = new Set(); kinds.forEach(k => k && KINDS[k].targets.forEach(t => s.add(t)));
+  if (!canMerge(kinds)) s.delete('merge');
   return ORDER.filter(t => s.has(t));
 }
 function fileTargets(files) {
   const s = new Set(); files.forEach(f => targetsFor(f).forEach(t => s.add(t)));
+  if (!canMerge(files.map(kindOf))) s.delete('merge');
   return ORDER.filter(t => s.has(t));
 }
 const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
@@ -74,9 +85,9 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;'
 const $ = id => document.getElementById(id);
 const opts = () => ({
   quality: +$('optQuality').value / 100, maxDim: +$('optSize').value, kbps: +$('optKbps').value,
-  gifSeconds: +$('optGif').value, merge: $('optMerge').checked
+  gifSeconds: +$('optGif').value, merge: $('optMerge').checked, pdfQ: $('optPdfQ').value
 });
-const OPT_IDS = ['optQuality', 'optSize', 'optKbps', 'optGif', 'optMerge'];
+const OPT_IDS = ['optQuality', 'optSize', 'optKbps', 'optGif', 'optMerge', 'optPdfQ'];
 try {
   const saved = JSON.parse(localStorage.getItem('lunaverta-opts') || '{}');
   OPT_IDS.forEach(id => { if (id in saved) { const el = $(id); if (el.type === 'checkbox') el.checked = saved[id]; else el.value = saved[id]; } });
@@ -89,14 +100,14 @@ OPT_IDS.forEach(id => $(id).addEventListener('input', persistOpts));
 persistOpts();
 
 // ---------- canvas helpers ----------
-function canvasToBlob(c, type, q) { return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('Your browser cannot write ' + type)), type, q)); }
+function canvasToBlob(c, type, q) { return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error(T('err.write', { type }))), type, q)); }
 function fit(w, h, maxDim) { if (!maxDim || Math.max(w, h) <= maxDim) return [w, h]; const s = maxDim / Math.max(w, h); return [Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s))]; }
 let heifMod = null;
 function heif() {
   if (!heifMod) heifMod = (async () => {
     await lib('heif');
     const res = await fetch(VENDOR + 'libheif.wasm');
-    if (!res.ok) throw new Error('The HEIC helper could not be loaded.');
+    if (!res.ok) throw new Error(T('err.heic.load'));
     let m = libheif({ wasmBinary: await res.arrayBuffer() });
     if (m && typeof m.then === 'function') m = await m;
     if (m && m.ready && typeof m.ready.then === 'function') await m.ready;
@@ -107,11 +118,11 @@ function heif() {
 async function decodeHEIC(file) {
   const m = await heif();
   const images = new m.HeifDecoder().decode(new Uint8Array(await file.arrayBuffer()));
-  if (!images || !images.length) throw new Error('This HEIC file contains no image LunaVerta can read.');
+  if (!images || !images.length) throw new Error(T('err.heic.none'));
   const im = images[0], w = im.get_width(), h = im.get_height();
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d'), data = ctx.createImageData(w, h);
-  await new Promise((res, rej) => im.display(data, d => d ? res() : rej(new Error('This HEIC photo could not be decoded.'))));
+  await new Promise((res, rej) => im.display(data, d => d ? res() : rej(new Error(T('err.heic.decode')))));
   ctx.putImageData(data, 0, 0);
   images.forEach(i => i.free && i.free());
   return { img: c, w, h };
@@ -127,7 +138,7 @@ async function decodeNative(blob) {
   const url = URL.createObjectURL(blob);
   try {
     const img = new Image(); img.decoding = 'async'; img.src = url;
-    await img.decode().catch(() => { throw new Error('This image could not be read. It may be damaged, or your browser does not support the format.'); });
+    await img.decode().catch(() => { throw new Error(T('err.image')); });
     let w = img.naturalWidth, h = img.naturalHeight;
     if (!w || !h) { w = 1024; h = 1024; }
     return { img, w, h };
@@ -275,7 +286,7 @@ async function decodeAudio(file) {
   const ab = await file.arrayBuffer();
   const ctx = new OfflineAudioContext(1, 1, 44100);
   try { return await ctx.decodeAudioData(ab); }
-  catch (e) { throw new Error(kindOf(file) === 'video' ? 'This video has no soundtrack your browser can read.' : 'Your browser cannot decode this audio file.'); }
+  catch (e) { throw new Error(T(kindOf(file) === 'video' ? 'err.noSound' : 'err.audio')); }
 }
 
 // ---------- video ----------
@@ -284,7 +295,7 @@ function loadVideo(file) {
     const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto';
     v.src = URL.createObjectURL(file);
     v.onloadeddata = () => res(v);
-    v.onerror = () => rej(new Error('Your browser cannot play this video format, so it cannot be converted here.'));
+    v.onerror = () => rej(new Error(T('err.video')));
   });
 }
 const seek = (v, t) => new Promise(res => { const done = () => { v.removeEventListener('seeked', done); res(); }; v.addEventListener('seeked', done); v.currentTime = t; });
@@ -570,7 +581,7 @@ async function readDoc(file) {
 // tables, images, headers and footers in the page. Each page is then drawn into
 // the PDF as an image, with an invisible text layer on top so the PDF can still
 // be searched and copied from.
-const PAGE_SCALE = 2; // about 190 dpi
+const PAGE_QUALITY = { best: { scale: 2, jpeg: .92 }, small: { scale: 1.35, jpeg: .72 } }; // about 190 / 130 dpi
 const WIN_ANSI = /[^\x20-\x7e\xa0-\xff\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u20ac]/g;
 function wordBoxes(section) {
   const top = section.getBoundingClientRect(), out = [];
@@ -707,7 +718,8 @@ async function settleLayout(box) {
     same = now === last ? same + 1 : 0; last = now;
   }
 }
-async function docxToPDF(file, title, progress) {
+async function docxToPDF(file, title, progress, quality = 'best') {
+  const Q = PAGE_QUALITY[quality] || PAGE_QUALITY.best;
   await lib('jszip'); // docx-preview reads the .docx with JSZip
   await Promise.all([lib('docx'), lib('h2c'), lib('jspdf')]);
   const stage = document.createElement('div');
@@ -791,14 +803,15 @@ async function docxToPDF(file, title, progress) {
         if (part.height < 1) continue;
         let img = part.alias && shots[part.alias];
         if (!img) {
-          const shot = await html2canvas(pg.sec, { scale: PAGE_SCALE, backgroundColor: '#ffffff', logging: false, x: 0, y: part.y, width: pg.w, height: Math.ceil(part.height) });
-          img = shot.toDataURL('image/jpeg', .92);
+          const shot = await html2canvas(pg.sec, { scale: Q.scale, backgroundColor: '#ffffff', logging: false, x: 0, y: part.y, width: pg.w, height: Math.ceil(part.height) });
+          img = shot.toDataURL('image/jpeg', Q.jpeg);
           if (part.alias) shots[part.alias] = img;
         }
         doc.addImage(img, 'JPEG', 0, part.at * .75, wPt, part.height * .75, part.alias ? part.alias + '-' + pg.si : undefined, 'FAST');
         doc.setFont('helvetica', 'normal');
         for (const b of pg.words) {
-          if (b.y < part.y || b.y >= part.y + part.height) continue;
+          const mid = b.y + b.h / 2; // each word belongs to exactly one band, by its centre
+          if (mid < part.y || mid >= part.y + part.height) continue;
           const text = b.text.replace(WIN_ANSI, '?');
           doc.setFontSize(b.size * .75);
           const natural = doc.getTextWidth(text);
@@ -817,7 +830,7 @@ async function docxToPDF(file, title, progress) {
 
 async function convertDoc(file, target, o, progress = () => {}) {
   if (target === 'pdf' && ext(file.name) === 'docx') {
-    try { return [{ name: base(file.name) + '.pdf', blob: await docxToPDF(file, base(file.name), progress) }]; }
+    try { return [{ name: base(file.name) + '.pdf', blob: await docxToPDF(file, base(file.name), progress, o && o.pdfQ) }]; }
     catch (err) { console.warn('Exact Word layout failed, using the simplified layout instead.', err); }
   }
   const d = await readDoc(file), title = base(file.name);
@@ -846,7 +859,7 @@ async function readWorkbook(file) {
   await lib('xlsx');
   const e = ext(file.name);
   if (e === 'json') {
-    let v; try { v = JSON.parse(await file.text()); } catch (err) { throw new Error('This JSON file has a syntax error, so it cannot be turned into a table.'); }
+    let v; try { v = JSON.parse(await file.text()); } catch (err) { throw new Error(T('err.json')); }
     const wb = XLSX.utils.book_new();
     if (v && !Array.isArray(v) && typeof v === 'object' && Object.values(v).every(Array.isArray)) {
       for (const [k, arr] of Object.entries(v)) XLSX.utils.book_append_sheet(wb, sheetFromArray(arr), k.slice(0, 31) || 'Sheet');
@@ -890,8 +903,176 @@ async function convertData(file, target) {
 }
 
 // ---------- converters by kind ----------
+// ---------- PDF tools: merge, split, shrink ----------
+async function openPdfLib(file) {
+  await lib('pdflib');
+  try { return await PDFLib.PDFDocument.load(new Uint8Array(await file.arrayBuffer())); }
+  catch (e) { throw new Error(T(/encrypt/i.test(e && e.message) ? 'err.pdf.locked' : 'err.pdf.read')); }
+}
+// PDFs keep their pages as they are (text, links, quality); images become pages.
+async function mergeToPDF(files, o, progress) {
+  await lib('pdflib');
+  const out = await PDFLib.PDFDocument.create();
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    if (kindOf(f) === 'pdf') {
+      const src = await openPdfLib(f);
+      (await out.copyPages(src, src.getPageIndices())).forEach(pg => out.addPage(pg));
+    } else {
+      const { img, w, h } = await decodeImage(f);
+      const c = drawToCanvas(img, w, h, o.maxDim || 2480, '#fff');
+      const pic = await out.embedJpg(await (await canvasToBlob(c, 'image/jpeg', o.quality)).arrayBuffer());
+      const pw = c.width * .75, ph = c.height * .75;
+      out.addPage([pw, ph]).drawImage(pic, { x: 0, y: 0, width: pw, height: ph });
+    }
+    progress((i + 1) / files.length * .9);
+  }
+  return new Blob([await out.save()], { type: 'application/pdf' });
+}
+// Some programs give every page one shared list of images. Before a page is
+// copied out on its own, keep only the images its content actually draws.
+function keepUsedImages(page) {
+  try {
+    const { PDFName, PDFDict, PDFArray, PDFRawStream, decodePDFRawStream } = PDFLib;
+    const res = page.node.Resources(), xo = res && res.lookup(PDFName.of('XObject'));
+    if (!(xo instanceof PDFDict)) return;
+    const raw = page.node.Contents(), streams = raw instanceof PDFArray ? raw.asArray().map(r => page.doc.context.lookup(r)) : [raw];
+    let ops = '';
+    for (const st of streams) {
+      if (!(st instanceof PDFRawStream)) return; // unknown stream type: leave the page alone
+      ops += new TextDecoder('latin1').decode(decodePDFRawStream(st).decode());
+    }
+    const used = new Set([...ops.matchAll(/\/([^\s\/\[\]()<>{}%]+)\s+Do\b/g)].map(m => m[1]));
+    const keepXo = page.doc.context.obj({});
+    for (const [k, v] of xo.entries()) if (used.has(k.decodeText ? k.decodeText() : k.asString().slice(1))) keepXo.set(k, v);
+    const newRes = page.doc.context.obj({});
+    for (const [k, v] of res.entries()) newRes.set(k, k === PDFName.of('XObject') ? keepXo : v);
+    page.node.set(PDFName.of('Resources'), newRes);
+  } catch (e) { /* keep the page as it is */ }
+}
+async function splitPDF(file, progress) {
+  const src = await openPdfLib(file), n = src.getPageCount(), pad = String(n).length, b = base(file.name), outs = [];
+  src.getPages().forEach(keepUsedImages);
+  for (let i = 0; i < n; i++) {
+    const one = await PDFLib.PDFDocument.create();
+    one.addPage((await one.copyPages(src, [i]))[0]);
+    outs.push({ name: `${b}-${String(i + 1).padStart(pad, '0')}.pdf`, blob: new Blob([await one.save()], { type: 'application/pdf' }) });
+    progress((i + 1) / n);
+  }
+  return outs;
+}
+// Redraw every page as a compact image with an invisible text layer, so the
+// smaller file can still be searched and copied from. Keeps the original if
+// that turns out smaller.
+async function shrinkPDF(file, pdf, progress) {
+  await lib('jspdf');
+  let doc;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i), vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 125 / 72 });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const w = vp1.width, h = vp1.height, orient = w > h ? 'l' : 'p';
+    if (!doc) doc = await newPDF([w, h], orient); else doc.addPage([w, h], orient);
+    doc.addImage(c.toDataURL('image/jpeg', .68), 'JPEG', 0, 0, w, h, undefined, 'FAST');
+    doc.setFont('helvetica', 'normal');
+    for (const it of (await page.getTextContent()).items) {
+      if (!it.str || !it.str.trim()) continue;
+      const m = pdfjsLib.Util.transform(vp1.transform, it.transform);
+      if (Math.abs(m[1]) > .01 || Math.abs(m[2]) > .01) continue; // rotated text: leave out of the text layer
+      const size = Math.hypot(m[2], m[3]) || Math.abs(m[3]) || 10, text = it.str.replace(WIN_ANSI, '?');
+      doc.setFontSize(size);
+      const natural = doc.getTextWidth(text);
+      doc.text(text, m[4], m[5], { renderingMode: 'invisible', horizontalScale: natural && it.width ? Math.min(4, Math.max(.25, it.width / natural)) : 1 });
+    }
+    progress(i / pdf.numPages);
+  }
+  const blob = doc.output('blob');
+  if (blob.size >= file.size * .95) return [{ name: file.name, blob: file.slice(0, file.size, 'application/pdf'), noteKey: 'shrink.kept' }];
+  return [{ name: base(file.name) + '-small.pdf', blob, noteKey: 'shrink.saved', noteVars: { p: Math.round((1 - blob.size / file.size) * 100) } }];
+}
+
+// ---------- removing hidden data from photos ----------
+// Strips EXIF (location, camera, dates), XMP, IPTC and comments without
+// re-encoding, so the picture itself is untouched.
+function exifInfo(view) {
+  const le = view.getUint16(0) === 0x4949, u16 = o => view.getUint16(o, le), u32 = o => view.getUint32(o, le);
+  const ifd = u32(4), n = u16(ifd); let orientation = 1, gps = false;
+  for (let i = 0; i < n; i++) { const e = ifd + 2 + i * 12, tag = u16(e); if (tag === 0x0112) orientation = u16(e + 8); if (tag === 0x8825) gps = true; }
+  return { orientation, gps };
+}
+const ascii = (u, at, len) => String.fromCharCode(...u.subarray(at, at + len));
+function cleanJPEG(buf) {
+  const u = new Uint8Array(buf), v = new DataView(buf);
+  if (v.getUint16(0) !== 0xFFD8) return null;
+  const keep = [u.subarray(0, 2)]; let pos = 2, removed = false, info = { orientation: 1, gps: false };
+  while (pos + 4 <= u.length) {
+    if (u[pos] !== 0xFF) return null;
+    const m = u[pos + 1];
+    if (m === 0xFF) { pos++; continue; }
+    if (m === 0xDA) { keep.push(u.subarray(pos)); break; } // image data follows; keep the rest as is
+    if ((m >= 0xD0 && m <= 0xD8) || m === 0x01) { keep.push(u.subarray(pos, pos + 2)); pos += 2; continue; }
+    const len = v.getUint16(pos + 2), seg = u.subarray(pos, pos + 2 + len);
+    if (m === 0xE1 && ascii(u, pos + 4, 4) === 'Exif') { try { info = exifInfo(new DataView(buf, pos + 10, len - 8)); } catch (e) {} }
+    const icc = m === 0xE2 && ascii(u, pos + 4, 11) === 'ICC_PROFILE';
+    const drop = m === 0xFE || (m >= 0xE1 && m <= 0xED && !icc);
+    if (drop) removed = true; else keep.push(seg);
+    pos += 2 + len;
+  }
+  return { blob: new Blob(keep, { type: 'image/jpeg' }), removed, ...info };
+}
+function cleanPNG(buf) {
+  const u = new Uint8Array(buf), v = new DataView(buf);
+  if (ascii(u, 1, 3) !== 'PNG') return null;
+  const keep = [u.subarray(0, 8)]; let pos = 8, removed = false, gps = false;
+  while (pos + 12 <= u.length) {
+    const len = v.getUint32(pos), type = ascii(u, pos + 4, 4), end = pos + 12 + len;
+    if (['tEXt', 'zTXt', 'iTXt', 'eXIf', 'tIME'].includes(type)) {
+      removed = true;
+      if (type === 'eXIf') { try { gps = exifInfo(new DataView(buf, pos + 8, len)).gps; } catch (e) {} }
+    } else keep.push(u.subarray(pos, end));
+    pos = end;
+    if (type === 'IEND') break;
+  }
+  return { blob: new Blob(keep, { type: 'image/png' }), removed, gps, orientation: 1 };
+}
+function cleanWebP(buf) {
+  const u = new Uint8Array(buf);
+  if (ascii(u, 0, 4) !== 'RIFF' || ascii(u, 8, 4) !== 'WEBP') return null;
+  const v = new DataView(buf), keep = []; let pos = 12, removed = false, gps = false;
+  while (pos + 8 <= u.length) {
+    const type = ascii(u, pos, 4), len = v.getUint32(pos + 4, true), end = pos + 8 + len + (len & 1);
+    if (type === 'EXIF' || type === 'XMP ') {
+      removed = true;
+      if (type === 'EXIF') { try { const off = ascii(u, pos + 8, 4) === 'Exif' ? 6 : 0; gps = exifInfo(new DataView(buf, pos + 8 + off, len - off)).gps; } catch (e) {} }
+    } else {
+      const chunk = u.slice(pos, end);
+      if (type === 'VP8X') chunk[8] &= ~0x0C; // clear the "has EXIF / XMP" flags
+      keep.push(chunk);
+    }
+    pos = end;
+  }
+  const size = keep.reduce((n, c) => n + c.length, 4), head = new Uint8Array(12);
+  head.set([82, 73, 70, 70]); new DataView(head.buffer).setUint32(4, size, true); head.set([87, 69, 66, 80], 8);
+  return { blob: new Blob([head, ...keep], { type: 'image/webp' }), removed, gps, orientation: 1 };
+}
+async function cleanImage(file, o) {
+  const e = ext(file.name), b = base(file.name), buf = await file.arrayBuffer();
+  const r = e === 'jpg' || e === 'jpeg' ? cleanJPEG(buf) : e === 'png' ? cleanPNG(buf) : e === 'webp' ? cleanWebP(buf) : null;
+  const note = x => (x.gps ? 'clean.gps' : x.removed ? 'clean.some' : 'clean.none');
+  if (r && r.orientation === 1) return [{ name: `${b}-clean.${e === 'jpeg' ? 'jpg' : e}`, blob: r.blob, noteKey: note(r) }];
+  if (r || /^(heic|heif|avif)$/.test(e)) {
+    // Turned photos (and HEIC/AVIF) are redrawn upright at high quality instead.
+    const { img, w, h } = await decodeImage(file);
+    const c = drawToCanvas(img, w, h, 0, '#ffffff');
+    return [{ name: `${b}-clean.jpg`, blob: await canvasToBlob(c, 'image/jpeg', .95), noteKey: r ? note(r) : 'clean.some' }];
+  }
+  return [{ name: `${b}-clean.${e}`, blob: file.slice(0, file.size, file.type), noteKey: 'clean.none' }];
+}
+
 const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 async function convertImage(file, target, o) {
+  if (target === 'clean') return cleanImage(file, o);
   const { img, w, h } = await decodeImage(file);
   const flat = target === 'jpg' || target === 'bmp' || target === 'pdf';
   const c = drawToCanvas(img, w, h, o.maxDim, flat ? '#ffffff' : null);
@@ -903,9 +1084,13 @@ async function convertImage(file, target, o) {
   if (target === 'pdf') return [{ name: b + '.pdf', blob: await imagesToPDF([c], o.quality) }];
 }
 async function convertPDF(file, target, o, progress) {
+  if (target === 'split') return splitPDF(file, progress);
   await lib('pdfjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR + 'pdf.worker.min.js';
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise;
+  let pdf;
+  try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise; }
+  catch (e) { throw new Error(T(e && e.name === 'PasswordException' ? 'err.pdf.locked' : 'err.pdf.read')); }
+  if (target === 'shrink') return shrinkPDF(file, pdf, progress);
   const b = base(file.name), out = [], pad = String(pdf.numPages).length;
   if (target === 'txt') {
     const pages = [];
@@ -981,7 +1166,7 @@ function addFiles(list, opts = {}) {
   const added = [];
   for (const file of list) {
     const kind = kindOf(file);
-    if (!kind) { toast(`${file.name} isn't a format LunaVerta can convert yet.`); continue; }
+    if (!kind) { toast(T('toast.unsupported', { name: file.name })); continue; }
     const item = { id: ++uid, file, kind };
     tray.push(item); added.push(item);
   }
@@ -991,12 +1176,26 @@ function addFiles(list, opts = {}) {
 function renderTray() {
   const t = $('tray');
   t.innerHTML = '';
-  if (!tray.length) { t.innerHTML = '<span class="tray-empty">No files yet. Drop some here, paste them, or use Choose files.</span>'; }
+  if (!tray.length) { t.innerHTML = `<span class="tray-empty">${esc(T('tray.empty'))}</span>`; }
   for (const it of tray) {
     const el = document.createElement('span');
     el.className = 'chip'; el.style.setProperty('--k', kv(KINDS[it.kind].color));
-    el.innerHTML = `<span class="dot"></span><span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${fmtSize(it.file.size)}</span><button type="button" aria-label="Remove ${esc(it.file.name)}">&times;</button>`;
+    el.innerHTML = `<span class="dot"></span><span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${fmtSize(it.file.size)}</span><button type="button" aria-label="${esc(T('tray.remove', { name: it.file.name }))}">&times;</button>`;
     el.querySelector('button').onclick = () => { tray = tray.filter(x => x !== it); renderTray(); };
+    if (tray.length > 1) { // drag chips to set the order, which a merge follows
+      el.draggable = true; el.title = T('tray.drag'); el.dataset.id = it.id;
+      el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/x-lunaverta-chip', String(it.id)); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+      el.addEventListener('dragover', e => { if ([...e.dataTransfer.types].includes('text/x-lunaverta-chip')) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } });
+      el.addEventListener('drop', e => {
+        const id = +e.dataTransfer.getData('text/x-lunaverta-chip'); if (!id || id === it.id) return;
+        e.preventDefault();
+        const from = tray.findIndex(x => x.id === id), moved = tray.splice(from, 1)[0];
+        const r = el.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+        tray.splice(tray.indexOf(it) + (after ? 1 : 0), 0, moved);
+        renderTray();
+      });
+    }
     t.appendChild(el);
   }
   const targets = fileTargets(tray.map(x => x.file));
@@ -1004,7 +1203,7 @@ function renderTray() {
   const row = $('targetRow'); row.innerHTML = '';
   for (const tg of targets) {
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'tgt'; b.style.setProperty('--k', kv(OUT[tg].k)); b.textContent = tg.toUpperCase();
+    b.type = 'button'; b.className = 'tgt'; b.style.setProperty('--k', kv(OUT[tg].k)); b.textContent = label(tg);
     b.onclick = () => runBatch(tray.map(x => x.file), tg);
     row.appendChild(b);
   }
@@ -1028,13 +1227,16 @@ function schedule(fn) {
 async function finishJob(j, outs) {
   if (outs.length > 1) {
     j.out = { name: `${base(j.srcName)}-${j.target}.zip`, blob: await zipOf(outs) };
-    j.note = `${outs.length} files in a zip`;
-  } else j.out = outs[0];
+    j.noteKey = 'job.zip'; j.noteVars = { n: outs.length };
+  } else {
+    j.out = outs[0];
+    if (outs[0].noteKey) { j.noteKey = outs[0].noteKey; j.noteVars = outs[0].noteVars; }
+  }
   if (/^image\//.test(j.out.blob.type)) j.url = URL.createObjectURL(j.out.blob);
   j.status = 'done'; j.progress = 1; renderJob(j); updateFoot();
 }
 function failJob(j, err) {
-  j.status = 'err'; j.error = (err && err.message) || 'Something went wrong while converting this file.';
+  j.status = 'err'; j.error = (err && err.message) || T('job.failed');
   console.error(err); renderJob(j); updateFoot();
 }
 function runBatch(files, target) {
@@ -1043,7 +1245,14 @@ function runBatch(files, target) {
   const items = files.map(f => ({ f, kind: kindOf(f) })).filter(x => x.kind);
   const ok = items.filter(x => targetsFor(x.f).includes(target));
   const skipped = items.length - ok.length;
-  if (skipped) toast(`${skipped} file${skipped > 1 ? 's' : ''} can't become ${target.toUpperCase()} and ${skipped > 1 ? 'were' : 'was'} skipped.`);
+  if (target === 'merge') {
+    if (!canMerge(ok.map(x => x.kind))) { toast(T('toast.mergeTwo')); return; }
+    const j = newJob(`${ok.length} ${T('job.files')}`, 'merge');
+    j.label = T('merge.name') + '.pdf'; j.srcLabel = 'PDF';
+    schedule(async () => finishJob(j, [{ name: T('merge.name') + '.pdf', blob: await mergeToPDF(ok.map(x => x.f), o, p => setProgress(j, p)) }])).catch(e => failJob(j, e));
+    return;
+  }
+  if (skipped) toast(T('toast.skipped', { n: skipped, t: label(target) }));
   if (!ok.length) return;
   // Images → one merged PDF
   const imgs = ok.filter(x => x.kind === 'image');
@@ -1065,7 +1274,7 @@ function runBatch(files, target) {
     const j = newJob(x.f.name, target);
     schedule(async () => {
       const outs = await CONVERT[x.kind](x.f, target, o, p => setProgress(j, p));
-      if (!outs || !outs.length) throw new Error('Nothing came out of this conversion.');
+      if (!outs || !outs.length) throw new Error(T('job.empty'));
       await finishJob(j, outs);
     }).catch(e => failJob(j, e));
   }
@@ -1076,18 +1285,19 @@ function renderJob(j, isNew) {
   if (!j.el) { j.el = document.createElement('div'); }
   const el = j.el;
   el.className = 'row ' + j.status; el.style.setProperty('--k', kv(j.k));
-  const name = j.out ? j.out.name : (j.label || base(j.srcName) + '.' + j.target);
-  const srcExt = ext(j.srcName) || 'files';
+  const name = j.out ? j.out.name : (j.label || base(j.srcName) + '.' + (OUT[j.target].tool ? 'pdf' : j.target));
+  const srcExt = j.srcLabel || ext(j.srcName) || T('job.files');
   let thumb;
   if (j.status === 'working') thumb = `<svg class="ring-progress spin" viewBox="0 0 36 36" aria-hidden="true"><circle class="trk" cx="18" cy="18" r="16"/><circle class="bar" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="${100.5 * (1 - Math.max(.25, j.progress))}"/></svg>`;
   else if (j.url) thumb = `<img src="${j.url}" alt="">`;
-  else thumb = esc(j.status === 'err' ? '!' : j.target);
-  const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : 'Converting') : j.status === 'done' ? fmtSize(j.out.blob.size) : '';
+  else thumb = esc(j.status === 'err' ? '!' : OUT[j.target].tool ? (ext(name) || 'pdf') : j.target);
+  const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : T('job.converting')) : j.status === 'done' ? fmtSize(j.out.blob.size) : '';
+  const note = j.noteKey ? T(j.noteKey, j.noteVars) : '';
   el.innerHTML = `<div class="thumb">${thumb}</div>
     <div class="info"><span class="fn" title="${esc(name)}">${esc(name)}</span>
-    <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(j.target.toUpperCase())}</b></span><span class="state">${esc(state)}</span>${j.note ? `<span>${esc(j.note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
-    <div>${j.status === 'done' ? '<button class="btn sm save" type="button">Save</button>' : j.status === 'err' ? '<button class="btn sm ghost dismiss" type="button">Dismiss</button>' : ''}</div>`;
-  const sv = el.querySelector('.save'); if (sv) sv.onclick = () => saveFile(j.out.name, j.out.blob, sv);
+    <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(label(j.target))}</b></span><span class="state">${esc(state)}</span>${note ? `<span>${esc(note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
+    <div>${j.status === 'done' ? `<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>`;
+  const sv = el.querySelector('.save'); if (sv) sv.onclick = () => { j.saved = true; saveFile(j.out.name, j.out.blob, sv); };
   const dm = el.querySelector('.dismiss'); if (dm) dm.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); };
   if (isNew) $('manifest').prepend(el);
 }
@@ -1097,7 +1307,7 @@ function updateFoot() {
   $('saveAll').disabled = done.length < 1;
   $('clearOut').disabled = !jobs.length || jobs.some(j => j.status === 'working');
   const w = jobs.filter(j => j.status === 'working').length;
-  $('outCount').textContent = jobs.length ? (w ? `${w} converting` : `${done.length} ready`) : '';
+  $('outCount').textContent = jobs.length ? (w ? T('out.converting', { n: w }) : T('out.ready', { n: done.length })) : '';
 }
 
 // ---------- saving ----------
@@ -1106,16 +1316,16 @@ function saveFile(filename, blob, btn) {
   a.href = URL.createObjectURL(blob); a.download = filename; a.rel = 'noopener';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
-  if (btn && btn.classList.contains('save')) btn.textContent = 'Saved';
+  if (btn && btn.classList.contains('save')) btn.textContent = T('job.saved');
 }
 $('saveAll').onclick = async () => {
   const done = jobs.filter(j => j.status === 'done');
   if (!done.length) return;
   if (done.length === 1) return saveFile(done[0].out.name, done[0].out.blob, $('saveAll'));
-  const b = $('saveAll'); b.disabled = true; b.textContent = 'Zipping…';
+  const b = $('saveAll'); b.disabled = true; b.textContent = T('out.zipping');
   try { const z = await zipOf(done.map(j => j.out)); saveFile('lunaverta-converted.zip', z); }
   catch (e) { toast(e.message); }
-  finally { b.textContent = 'Save all as .zip'; updateFoot(); }
+  finally { b.textContent = T('out.saveAll'); updateFoot(); }
 };
 $('clearOut').onclick = () => { jobs.forEach(j => j.url && URL.revokeObjectURL(j.url)); jobs = jobs.filter(j => j.status === 'working'); $('manifest').querySelectorAll('.row:not(.working)').forEach(r => r.remove()); updateFoot(); };
 $('clearTray').onclick = () => { tray = []; renderTray(); };
@@ -1138,10 +1348,10 @@ function drawRing(targets, count, subtitle) {
     const mid = (a0 + a1) / 2, lr = (R.r0 + R.r1) / 2 + 4;
     const lx = R.cx + lr * Math.cos(mid), ly = R.cy + lr * Math.sin(mid);
     const tx = R.cx + (R.r1 - 12) * Math.cos(mid), ty = R.cy + (R.r1 - 12) * Math.sin(mid);
-    s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="Convert to ${t.toUpperCase()}" style="--k:${kv(OUT[t].k)}">
+    s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="${esc(T('ring.convertTo', { t: label(t) }))}" style="--k:${kv(OUT[t].k)}">
       <path d="${n === 1 ? arc(-Math.PI / 2, Math.PI * 1.5 - 0.0001, R.r0, R.r1) : arc(a0, a1, R.r0, R.r1)}"/>
       <circle class="tick" cx="${tx}" cy="${ty}" r="3"/>
-      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">${t.toUpperCase()}</text></g>`;
+      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">${esc(label(t))}</text></g>`;
   });
   s += `<g class="hub"><circle cx="${R.cx}" cy="${R.cy}" r="${R.r0 - 6}"/>
     <text class="t1" id="hubT1" x="${R.cx}" y="${R.cy - 6}" text-anchor="middle">${count}</text>
@@ -1159,7 +1369,7 @@ function setHot(t) {
   if (!ringState) return;
   ringState.hot = t;
   svg.querySelectorAll('.slice').forEach(g => g.classList.toggle('hot', g.dataset.t === t));
-  const t2 = $('hubT2'); if (t2) t2.textContent = t ? '→ ' + t.toUpperCase() : ringState.subtitle;
+  const t2 = $('hubT2'); if (t2) t2.textContent = t ? '→ ' + label(t) : ringState.subtitle;
 }
 function placeRing(x, y) {
   const s = 320, m = 8;
@@ -1204,7 +1414,7 @@ addEventListener('dragenter', e => {
     $('dock').classList.add('over');
     const n = dragKinds.length, known = dragKinds.every(Boolean) && n > 0;
     const targets = known ? unionTargets(dragKinds) : [];
-    if (targets.length) openRing({ targets, files: null, x: e.clientX, y: e.clientY, count: n, subtitle: n === 1 ? 'file' : 'files' });
+    if (targets.length) openRing({ targets, files: null, x: e.clientX, y: e.clientY, count: n, subtitle: T('ring.file', { n }) });
   }
 });
 addEventListener('dragover', e => {
@@ -1229,7 +1439,7 @@ addEventListener('drop', e => {
   if (!files.length) return;
   if (t) { runBatch(files, t); return; }
   const added = addFiles(files);
-  if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: e.clientX, y: e.clientY, count: added.length, subtitle: added.length === 1 ? 'file' : 'files', modal: true });
+  if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: e.clientX, y: e.clientY, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
 });
 
 // ---------- picking files ----------
@@ -1239,21 +1449,32 @@ $('fileInput').onchange = e => {
   const added = addFiles([...e.target.files]); e.target.value = '';
   if (!added.length) return;
   const r = $('pick').getBoundingClientRect();
-  openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: Math.min(innerWidth / 2, r.left + r.width / 2), y: Math.min(innerHeight / 2 + 40, r.bottom + 170), count: added.length, subtitle: added.length === 1 ? 'file' : 'files', modal: true });
+  openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: Math.min(innerWidth / 2, r.left + r.width / 2), y: Math.min(innerHeight / 2 + 40, r.bottom + 170), count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
 };
 // Paste files or screenshots straight in
-addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { addFiles(f); toast(`Added ${f.length} pasted file${f.length > 1 ? 's' : ''}.`); } });
+addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { addFiles(f); toast(T('toast.pasted', { n: f.length })); } });
 
 // ---------- reference grid ----------
-$('refGrid').innerHTML = Object.values(KINDS).map(k => `<div class="kind" style="--k:${kv(k.color)}"><h3>${k.label}</h3>
-  <p class="from">From ${k.exts.filter(e => !SAME[e]).map(e => e.toUpperCase()).join(' · ')}</p>
-  <p class="to">To <b>${k.targets.map(t => t.toUpperCase()).join(' · ')}</b></p><p class="note">${k.note}</p></div>`).join('');
+function renderRef() {
+  $('refGrid').innerHTML = Object.entries(KINDS).map(([id, k]) => `<div class="kind" style="--k:${kv(k.color)}"><h3>${esc(T('kind.' + id))}</h3>
+  <p class="from">${esc(T('ref.from'))} ${k.exts.filter(e => !SAME[e]).map(e => e.toUpperCase()).join(' · ')}</p>
+  <p class="to">${esc(T('ref.to'))} <b>${k.targets.map(label).map(esc).join(' · ')}</b></p><p class="note">${esc(T('note.' + id))}</p></div>`).join('');
+}
+renderRef();
 
 // ---------- toast ----------
 let toastT;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 
+function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
+gifLabels();
 renderTray(); updateFoot();
+document.addEventListener('lv-lang', () => {
+  gifLabels(); renderTray(); renderRef(); updateFoot();
+  jobs.forEach(j => renderJob(j));
+  if (ringState) closeRing();
+  if (!$('saveAll').disabled || $('saveAll').textContent) $('saveAll').textContent = T('out.saveAll');
+});
 
 // ---------- installed app: open files from the OS ("Open with LunaVerta") ----------
 let launched = false;
@@ -1263,11 +1484,11 @@ if ('launchQueue' in window) {
     launched = true;
     const files = await Promise.all(params.files.map(h => h.getFile()));
     const added = addFiles(files);
-    if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: innerWidth / 2, y: innerHeight / 2, count: added.length, subtitle: added.length === 1 ? 'file' : 'files', modal: true });
+    if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: innerWidth / 2, y: innerHeight / 2, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
   });
 }
 
-addEventListener('appinstalled', () => { toast('LunaVerta is installed. You can open files with it from your computer.'); });
+addEventListener('appinstalled', () => { toast(T('toast.installed')); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -1275,7 +1496,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !navigator.serviceWorker.controller) return;
-    refreshing = true; toast('LunaVerta was updated. It will use the new version next time you open it.');
+    refreshing = true; toast(T('toast.updated'));
   });
 }
 const net = $('net');

@@ -56,6 +56,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); }
 .wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
 button, select, input { font: inherit; color: inherit; }
@@ -192,3 +193,16 @@ kbd { font: 500 12px var(--f-mono); border: 1px solid var(--line); border-bottom
 
 /* Off-screen stage where Word documents are laid out for PDF export: keep the site's styles out of it. */
 .docx-stage, .docx-stage * { box-sizing: content-box; }
+
+/* Language switch */
+.lang-switch { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
+.lang-switch button { border: 0; background: transparent; padding: 5px 9px; font: 500 12px/1 var(--f-mono); letter-spacing: .06em; color: var(--muted); }
+.lang-switch button + button { border-left: 1px solid var(--line); }
+.lang-switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.lang-switch button:hover:not([aria-pressed="true"]) { color: var(--ink); }
+
+/* Files can be dragged into a new order (the order a merge follows) */
+.chip[draggable="true"] { cursor: grab; }
+.chip[draggable="true"]:active { cursor: grabbing; }
+.chip.dragging { opacity: .45; }
+.opt > span { display: inline-flex; gap: 6px; align-items: baseline; }

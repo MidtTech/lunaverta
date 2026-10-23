@@ -1,6 +1,6 @@
 # LunaVerta
 
-A private file converter that runs entirely in the browser. Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
+A private file converter that runs entirely in the browser. It also merges, splits and shrinks PDFs, removes hidden location data from photos, and is available in English and Danish (following the browser's language, with a switch at the top). Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
 
 Live site (once deployed): https://lunaverta.com
 
@@ -12,7 +12,7 @@ docs/                   ← the whole website. Deploy this folder, nothing else.
   privacy.html          GDPR-style privacy notice (no cookies, no uploads)
   licenses.html         open-source credits
   404.html
-  assets/app.js, app.css
+  assets/app.js, app.css, i18n.js (all texts in English and Danish)
   vendor/               self-hosted helper libraries (PDF.js, jsPDF, SheetJS, Mammoth, lamejs, libheif …)
   fonts/                self-hosted fonts (no Google Fonts calls, which matters for GDPR)
   icons/, og.png        app icons, install screenshots and social-share image

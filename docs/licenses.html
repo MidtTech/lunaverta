@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Open-source licenses · LunaVerta</title>
+<title data-i18n-title="nav.licenses">Open-source licenses · LunaVerta</title>
 <meta name="description" content="LunaVerta is built on open-source libraries. Here are their licenses.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="color-scheme" content="light dark">
@@ -13,10 +13,15 @@
 </head>
 <body>
 <div class="wrap">
-  <header><div class="brand"><a href="./"><img src="icons/favicon.svg" width="38" height="38" alt=""><span style="font:700 28px/1 var(--f-display)">LunaVerta</span></a></div></header>
+  <header><div class="brand"><a href="./"><img src="icons/favicon.svg" width="38" height="38" alt=""><span style="font:700 28px/1 var(--f-display)">LunaVerta</span></a></div>
+      <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.label" aria-label="Language" style="margin-left:auto">
+        <button type="button" data-set-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="false" lang="da">DA</button>
+      </div>
+  </header>
   <main class="prose">
-    <h1>Open-source licenses</h1>
-    <p>LunaVerta's own code is released under the MIT License. It is built on these open-source projects, served unmodified from this site:</p>
+    <h1 data-i18n="nav.licenses">Open-source licenses</h1>
+    <p data-lang="en">LunaVerta's own code is released under the MIT License. It is built on these open-source projects, served unmodified from this site:</p>
+    <p data-lang="da" hidden>LunaVertas egen kode er udgivet under MIT-licensen. Den bygger på disse open source-projekter, som leveres uændret fra dette site:</p>
     <ul>
       <li><b>PDF.js</b> 3.11.174, Mozilla. Apache License 2.0.</li>
       <li><b>jsPDF</b> 2.5.1. MIT License.</li>
@@ -24,6 +29,7 @@
       <li><b>SheetJS Community Edition</b> 0.18.5. Apache License 2.0.</li>
       <li><b>Mammoth</b> 1.6.0, Michael Williamson. BSD 2-Clause License.</li>
       <li><b>Marked</b> 9.1.6. MIT License.</li>
+      <li><b>pdf-lib</b> 1.17.1, Andrew Dillon. MIT License.</li>
       <li><b>docx-preview</b> 0.4.1, Volodymyr Baydalka. Apache License 2.0.</li>
       <li><b>html2canvas</b> 1.4.1, Niklas von Hertzen. MIT License.</li>
       <li><b>Turndown</b> 7.1.2, Dom Christie. MIT License.</li>
@@ -31,9 +37,11 @@
       <li><b>libheif-js</b> 1.23.5, built from libheif and libde265. GNU LGPL 3.0. Served as separate, unmodified files you may replace.</li>
       <li><b>Bricolage Grotesque</b>, <b>IBM Plex Sans</b> and <b>IBM Plex Mono</b> typefaces. SIL Open Font License 1.1.</li>
     </ul>
-    <p>The full license texts ship with each library's source package and are listed in the project's THIRD_PARTY_NOTICES file.</p>
+    <p data-lang="en">The full license texts ship with each library's source package and are listed in the project's THIRD_PARTY_NOTICES file.</p>
+    <p data-lang="da" hidden>De fulde licenstekster følger med hvert biblioteks kildepakke og står i projektets THIRD_PARTY_NOTICES-fil.</p>
   </main>
-  <footer><span>LunaVerta · Free, private file conversion</span><nav aria-label="Site"><a href="./">Converter</a><a href="privacy.html">Privacy</a><a href="licenses.html">Open-source licenses</a></nav></footer>
+  <footer><span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span></span><nav aria-label="Site"><a href="./" data-i18n="nav.converter">Converter</a><a href="privacy.html" data-i18n="nav.privacy">Privacy</a><a href="licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav></footer>
 </div>
+<script src="assets/i18n.js"></script>
 </body>
 </html>

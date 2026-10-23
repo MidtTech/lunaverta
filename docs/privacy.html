@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Privacy · LunaVerta</title>
+<title data-i18n-title="nav.privacy">Privacy · LunaVerta</title>
 <meta name="description" content="LunaVerta converts files on your device. No uploads, no cookies, no tracking.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="color-scheme" content="light dark">
@@ -13,10 +13,15 @@
 </head>
 <body>
 <div class="wrap">
-  <header><div class="brand"><a href="./"><img src="icons/favicon.svg" width="38" height="38" alt=""><span style="font:700 28px/1 var(--f-display)">LunaVerta</span></a></div></header>
+  <header><div class="brand"><a href="./"><img src="icons/favicon.svg" width="38" height="38" alt=""><span style="font:700 28px/1 var(--f-display)">LunaVerta</span></a></div>
+      <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.label" aria-label="Language" style="margin-left:auto">
+        <button type="button" data-set-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="false" lang="da">DA</button>
+      </div>
+  </header>
   <main class="prose">
+    <div data-lang="en" lang="en">
     <h1>Privacy</h1>
-    <p class="muted">Last updated 22 October 2026</p>
+    <p class="muted">Last updated 23 October 2026</p>
     <p>LunaVerta is built so that your files stay with you. This page explains what that means in practice.</p>
     <h2>Your files</h2>
     <p>Files you open in LunaVerta are read and converted by your own browser, on your own device. They are never sent to us or to anyone else. Converted files are saved directly to your device. When you close the tab, nothing is kept.</p>
@@ -24,7 +29,7 @@
     <p>LunaVerta sets no cookies, uses no analytics, shows no ads and has no accounts. It loads no fonts, scripts or images from other companies' servers. Because of this, there is no cookie banner.</p>
     <h2>What is stored on your device</h2>
     <ul>
-      <li>Your conversion settings (quality, size and so on), kept in your browser's local storage so they are there next time.</li>
+      <li>Your settings (quality, size, language and so on), kept in your browser's local storage so they are there next time.</li>
       <li>A copy of the app and its helper libraries, kept by your browser so LunaVerta works offline.</li>
     </ul>
     <p>Both stay on your device. You can remove them at any time by clearing this site's data in your browser settings.</p>
@@ -34,8 +39,31 @@
     <p>Under the EU General Data Protection Regulation you can ask what personal data we hold about you and have it corrected or deleted. Since LunaVerta collects no personal data itself, there is usually nothing to hand over. You can also complain to your national data protection authority.</p>
     <h2>Contact</h2>
     <p>Questions about privacy: <span id="contact">privacy@lunaverta.com</span></p>
+    </div>
+    <div data-lang="da" hidden lang="da">
+    <h1>Privatliv</h1>
+    <p class="muted">Senest opdateret 23. oktober 2026</p>
+    <p>LunaVerta er bygget sådan, at dine filer bliver hos dig. Her kan du læse, hvad det betyder i praksis.</p>
+    <h2>Dine filer</h2>
+    <p>De filer, du åbner i LunaVerta, læses og konverteres af din egen browser på din egen enhed. De sendes aldrig til os eller til andre. Konverterede filer gemmes direkte på din enhed. Når du lukker fanen, gemmes intet.</p>
+    <h2>Ingen cookies, konti eller sporing</h2>
+    <p>LunaVerta sætter ingen cookies, bruger ingen statistikværktøjer, viser ingen reklamer og har ingen konti. Siden henter ingen skrifttyper, scripts eller billeder fra andre virksomheders servere. Derfor er der heller ikke noget cookiebanner.</p>
+    <h2>Hvad der gemmes på din enhed</h2>
+    <ul>
+      <li>Dine indstillinger (kvalitet, størrelse, sprog og lignende), som gemmes i browserens lokale lager, så de er der næste gang.</li>
+      <li>En kopi af appen og dens hjælpeværktøjer, som browseren gemmer, så LunaVerta virker uden internet.</li>
+    </ul>
+    <p>Begge dele bliver på din enhed. Du kan til enhver tid fjerne dem ved at rydde sitets data i browserens indstillinger.</p>
+    <h2>Hosting</h2>
+    <p>Som på alle hjemmesider kan den server, der leverer LunaVertas sider, kortvarigt registrere tekniske oplysninger om forespørgsler, f.eks. din IP-adresse og browsertype, for at holde tjenesten kørende og sikker. Disse oplysninger indeholder aldrig dine filer. De håndteres af vores hostingudbyder efter deres egne databehandlingsvilkår og bruges ikke til at identificere eller profilere dig.</p>
+    <h2>Dine rettigheder</h2>
+    <p>Efter EU's databeskyttelsesforordning (GDPR) kan du spørge, hvilke personoplysninger vi har om dig, og få dem rettet eller slettet. Da LunaVerta ikke selv indsamler personoplysninger, er der som regel intet at udlevere. Du kan også klage til Datatilsynet.</p>
+    <h2>Kontakt</h2>
+    <p>Spørgsmål om privatliv: <span>privacy@lunaverta.com</span></p>
+    </div>
   </main>
-  <footer><span>LunaVerta · Free, private file conversion</span><nav aria-label="Site"><a href="./">Converter</a><a href="privacy.html">Privacy</a><a href="licenses.html">Open-source licenses</a></nav></footer>
+  <footer><span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span></span><nav aria-label="Site"><a href="./" data-i18n="nav.converter">Converter</a><a href="privacy.html" data-i18n="nav.privacy">Privacy</a><a href="licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav></footer>
 </div>
+<script src="assets/i18n.js"></script>
 </body>
 </html>
