@@ -7,8 +7,9 @@
   "type": "module",
   "scripts": {
     "vendor": "node scripts/vendor.mjs",
-    "build": "node scripts/vendor.mjs && node scripts/stamp.mjs",
-    "serve": "npx --yes serve@14.2.4 docs -l 8080"
+    "build": "node scripts/vendor.mjs && node scripts/build-pages.mjs",
+    "serve": "npx --yes serve@14.2.4 docs -l 8080",
+    "pages": "node scripts/build-pages.mjs"
   },
   "devDependencies": {
     "@fontsource/bricolage-grotesque": "5.3.0",

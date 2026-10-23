@@ -869,6 +869,18 @@ async function readWorkbook(file) {
   if (e === 'csv' || e === 'tsv') {
     const text = await file.text();
     if (e === 'tsv') { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(text.replace(/\r/g, '').split('\n').filter(Boolean).map(l => l.split('\t'))), 'Sheet1'); return wb; }
+    // Semicolon-separated files (Danish/European Excel) use a decimal comma:
+    // read every cell as text, then turn "1.234,50" into the number 1234.5.
+    // Values with a leading zero (postcodes, phone numbers) stay text.
+    const first = text.split(/\r?\n/, 1)[0];
+    if ((first.match(/;/g) || []).length > (first.match(/,/g) || []).length) {
+      const wb = XLSX.read(text, { type: 'string', FS: ';', raw: true });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '', raw: true });
+      const num = v => (typeof v === 'string' && !/^-?0\d/.test(v.trim()) && /^-?(\d{1,3}(\.\d{3})+|\d+)(,\d+)?$/.test(v.trim()) ? parseFloat(v.trim().replace(/\./g, '').replace(',', '.')) : v);
+      const out = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(out, XLSX.utils.aoa_to_sheet(rows.map(r => r.map(num))), 'Sheet1');
+      return out;
+    }
     return XLSX.read(text, { type: 'string', raw: false });
   }
   return XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
@@ -1173,6 +1185,17 @@ function addFiles(list, opts = {}) {
   renderTray();
   return added;
 }
+// Tool pages (e.g. /heic-to-jpg/) name the format they convert to.
+const PRESET = (document.querySelector('main[data-preset]') || {}).dataset?.preset || '';
+// On a tool page, new files go straight to that page's format when they can;
+// otherwise the ring opens as usual.
+function afterAdd(added, x, y) {
+  if (!added.length) return;
+  const files = added.map(a => a.file), targets = fileTargets(files);
+  if (PRESET && PRESET !== 'merge' && targets.includes(PRESET)) { runBatch(files, PRESET); return; }
+  if (PRESET === 'merge') return; // merge waits until the files are in order; the MERGE button is first and highlighted
+  openRing({ targets, files, x, y, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
+}
 function renderTray() {
   const t = $('tray');
   t.innerHTML = '';
@@ -1199,11 +1222,12 @@ function renderTray() {
     t.appendChild(el);
   }
   const targets = fileTargets(tray.map(x => x.file));
+  if (PRESET && targets.includes(PRESET)) targets.unshift(...targets.splice(targets.indexOf(PRESET), 1));
   $('targets').hidden = !targets.length;
   const row = $('targetRow'); row.innerHTML = '';
   for (const tg of targets) {
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'tgt'; b.style.setProperty('--k', kv(OUT[tg].k)); b.textContent = label(tg);
+    b.type = 'button'; b.className = 'tgt' + (tg === PRESET ? ' preset' : ''); b.style.setProperty('--k', kv(OUT[tg].k)); b.textContent = label(tg);
     b.onclick = () => runBatch(tray.map(x => x.file), tg);
     row.appendChild(b);
   }
@@ -1444,7 +1468,7 @@ addEventListener('drop', e => {
   if (!files.length) return;
   if (t) { runBatch(files, t); return; }
   const added = addFiles(files);
-  if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: e.clientX, y: e.clientY, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
+  afterAdd(added, e.clientX, e.clientY);
 });
 
 // ---------- picking files ----------
@@ -1454,7 +1478,7 @@ $('fileInput').onchange = e => {
   const added = addFiles([...e.target.files]); e.target.value = '';
   if (!added.length) return;
   const r = $('pick').getBoundingClientRect();
-  openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: Math.min(innerWidth / 2, r.left + r.width / 2), y: Math.min(innerHeight / 2 + 40, r.bottom + 170), count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
+  afterAdd(added, Math.min(innerWidth / 2, r.left + r.width / 2), Math.min(innerHeight / 2 + 40, r.bottom + 170));
 };
 // Paste files or screenshots straight in
 addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { addFiles(f); toast(T('toast.pasted', { n: f.length })); } });
@@ -1494,7 +1518,7 @@ if ('launchQueue' in window) {
     launched = true;
     const files = await Promise.all(params.files.map(h => h.getFile()));
     const added = addFiles(files);
-    if (added.length) openRing({ targets: fileTargets(added.map(a => a.file)), files: added.map(a => a.file), x: innerWidth / 2, y: innerHeight / 2, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
+    afterAdd(added, innerWidth / 2, innerHeight / 2);
   });
 }
 
@@ -1502,7 +1526,7 @@ addEventListener('appinstalled', () => { toast(T('toast.installed')); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !navigator.serviceWorker.controller) return;

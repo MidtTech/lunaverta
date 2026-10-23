@@ -1,0 +1,60 @@
+# LunaVerta
+
+> LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user's own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech, and its code is open source under the MIT License.
+
+LunaVerta is available in English (https://lunaverta.com/) and Danish (https://lunaverta.com/da/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
+
+Key facts:
+- Price: Free
+- Uploads: None: files stay on your device
+- Account: Not needed
+- Works offline: Yes, after the first visit
+- Languages: English and Danish
+- Made by: Midt-Tech, Aarhus, Denmark (CVR 34256276)
+- Source code: Open source, MIT License
+- Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
+- Not supported: video-to-video re-encoding (e.g. to MP4) and legacy .doc/.ppt files
+
+## Tools (English)
+- [HEIC to JPG](https://lunaverta.com/heic-to-jpg/): Convert iPhone HEIC photos to JPG in your browser. Free, fast and private: your photos are never uploaded. Works with many photos at once.
+- [Word to PDF](https://lunaverta.com/word-to-pdf/): Convert Word documents (DOCX) to PDF in your browser. Keeps fonts, tables, images, headers and footers. Free and private, no upload.
+- [Merge PDF](https://lunaverta.com/merge-pdf/): Combine several PDF files (and images) into one PDF in your browser. Drag to set the order. Free and private: nothing is uploaded.
+- [Split PDF](https://lunaverta.com/split-pdf/): Split a PDF into separate one-page PDF files in your browser. Free and private: your PDF is never uploaded.
+- [Compress PDF](https://lunaverta.com/compress-pdf/): Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.
+- [Edit PDF](https://lunaverta.com/edit-pdf/): Edit PDFs in your browser: correct text, add text, fill in forms, reorder, rotate and delete pages. Free and private, no upload.
+- [PDF to JPG](https://lunaverta.com/pdf-to-jpg/): Turn every page of a PDF into a JPG image in your browser. Free and private: your PDF is never uploaded.
+- [PDF to PNG](https://lunaverta.com/pdf-to-png/): Turn every page of a PDF into a PNG image in your browser. Lossless and sharp. Free and private, no upload.
+- [JPG to PDF](https://lunaverta.com/jpg-to-pdf/): Turn JPG, PNG and HEIC images into a PDF in your browser, one page per image. Free and private: nothing is uploaded.
+- [PNG to JPG](https://lunaverta.com/png-to-jpg/): Convert PNG images to JPG in your browser and make them much smaller. Free and private: nothing is uploaded.
+- [WebP to JPG](https://lunaverta.com/webp-to-jpg/): Convert WebP images from the web to JPG in your browser so they open in any program. Free and private, no upload.
+- [Remove photo location](https://lunaverta.com/remove-location-from-photos/): Remove GPS location, camera details and other hidden EXIF data from photos before sharing. Quality stays the same. Free, no upload.
+- [Excel to CSV](https://lunaverta.com/excel-to-csv/): Convert Excel workbooks (XLSX, XLS, ODS) to CSV in your browser, one CSV per sheet. Free and private: nothing is uploaded.
+- [CSV to Excel](https://lunaverta.com/csv-to-excel/): Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.
+- [Video to GIF](https://lunaverta.com/video-to-gif/): Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.
+- [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
+- [PDF to text](https://lunaverta.com/pdf-to-text/): Extract all text from a PDF into a plain text file in your browser. Free and private: your PDF is never uploaded.
+
+## Værktøjer (dansk)
+- [HEIC til JPG](https://lunaverta.com/da/heic-til-jpg/): Konvertér iPhone-billeder fra HEIC til JPG i din browser. Gratis, hurtigt og privat: dine billeder bliver aldrig uploadet. Mange billeder ad gangen.
+- [Word til PDF](https://lunaverta.com/da/word-til-pdf/): Konvertér Word-dokumenter (DOCX) til PDF i din browser. Bevarer skrifttyper, tabeller, billeder, sidehoveder og sidefødder. Gratis og privat.
+- [Saml PDF](https://lunaverta.com/da/saml-pdf/): Saml flere PDF-filer (og billeder) til én PDF i din browser. Træk for at vælge rækkefølgen. Gratis og privat: intet bliver uploadet.
+- [Del PDF](https://lunaverta.com/da/del-pdf/): Del en PDF op i separate PDF-filer med én side hver, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Komprimér PDF](https://lunaverta.com/da/komprimer-pdf/): Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Redigér PDF](https://lunaverta.com/da/rediger-pdf/): Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.
+- [PDF til JPG](https://lunaverta.com/da/pdf-til-jpg/): Lav hver side i en PDF om til et JPG-billede direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+- [PDF til PNG](https://lunaverta.com/da/pdf-til-png/): Lav hver side i en PDF om til et PNG-billede direkte i din browser. Tabsfrit og skarpt. Gratis og privat, uden upload.
+- [JPG til PDF](https://lunaverta.com/da/billeder-til-pdf/): Lav JPG-, PNG- og HEIC-billeder om til en PDF i din browser, én side pr. billede. Gratis og privat: intet bliver uploadet.
+- [PNG til JPG](https://lunaverta.com/da/png-til-jpg/): Konvertér PNG-billeder til JPG i din browser, og gør dem meget mindre. Gratis og privat: intet bliver uploadet.
+- [WebP til JPG](https://lunaverta.com/da/webp-til-jpg/): Konvertér WebP-billeder fra nettet til JPG i din browser, så de kan åbnes i alle programmer. Gratis og privat, uden upload.
+- [Fjern GPS fra billeder](https://lunaverta.com/da/fjern-gps-fra-billeder/): Fjern GPS-placering, kameraoplysninger og andre skjulte EXIF-data fra billeder, før du deler dem. Kvaliteten er uændret. Gratis, uden upload.
+- [Excel til CSV](https://lunaverta.com/da/excel-til-csv/): Konvertér Excel-projektmapper (XLSX, XLS, ODS) til CSV i din browser, én CSV pr. ark. Gratis og privat: intet bliver uploadet.
+- [CSV til Excel](https://lunaverta.com/da/csv-til-excel/): Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.
+- [Video til GIF](https://lunaverta.com/da/video-til-gif/): Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.
+- [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
+- [PDF til tekst](https://lunaverta.com/da/pdf-til-tekst/): Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+
+## About
+- [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta
+- [Open-source licenses](https://lunaverta.com/licenses.html)
+- [Source code](https://github.com/MidtTech/lunaverta)
+- Publisher: Midt-Tech, Hammershusvej 72, 1. tv., 8210 Aarhus V, Denmark, CVR 34256276, lee@midttech.com

@@ -1,0 +1,237 @@
+// Page content for the generated pages (scripts/build-pages.mjs): the front
+// page and one page per tool, in English and Danish. Interface texts live in
+// docs/assets/strings.js; this file holds what differs from page to page.
+
+export const SITE = 'https://lunaverta.com';
+
+export const COMPANY = {
+  name: 'Midt-Tech', url: 'https://midttech.com/', cvr: '34256276', email: 'lee@midttech.com',
+  street: 'Hammershusvej 72, 1. tv.', zip: '8210', city: 'Aarhus V', country: 'DK'
+};
+
+export const HOME = {
+  en: {
+    title: 'LunaVerta · Free private file converter, no upload',
+    desc: 'Convert images, PDFs, Word, Excel, audio and video in your browser. Edit, merge and shrink PDFs. Free, no upload, no account, no cookies.',
+    h1: 'Convert files privately, right in your browser',
+    lead: 'Images, PDFs, Word, Excel, audio and video. Free, with no upload, no account and no cookies.',
+    dock: '<strong>Drag files anywhere on the page.</strong> A ring of formats opens under your cursor. Drop on a format to convert straight away, or drop in the middle to keep them here. You can also paste files.'
+  },
+  da: {
+    title: 'LunaVerta · Gratis privat filkonvertering uden upload',
+    desc: 'Konvertér billeder, PDF, Word, Excel, lyd og video i din browser. Redigér, saml og komprimér PDF. Gratis, uden upload, konto eller cookies.',
+    h1: 'Konvertér filer privat, direkte i din browser',
+    lead: 'Billeder, PDF, Word, Excel, lyd og video. Gratis, uden upload, uden konto og uden cookies.',
+    dock: '<strong>Træk filer hen hvor som helst på siden.</strong> En ring med formater åbner under markøren. Slip på et format for at konvertere med det samme, eller slip i midten for at lægge filerne her. Du kan også indsætte filer.'
+  }
+};
+
+export const LABELS = {
+  en: {
+    howto: 'How to {name}', tools: 'All tools', about: 'About LunaVerta', home: 'Home', faqTool: 'Questions about {name}',
+    dock: '<strong>Choose files or drop them anywhere on the page.</strong> They become {t} straight away, on your own device. Nothing is uploaded.',
+    dockMerge: '<strong>Choose two or more files, or drop them on the page.</strong> Drag them into the order you want, then press MERGE. Nothing is uploaded.',
+    dockEdit: '<strong>Choose a PDF, or drop it on the page.</strong> The editor opens straight away, on your own device. Nothing is uploaded.',
+    noscript: 'LunaVerta converts files with JavaScript inside your browser. Turn JavaScript on to use it.',
+    aboutText: 'LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user\'s own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech, and its code is open source under the MIT License.',
+    facts: [['Price', 'Free'], ['Uploads', 'None: files stay on your device'], ['Account', 'Not needed'], ['Works offline', 'Yes, after the first visit'], ['Languages', 'English and Danish'], ['Made by', 'Midt-Tech, Aarhus, Denmark (CVR 34256276)'], ['Source code', 'Open source, MIT License']],
+    factsCode: 'Source code on GitHub'
+  },
+  da: {
+    howto: 'Sådan gør du: {name}', tools: 'Alle værktøjer', about: 'Om LunaVerta', home: 'Forside', faqTool: 'Spørgsmål om {name}',
+    dock: '<strong>Vælg filer, eller slip dem hvor som helst på siden.</strong> De bliver til {t} med det samme, på din egen enhed. Intet bliver uploadet.',
+    dockMerge: '<strong>Vælg to eller flere filer, eller slip dem på siden.</strong> Træk dem i den rækkefølge, du vil have, og tryk SAML. Intet bliver uploadet.',
+    dockEdit: '<strong>Vælg en PDF, eller slip den på siden.</strong> Editoren åbner med det samme, på din egen enhed. Intet bliver uploadet.',
+    noscript: 'LunaVerta konverterer filer med JavaScript i din browser. Slå JavaScript til for at bruge den.',
+    aboutText: 'LunaVerta er en gratis filkonverter og PDF-editor, der kører helt i webbrowseren. Filerne behandles på brugerens egen enhed og bliver aldrig uploadet til en server. Den virker uden internet efter første besøg, kræver ingen konto, sætter ingen cookies og viser ingen reklamer. LunaVerta er lavet i Danmark af Midt-Tech, og koden er open source under MIT-licensen.',
+    facts: [['Pris', 'Gratis'], ['Upload', 'Ingen: filerne bliver på din enhed'], ['Konto', 'Ikke nødvendig'], ['Virker offline', 'Ja, efter første besøg'], ['Sprog', 'Dansk og engelsk'], ['Lavet af', 'Midt-Tech, Aarhus (CVR 34256276)'], ['Kildekode', 'Open source, MIT-licens']],
+    factsCode: 'Kildekoden på GitHub'
+  }
+};
+
+export const REPO = 'https://github.com/MidtTech/lunaverta';
+
+// One entry per tool page. preset is the format/tool the page converts to.
+export const TOOLS = [
+  { id: 'heic-to-jpg', preset: 'jpg', slug: { en: 'heic-to-jpg', da: 'heic-til-jpg' },
+    en: { name: 'HEIC to JPG', title: 'HEIC to JPG converter · Free, private, no upload', desc: 'Convert iPhone HEIC photos to JPG in your browser. Free, fast and private: your photos are never uploaded. Works with many photos at once.',
+      h1: 'Convert HEIC to JPG', lead: 'Turn iPhone photos (HEIC) into JPG that opens everywhere. The conversion runs on your own device, so your photos are never uploaded.',
+      steps: ['Choose your HEIC photos, or drop them on the page.', 'LunaVerta converts them to JPG straight away.', 'Save the photos one by one, or all at once as a .zip.'],
+      faq: [['Why are my iPhone photos HEIC?', 'iPhones save photos as HEIC by default because the files are about half the size of JPG. Many Windows programs and websites cannot open HEIC, which is why converting to JPG helps.'], ['Do I lose quality?', 'Very little. Set the image quality (90% by default) to choose between the best quality and a smaller file.']] },
+    da: { name: 'HEIC til JPG', title: 'HEIC til JPG · Gratis og privat, uden upload', desc: 'Konvertér iPhone-billeder fra HEIC til JPG i din browser. Gratis, hurtigt og privat: dine billeder bliver aldrig uploadet. Mange billeder ad gangen.',
+      h1: 'Konvertér HEIC til JPG', lead: 'Lav iPhone-billeder (HEIC) om til JPG, der kan åbnes overalt. Konverteringen sker på din egen enhed, så dine billeder bliver aldrig uploadet.',
+      steps: ['Vælg dine HEIC-billeder, eller slip dem på siden.', 'LunaVerta laver dem om til JPG med det samme.', 'Gem billederne ét ad gangen, eller alle på én gang som .zip.'],
+      faq: [['Hvorfor er mine iPhone-billeder HEIC?', 'iPhone gemmer som standard billeder som HEIC, fordi filerne fylder cirka halvt så meget som JPG. Mange Windows-programmer og hjemmesider kan ikke åbne HEIC, og derfor hjælper det at konvertere til JPG.'], ['Mister jeg kvalitet?', 'Meget lidt. Med billedkvaliteten (90 % som standard) vælger du mellem bedste kvalitet og en mindre fil.']] } },
+
+  { id: 'word-to-pdf', preset: 'pdf', slug: { en: 'word-to-pdf', da: 'word-til-pdf' },
+    en: { name: 'Word to PDF', title: 'Word to PDF converter · Keeps the layout, no upload', desc: 'Convert Word documents (DOCX) to PDF in your browser. Keeps fonts, tables, images, headers and footers. Free and private, no upload.',
+      h1: 'Convert Word to PDF', lead: 'Turn Word documents (.docx) into PDF with the page layout, fonts, colours, tables, images, headers and footers intact. Your document never leaves your device.',
+      steps: ['Choose your Word document (.docx), or drop it on the page.', 'LunaVerta lays it out like Word and makes a PDF.', 'Save the PDF. The text stays searchable.'],
+      faq: [['Can I make the PDF smaller?', 'Yes. Under settings, set Word to PDF to Small file. The PDF becomes about 60% smaller, which is handy for e-mail.'], ['Does it work with old .doc files?', 'No, only .docx. Open a .doc file in Word and save it as .docx first.']] },
+    da: { name: 'Word til PDF', title: 'Word til PDF · Bevarer layoutet, uden upload', desc: 'Konvertér Word-dokumenter (DOCX) til PDF i din browser. Bevarer skrifttyper, tabeller, billeder, sidehoveder og sidefødder. Gratis og privat.',
+      h1: 'Konvertér Word til PDF', lead: 'Lav Word-dokumenter (.docx) om til PDF med sidelayout, skrifttyper, farver, tabeller, billeder, sidehoveder og sidefødder intakt. Dokumentet forlader aldrig din enhed.',
+      steps: ['Vælg dit Word-dokument (.docx), eller slip det på siden.', 'LunaVerta sætter det op som Word og laver en PDF.', 'Gem PDF\'en. Teksten kan stadig søges i.'],
+      faq: [['Kan jeg gøre PDF\'en mindre?', 'Ja. Sæt Word til PDF til Lille fil under indstillingerne. PDF\'en bliver cirka 60 % mindre, hvilket er praktisk til e-mail.'], ['Virker det med gamle .doc-filer?', 'Nej, kun .docx. Åbn .doc-filen i Word, og gem den som .docx først.']] } },
+
+  { id: 'merge-pdf', preset: 'merge', slug: { en: 'merge-pdf', da: 'saml-pdf' },
+    en: { name: 'Merge PDF', title: 'Merge PDF files · Free, private, no upload', desc: 'Combine several PDF files (and images) into one PDF in your browser. Drag to set the order. Free and private: nothing is uploaded.',
+      h1: 'Merge PDF files', lead: 'Combine several PDFs, and images if you like, into one PDF. Pages keep their quality, text and links. Everything happens on your device.',
+      steps: ['Choose two or more PDFs, or drop them on the page.', 'Drag the files into the order you want.', 'Press MERGE and save the combined PDF.'],
+      faq: [['Can I add images too?', 'Yes. JPG, PNG, HEIC and other images become pages in the PDF. At least one of the files must be a PDF.'], ['Is there a limit to how many files I can merge?', 'No fixed limit. Very large files use more memory, so merge in a few rounds if your device slows down.']] },
+    da: { name: 'Saml PDF', title: 'Saml PDF-filer · Gratis og privat, uden upload', desc: 'Saml flere PDF-filer (og billeder) til én PDF i din browser. Træk for at vælge rækkefølgen. Gratis og privat: intet bliver uploadet.',
+      h1: 'Saml PDF-filer', lead: 'Saml flere PDF\'er, og gerne billeder, til én PDF. Siderne bevarer kvalitet, tekst og links. Det hele sker på din enhed.',
+      steps: ['Vælg to eller flere PDF\'er, eller slip dem på siden.', 'Træk filerne i den rækkefølge, du vil have.', 'Tryk SAML, og gem den samlede PDF.'],
+      faq: [['Kan jeg også tilføje billeder?', 'Ja. JPG, PNG, HEIC og andre billeder bliver til sider i PDF\'en. Mindst én af filerne skal være en PDF.'], ['Er der en grænse for, hvor mange filer jeg kan samle?', 'Ingen fast grænse. Meget store filer bruger mere hukommelse, så saml i et par omgange, hvis din enhed bliver langsom.']] } },
+
+  { id: 'split-pdf', preset: 'split', slug: { en: 'split-pdf', da: 'del-pdf' },
+    en: { name: 'Split PDF', title: 'Split PDF into pages · Free, private, no upload', desc: 'Split a PDF into separate one-page PDF files in your browser. Free and private: your PDF is never uploaded.',
+      h1: 'Split a PDF into single pages', lead: 'Turn every page of a PDF into its own PDF file. Handy when you only need to send one page. Nothing is uploaded.',
+      steps: ['Choose a PDF, or drop it on the page.', 'LunaVerta splits it into one PDF per page.', 'Save the pages, which come together in a .zip.'],
+      faq: [['Can I pick only some pages?', 'Use Edit to delete the pages you don\'t need, or split and keep the files you want.'], ['Do the pages keep their quality?', 'Yes. Pages are copied as they are, with text, images and links.']] },
+    da: { name: 'Del PDF', title: 'Del PDF op i sider · Gratis og privat, uden upload', desc: 'Del en PDF op i separate PDF-filer med én side hver, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.',
+      h1: 'Del en PDF op i enkelte sider', lead: 'Lav hver side i en PDF om til sin egen PDF-fil. Praktisk, når du kun skal sende én side. Intet bliver uploadet.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'LunaVerta deler den op i én PDF pr. side.', 'Gem siderne, som samles i en .zip.'],
+      faq: [['Kan jeg vælge bestemte sider?', 'Brug Redigér til at slette de sider, du ikke skal bruge, eller del op og behold de filer, du vil have.'], ['Bevarer siderne kvaliteten?', 'Ja. Siderne kopieres, som de er, med tekst, billeder og links.']] } },
+
+  { id: 'compress-pdf', preset: 'shrink', slug: { en: 'compress-pdf', da: 'komprimer-pdf' },
+    en: { name: 'Compress PDF', title: 'Compress PDF · Make PDFs smaller, no upload', desc: 'Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.',
+      h1: 'Compress a PDF', lead: 'Make large PDFs smaller so they fit in an e-mail. Scanned and image-heavy PDFs often shrink by 60% or more, and the text stays searchable.',
+      steps: ['Choose a PDF, or drop it on the page.', 'LunaVerta redraws the pages more compactly.', 'Save the smaller PDF. If it can\'t get smaller, you get the original back.'],
+      faq: [['How much smaller does it get?', 'It depends on the PDF. Scans and PDFs with many pictures often shrink by 60% or more. PDFs that are mostly text are usually small already.'], ['Can I still select and search the text?', 'Yes. LunaVerta keeps a text layer, so you can search and copy text in the smaller PDF.']] },
+    da: { name: 'Komprimér PDF', title: 'Komprimér PDF · Gør PDF\'er mindre, uden upload', desc: 'Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.',
+      h1: 'Komprimér en PDF', lead: 'Gør store PDF\'er mindre, så de kan sendes med e-mail. Scannede og billedtunge PDF\'er bliver ofte 60 % mindre eller mere, og teksten kan stadig søges i.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'LunaVerta tegner siderne mere kompakt.', 'Gem den mindre PDF. Kan den ikke blive mindre, får du originalen tilbage.'],
+      faq: [['Hvor meget mindre bliver den?', 'Det afhænger af PDF\'en. Scanninger og PDF\'er med mange billeder bliver ofte 60 % mindre eller mere. PDF\'er med mest tekst er som regel allerede små.'], ['Kan jeg stadig markere og søge i teksten?', 'Ja. LunaVerta bevarer et tekstlag, så du kan søge og kopiere tekst i den mindre PDF.']] } },
+
+  { id: 'edit-pdf', preset: 'edit', slug: { en: 'edit-pdf', da: 'rediger-pdf' },
+    en: { name: 'Edit PDF', title: 'Edit PDF online · Free, private, no upload', desc: 'Edit PDFs in your browser: correct text, add text, fill in forms, reorder, rotate and delete pages. Free and private, no upload.',
+      h1: 'Edit a PDF', lead: 'Correct existing text, write new text, fill in forms, and reorder, rotate or delete pages. The editor runs in your browser, so the PDF never leaves your device.',
+      steps: ['Choose a PDF, or drop it on the page.', 'Rearrange pages, or open a page to edit its text or fill in fields.', 'Press Save PDF and download the edited copy.'],
+      faq: [['Can I change text that is already in the PDF?', 'Yes. Open a page, press Edit text and click a line. The old text is covered and the new text is written in a matching font. The old text is covered, not deleted, so don\'t use this to hide confidential information.'], ['Does the form stay fillable?', 'Yes. Form fields you fill in keep working, so the PDF can still be filled in later.']] },
+    da: { name: 'Redigér PDF', title: 'Redigér PDF online · Gratis og privat, uden upload', desc: 'Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.',
+      h1: 'Redigér en PDF', lead: 'Ret eksisterende tekst, skriv ny tekst, udfyld formularer, og ændr rækkefølge, drej eller slet sider. Editoren kører i din browser, så PDF\'en forlader aldrig din enhed.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'Flyt rundt på siderne, eller åbn en side for at rette tekst eller udfylde felter.', 'Tryk Gem PDF, og hent den redigerede kopi.'],
+      faq: [['Kan jeg rette tekst, der allerede står i PDF\'en?', 'Ja. Åbn en side, tryk Ret tekst, og klik på en linje. Den gamle tekst dækkes, og den nye skrives i en matchende skrift. Den gamle tekst bliver dækket, ikke slettet, så brug det ikke til at skjule fortrolige oplysninger.'], ['Kan formularen stadig udfyldes bagefter?', 'Ja. De felter, du udfylder, virker stadig, så PDF\'en kan udfyldes igen senere.']] } },
+
+  { id: 'pdf-to-jpg', preset: 'jpg', slug: { en: 'pdf-to-jpg', da: 'pdf-til-jpg' },
+    en: { name: 'PDF to JPG', title: 'PDF to JPG converter · Free, private, no upload', desc: 'Turn every page of a PDF into a JPG image in your browser. Free and private: your PDF is never uploaded.',
+      h1: 'Convert PDF to JPG', lead: 'Turn each page of a PDF into a sharp JPG image, ready for presentations, social media or a website. Nothing is uploaded.',
+      steps: ['Choose a PDF, or drop it on the page.', 'Each page becomes a JPG image.', 'Save the images, which come in a .zip when there are several pages.'],
+      faq: [['How sharp are the images?', 'Pages are drawn at about 150 dpi. Use Longest side to make them smaller.'], ['Can I get PNG instead?', 'Yes, see PDF to PNG, or pick PNG in the ring.']] },
+    da: { name: 'PDF til JPG', title: 'PDF til JPG · Gratis og privat, uden upload', desc: 'Lav hver side i en PDF om til et JPG-billede direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.',
+      h1: 'Konvertér PDF til JPG', lead: 'Lav hver side i en PDF om til et skarpt JPG-billede, klar til præsentationer, sociale medier eller en hjemmeside. Intet bliver uploadet.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'Hver side bliver til et JPG-billede.', 'Gem billederne, som samles i en .zip, når der er flere sider.'],
+      faq: [['Hvor skarpe bliver billederne?', 'Siderne tegnes i cirka 150 dpi. Brug Længste side for at gøre dem mindre.'], ['Kan jeg få PNG i stedet?', 'Ja, se PDF til PNG, eller vælg PNG i ringen.']] } },
+
+  { id: 'pdf-to-png', preset: 'png', slug: { en: 'pdf-to-png', da: 'pdf-til-png' },
+    en: { name: 'PDF to PNG', title: 'PDF to PNG converter · Free, private, no upload', desc: 'Turn every page of a PDF into a PNG image in your browser. Lossless and sharp. Free and private, no upload.',
+      h1: 'Convert PDF to PNG', lead: 'Turn each page of a PDF into a lossless PNG image, ideal for text and diagrams that should stay crisp. Nothing is uploaded.',
+      steps: ['Choose a PDF, or drop it on the page.', 'Each page becomes a PNG image.', 'Save the images, which come in a .zip when there are several pages.'],
+      faq: [['PNG or JPG?', 'PNG keeps text and lines perfectly sharp but makes bigger files. JPG is smaller and fine for photos.'], ['Are my PDFs uploaded?', 'No. The pages are drawn in your browser.']] },
+    da: { name: 'PDF til PNG', title: 'PDF til PNG · Gratis og privat, uden upload', desc: 'Lav hver side i en PDF om til et PNG-billede direkte i din browser. Tabsfrit og skarpt. Gratis og privat, uden upload.',
+      h1: 'Konvertér PDF til PNG', lead: 'Lav hver side i en PDF om til et tabsfrit PNG-billede, ideelt til tekst og diagrammer, der skal forblive skarpe. Intet bliver uploadet.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'Hver side bliver til et PNG-billede.', 'Gem billederne, som samles i en .zip, når der er flere sider.'],
+      faq: [['PNG eller JPG?', 'PNG holder tekst og streger helt skarpe, men giver større filer. JPG er mindre og fint til fotos.'], ['Bliver mine PDF\'er uploadet?', 'Nej. Siderne tegnes i din browser.']] } },
+
+  { id: 'images-to-pdf', preset: 'pdf', slug: { en: 'jpg-to-pdf', da: 'billeder-til-pdf' },
+    en: { name: 'JPG to PDF', title: 'JPG to PDF · Images to one PDF, no upload', desc: 'Turn JPG, PNG and HEIC images into a PDF in your browser, one page per image. Free and private: nothing is uploaded.',
+      h1: 'Convert JPG and other images to PDF', lead: 'Put photos and scans into one PDF, one page per image, or make a PDF per image. Works with JPG, PNG, HEIC and more. Nothing is uploaded.',
+      steps: ['Choose your images, or drop them on the page.', 'Drag them into order if you want one combined PDF.', 'Save the PDF.'],
+      faq: [['One PDF or one per image?', 'By default all images go into one PDF. Untick Merge images into one PDF under settings to get a PDF per image.'], ['Which image formats work?', 'JPG, PNG, WebP, HEIC, AVIF, GIF, BMP and SVG.']] },
+    da: { name: 'JPG til PDF', title: 'JPG til PDF · Billeder til én PDF, uden upload', desc: 'Lav JPG-, PNG- og HEIC-billeder om til en PDF i din browser, én side pr. billede. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér JPG og andre billeder til PDF', lead: 'Saml fotos og scanninger i én PDF med én side pr. billede, eller lav en PDF pr. billede. Virker med JPG, PNG, HEIC og flere. Intet bliver uploadet.',
+      steps: ['Vælg dine billeder, eller slip dem på siden.', 'Træk dem i rækkefølge, hvis du vil have én samlet PDF.', 'Gem PDF\'en.'],
+      faq: [['Én PDF eller én pr. billede?', 'Som standard samles alle billeder i én PDF. Fjern fluebenet ved Saml billeder i én PDF under indstillingerne for at få en PDF pr. billede.'], ['Hvilke billedformater virker?', 'JPG, PNG, WebP, HEIC, AVIF, GIF, BMP og SVG.']] } },
+
+  { id: 'png-to-jpg', preset: 'jpg', slug: { en: 'png-to-jpg', da: 'png-til-jpg' },
+    en: { name: 'PNG to JPG', title: 'PNG to JPG converter · Free, private, no upload', desc: 'Convert PNG images to JPG in your browser and make them much smaller. Free and private: nothing is uploaded.',
+      h1: 'Convert PNG to JPG', lead: 'Turn PNG images into JPG, which is often several times smaller. Transparent areas become white. Nothing is uploaded.',
+      steps: ['Choose your PNG images, or drop them on the page.', 'They become JPG straight away.', 'Save them one by one or all at once as a .zip.'],
+      faq: [['What happens to transparency?', 'JPG cannot be transparent, so transparent areas become white. Keep PNG or choose WebP if you need transparency.'], ['Can I resize at the same time?', 'Yes. Set Longest side under settings before converting.']] },
+    da: { name: 'PNG til JPG', title: 'PNG til JPG · Gratis og privat, uden upload', desc: 'Konvertér PNG-billeder til JPG i din browser, og gør dem meget mindre. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér PNG til JPG', lead: 'Lav PNG-billeder om til JPG, som ofte er flere gange mindre. Gennemsigtige områder bliver hvide. Intet bliver uploadet.',
+      steps: ['Vælg dine PNG-billeder, eller slip dem på siden.', 'De bliver til JPG med det samme.', 'Gem dem ét ad gangen eller alle på én gang som .zip.'],
+      faq: [['Hvad sker der med gennemsigtighed?', 'JPG kan ikke være gennemsigtig, så gennemsigtige områder bliver hvide. Behold PNG, eller vælg WebP, hvis du har brug for gennemsigtighed.'], ['Kan jeg ændre størrelsen samtidig?', 'Ja. Indstil Længste side under indstillingerne, før du konverterer.']] } },
+
+  { id: 'webp-to-jpg', preset: 'jpg', slug: { en: 'webp-to-jpg', da: 'webp-til-jpg' },
+    en: { name: 'WebP to JPG', title: 'WebP to JPG converter · Free, private, no upload', desc: 'Convert WebP images from the web to JPG in your browser so they open in any program. Free and private, no upload.',
+      h1: 'Convert WebP to JPG', lead: 'Many websites serve images as WebP, which older programs cannot open. Turn them into JPG in a second, on your own device.',
+      steps: ['Choose your WebP images, or drop them on the page.', 'They become JPG straight away.', 'Save them one by one or all at once as a .zip.'],
+      faq: [['Can I convert to PNG instead?', 'Yes. Pick PNG in the ring or under Convert all to.'], ['Is it free?', 'Yes, with no limits, no account and no watermark.']] },
+    da: { name: 'WebP til JPG', title: 'WebP til JPG · Gratis og privat, uden upload', desc: 'Konvertér WebP-billeder fra nettet til JPG i din browser, så de kan åbnes i alle programmer. Gratis og privat, uden upload.',
+      h1: 'Konvertér WebP til JPG', lead: 'Mange hjemmesider viser billeder som WebP, som ældre programmer ikke kan åbne. Lav dem om til JPG på et sekund, på din egen enhed.',
+      steps: ['Vælg dine WebP-billeder, eller slip dem på siden.', 'De bliver til JPG med det samme.', 'Gem dem ét ad gangen eller alle på én gang som .zip.'],
+      faq: [['Kan jeg konvertere til PNG i stedet?', 'Ja. Vælg PNG i ringen eller under Konvertér alle til.'], ['Er det gratis?', 'Ja, uden begrænsninger, uden konto og uden vandmærke.']] } },
+
+  { id: 'remove-photo-location', preset: 'clean', slug: { en: 'remove-location-from-photos', da: 'fjern-gps-fra-billeder' },
+    en: { name: 'Remove photo location', title: 'Remove GPS location and EXIF from photos · No upload', desc: 'Remove GPS location, camera details and other hidden EXIF data from photos before sharing. Quality stays the same. Free, no upload.',
+      h1: 'Remove the location and hidden data from photos', lead: 'Photos from phones often contain the exact GPS location where they were taken. Remove it, along with camera details and dates, before you share them. The picture itself is not changed.',
+      steps: ['Choose your photos, or drop them on the page.', 'LunaVerta removes location, camera details and other hidden data.', 'Save the cleaned photos and share them safely.'],
+      faq: [['Does the photo lose quality?', 'No. JPG, PNG and WebP photos are cleaned without re-saving the image, so the picture is identical to the original.'], ['What exactly is removed?', 'EXIF data (GPS location, camera model, dates), XMP and IPTC data and comments. Photos taken sideways are redrawn upright so they still show the right way round.']] },
+    da: { name: 'Fjern GPS fra billeder', title: 'Fjern GPS-placering og EXIF fra billeder · Uden upload', desc: 'Fjern GPS-placering, kameraoplysninger og andre skjulte EXIF-data fra billeder, før du deler dem. Kvaliteten er uændret. Gratis, uden upload.',
+      h1: 'Fjern placering og skjulte data fra billeder', lead: 'Billeder fra telefoner indeholder ofte den præcise GPS-placering, hvor de blev taget. Fjern den sammen med kameraoplysninger og datoer, før du deler dem. Selve billedet ændres ikke.',
+      steps: ['Vælg dine billeder, eller slip dem på siden.', 'LunaVerta fjerner placering, kameraoplysninger og andre skjulte data.', 'Gem de rensede billeder, og del dem trygt.'],
+      faq: [['Mister billedet kvalitet?', 'Nej. JPG-, PNG- og WebP-billeder renses uden at blive gemt om, så billedet er identisk med originalen.'], ['Hvad bliver fjernet?', 'EXIF-data (GPS-placering, kameramodel, datoer), XMP- og IPTC-data og kommentarer. Billeder taget på langs tegnes op igen, så de stadig vender rigtigt.']] } },
+
+  { id: 'excel-to-csv', preset: 'csv', slug: { en: 'excel-to-csv', da: 'excel-til-csv' },
+    en: { name: 'Excel to CSV', title: 'Excel to CSV converter · Free, private, no upload', desc: 'Convert Excel workbooks (XLSX, XLS, ODS) to CSV in your browser, one CSV per sheet. Free and private: nothing is uploaded.',
+      h1: 'Convert Excel to CSV', lead: 'Turn Excel workbooks into CSV files for import into other systems. Workbooks with several sheets give one CSV per sheet. Nothing is uploaded.',
+      steps: ['Choose your Excel file (.xlsx, .xls or .ods), or drop it on the page.', 'Each sheet becomes a CSV file.', 'Save the CSV, or the .zip if there are several sheets.'],
+      faq: [['Will Danish letters (æ, ø, å) work?', 'Yes. The CSV is saved as UTF-8 with a marker, so Excel opens it with the right letters.'], ['Can I get JSON instead?', 'Yes. Pick JSON in the ring to get the data as JSON.']] },
+    da: { name: 'Excel til CSV', title: 'Excel til CSV · Gratis og privat, uden upload', desc: 'Konvertér Excel-projektmapper (XLSX, XLS, ODS) til CSV i din browser, én CSV pr. ark. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér Excel til CSV', lead: 'Lav Excel-projektmapper om til CSV-filer til import i andre systemer. Projektmapper med flere ark giver én CSV pr. ark. Intet bliver uploadet.',
+      steps: ['Vælg din Excel-fil (.xlsx, .xls eller .ods), eller slip den på siden.', 'Hvert ark bliver til en CSV-fil.', 'Gem CSV\'en, eller .zip-filen hvis der er flere ark.'],
+      faq: [['Virker æ, ø og å?', 'Ja. CSV-filen gemmes som UTF-8 med en markør, så Excel åbner den med de rigtige bogstaver.'], ['Kan jeg få JSON i stedet?', 'Ja. Vælg JSON i ringen for at få data som JSON.']] } },
+
+  { id: 'csv-to-excel', preset: 'xlsx', slug: { en: 'csv-to-excel', da: 'csv-til-excel' },
+    en: { name: 'CSV to Excel', title: 'CSV to Excel converter · Free, private, no upload', desc: 'Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.',
+      h1: 'Convert CSV to Excel', lead: 'Turn CSV, TSV or JSON data into a proper Excel workbook (.xlsx) that opens with columns in place. Nothing is uploaded.',
+      steps: ['Choose your CSV, TSV or JSON file, or drop it on the page.', 'LunaVerta builds an Excel workbook.', 'Save the .xlsx file.'],
+      faq: [['Does it handle semicolons?', 'Yes. Comma- and semicolon-separated files are both recognised.'], ['Can JSON become several sheets?', 'Yes. A JSON object with lists becomes one sheet per list.']] },
+    da: { name: 'CSV til Excel', title: 'CSV til Excel · Gratis og privat, uden upload', desc: 'Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér CSV til Excel', lead: 'Lav CSV-, TSV- eller JSON-data om til en rigtig Excel-projektmappe (.xlsx), der åbner med kolonnerne på plads. Intet bliver uploadet.',
+      steps: ['Vælg din CSV-, TSV- eller JSON-fil, eller slip den på siden.', 'LunaVerta laver en Excel-projektmappe.', 'Gem .xlsx-filen.'],
+      faq: [['Virker semikolon som skilletegn?', 'Ja. Både komma- og semikolonseparerede filer genkendes.'], ['Kan JSON blive til flere ark?', 'Ja. Et JSON-objekt med lister bliver til ét ark pr. liste.']] } },
+
+  { id: 'video-to-gif', preset: 'gif', slug: { en: 'video-to-gif', da: 'video-til-gif' },
+    en: { name: 'Video to GIF', title: 'Video to GIF maker · MP4 to GIF, no upload', desc: 'Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.',
+      h1: 'Make a GIF from a video', lead: 'Turn the opening seconds of an MP4, WebM or MOV video into an animated GIF. Choose 3, 5 or 10 seconds. Nothing is uploaded.',
+      steps: ['Choose a video, or drop it on the page.', 'LunaVerta turns the first seconds into a GIF.', 'Save the GIF.'],
+      faq: [['How long can the GIF be?', 'Choose the first 3, 5 or 10 seconds under GIF from video.'], ['Which video formats work?', 'MP4, WebM, MOV and others your browser can play.']] },
+    da: { name: 'Video til GIF', title: 'Video til GIF · MP4 til GIF, uden upload', desc: 'Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.',
+      h1: 'Lav en GIF af en video', lead: 'Lav de første sekunder af en MP4-, WebM- eller MOV-video om til en animeret GIF. Vælg 3, 5 eller 10 sekunder. Intet bliver uploadet.',
+      steps: ['Vælg en video, eller slip den på siden.', 'LunaVerta laver de første sekunder om til en GIF.', 'Gem GIF\'en.'],
+      faq: [['Hvor lang kan GIF\'en være?', 'Vælg de første 3, 5 eller 10 sekunder under GIF fra video.'], ['Hvilke videoformater virker?', 'MP4, WebM, MOV og andre, som din browser kan afspille.']] } },
+
+  { id: 'video-to-mp3', preset: 'mp3', slug: { en: 'video-to-mp3', da: 'video-til-mp3' },
+    en: { name: 'Video to MP3', title: 'Video and audio to MP3 · Free, private, no upload', desc: 'Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.',
+      h1: 'Convert video and audio to MP3', lead: 'Pull the soundtrack out of a video, or turn WAV, M4A, OGG or FLAC into MP3. Choose 128, 192 or 320 kbps. Nothing is uploaded.',
+      steps: ['Choose a video or audio file, or drop it on the page.', 'LunaVerta converts the sound to MP3.', 'Save the MP3.'],
+      faq: [['Which bitrate should I pick?', '192 kbps is a good balance. Use 320 kbps for the best quality, or 128 kbps for small files such as speech.'], ['Can I get WAV instead?', 'Yes. Pick WAV in the ring for uncompressed sound.']] },
+    da: { name: 'Video til MP3', title: 'Video og lyd til MP3 · Gratis og privat, uden upload', desc: 'Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.',
+      h1: 'Konvertér video og lyd til MP3', lead: 'Træk lydsporet ud af en video, eller lav WAV, M4A, OGG eller FLAC om til MP3. Vælg 128, 192 eller 320 kbps. Intet bliver uploadet.',
+      steps: ['Vælg en video- eller lydfil, eller slip den på siden.', 'LunaVerta laver lyden om til MP3.', 'Gem MP3-filen.'],
+      faq: [['Hvilken bitrate skal jeg vælge?', '192 kbps er en god balance. Brug 320 kbps for bedste kvalitet, eller 128 kbps til små filer som tale.'], ['Kan jeg få WAV i stedet?', 'Ja. Vælg WAV i ringen for ukomprimeret lyd.']] } },
+
+  { id: 'pdf-to-text', preset: 'txt', slug: { en: 'pdf-to-text', da: 'pdf-til-tekst' },
+    en: { name: 'PDF to text', title: 'PDF to text · Extract text from PDF, no upload', desc: 'Extract all text from a PDF into a plain text file in your browser. Free and private: your PDF is never uploaded.',
+      h1: 'Extract text from a PDF', lead: 'Copy all the text out of a PDF into a plain .txt file, page by page. Useful for quotes, notes and further editing. Nothing is uploaded.',
+      steps: ['Choose a PDF, or drop it on the page.', 'LunaVerta reads the text on every page.', 'Save the .txt file.'],
+      faq: [['Does it work on scanned PDFs?', 'Only if the scan already has a text layer. Plain scans are pictures with no text to extract.'], ['Is the layout kept?', 'Line breaks are kept, but columns and tables become plain text.']] },
+    da: { name: 'PDF til tekst', title: 'PDF til tekst · Hent tekst fra PDF, uden upload', desc: 'Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.',
+      h1: 'Hent teksten ud af en PDF', lead: 'Kopiér al teksten ud af en PDF til en almindelig .txt-fil, side for side. Praktisk til citater, noter og videre redigering. Intet bliver uploadet.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'LunaVerta læser teksten på alle sider.', 'Gem .txt-filen.'],
+      faq: [['Virker det med scannede PDF\'er?', 'Kun hvis scanningen allerede har et tekstlag. Almindelige scanninger er billeder uden tekst, der kan hentes ud.'], ['Bevares layoutet?', 'Linjeskift bevares, men kolonner og tabeller bliver til almindelig tekst.']] } }
+];
+
+// Mirror of the formats in app.js, for the "What converts to what" grid that is
+// written into the HTML (search engines and AI crawlers often don't run JavaScript).
+export const KINDS = {
+  image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ico', 'bmp', 'clean'] },
+  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'merge', 'split', 'shrink', 'png', 'jpg', 'txt'] },
+  doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
+  data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'html', 'md'] },
+  audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
+  video: { color: '--c-video', exts: ['mp4', 'webm', 'mov', 'm4v', 'mkv'], targets: ['gif', 'mp3', 'wav', 'png', 'jpg'] }
+};
+export const TOOL_TARGETS = ['edit', 'merge', 'split', 'shrink', 'clean'];

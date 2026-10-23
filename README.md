@@ -22,7 +22,8 @@ docs/                   ← the whole website. Deploy this folder, nothing else.
   robots.txt, sitemap.xml
 vercel.json             same headers for Vercel
 netlify.toml            tells Netlify to publish docs/
-scripts/                vendor.mjs (refresh libraries), stamp.mjs (cache version)
+src/template.html       page template; scripts/build-pages.mjs writes every page from it
+scripts/                vendor.mjs (refresh libraries), build-pages.mjs (pages, sitemap, llms.txt, version), site-content.mjs (page texts)
 ```
 
 There is no build step and no server code. Any static host works.
@@ -32,7 +33,7 @@ There is no build step and no server code. Any static host works.
 1. **Register the domain.** `lunaverta.com` showed no registration in the .com registry on 22 October 2026. Register it before anything else.
 2. **Company details.** The footer and privacy page name Midt-Tech (CVR 34256276) with contact lee@midttech.com. Update both if they change.
 3. **If you use a different domain**, search and replace `lunaverta.com` in `docs/index.html`, `docs/robots.txt` and `docs/sitemap.xml`.
-4. **Stamp the cache version** each time you change files: `npm run build` (or `node scripts/stamp.mjs`). This makes returning visitors pick up the new version.
+4. **Rebuild the pages** each time you change files: `node scripts/build-pages.mjs` (or `npm run build`). It writes all pages in English and Danish, sitemap.xml and llms.txt, and stamps the version so returning visitors get the update.
 
 ## Run it locally
 
@@ -83,3 +84,14 @@ Test HEIC, PDF, Word, Excel and MP3 conversions afterwards.
 - **Licenses:** LunaVerta's code is MIT. lamejs and libheif are LGPL-3.0 and are served as separate, unmodified files, which LGPL allows. See `THIRD_PARTY_NOTICES.md`.
 - **Browser support:** current Chrome, Edge, Firefox and Safari. "Open with LunaVerta" from the file manager needs an installed app in Chrome or Edge on desktop.
 - **Not included:** video-to-video re-encoding and legacy Office formats (DOC, PPT). Those need FFmpeg or LibreOffice, which are very heavy in a browser.
+
+## Search engines and AI assistants (SEO / GEO)
+
+- Every page is written as finished HTML in English (`/`) and Danish (`/da/`), with `hreflang` links between them, so search engines and AI crawlers read the text without running JavaScript.
+- One page per tool (for example `/heic-to-jpg/` and `/da/heic-til-jpg/`), each with its own title, description, heading, steps and questions, and the converter set to that tool.
+- Structured data (schema.org): Organization, WebSite, WebApplication, FAQPage, HowTo and BreadcrumbList.
+- `sitemap.xml` with language alternates, `robots.txt` that welcomes AI crawlers, and `llms.txt` with a plain summary for AI assistants.
+
+**Add a tool page:** add an entry to `TOOLS` in `scripts/site-content.mjs` (both languages), then run `node scripts/build-pages.mjs`.
+
+**After deploying:** add lunaverta.com to [Google Search Console](https://search.google.com/search-console) and [Bing Webmaster Tools](https://www.bing.com/webmasters) and submit `https://lunaverta.com/sitemap.xml`. Bing also feeds ChatGPT search and Copilot.
