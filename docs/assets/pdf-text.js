@@ -190,9 +190,14 @@ const apply = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[
 // 'removed' (the whole line was removed, draw the new text), 'picture' (the
 // line is part of a picture: its hidden text layer was removed, but it must
 // still be covered) or 'failed'.
-async function strip(doc, page, edits) {
+// boxes: [[x1, y1, x2, y2]] areas to black out. Every letter in them is
+// removed. result.flatten is true when something else lies under a box (a
+// picture, a drawing in a sub-page, or text LunaVerta can't read): such a page
+// must be turned into an image for the black-out to be safe.
+async function strip(doc, page, edits, boxes = []) {
   const P = window.PDFLib, N = k => P.PDFName.of(k);
   const result = edits.map(() => 'failed');
+  result.flatten = false;
   const decode = st => (st instanceof P.PDFRawStream ? P.decodePDFRawStream(st).decode() : st.getContents ? st.getContents() : new Uint8Array());
   const bin = u8 => { let s = ''; for (let k = 0; k < u8.length; k += 8192) s += String.fromCharCode.apply(null, u8.subarray(k, k + 8192)); return s; };
   const streamText = st => bin(decode(st));
@@ -200,11 +205,12 @@ async function strip(doc, page, edits) {
   try {
     const c = page.node.Contents();
     if (!c) return result;
+    result.oldContents = page.node.get(N('Contents'));
     const parts = [];
     if (c.size && !(c instanceof P.PDFStream)) for (let k = 0; k < c.size(); k++) parts.push(streamText(c.lookup(k)));
     else parts.push(streamText(c));
     src = parts.join('\n');
-  } catch (e) { console.warn('Could not read page content', e); return result; }
+  } catch (e) { console.warn('Could not read page content', e); result.flatten = boxes.length > 0; return result; }
   const ops = tokenize(src);
   const res = page.node.Resources();
   const fontDict = res && res.lookup(N('Font'));
@@ -224,7 +230,9 @@ async function strip(doc, page, edits) {
   };
 
   // pass 1: find every letter and where it is drawn
-  const glyphs = [];
+  const glyphs = [], draws = [];
+  let unknown = false;
+  const area = m => { const pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y]) => apply(m, x, y)); const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
   let gs = { ctm: [1, 0, 0, 1, 0, 0], tr: 0, tc: 0, tw: 0, th: 1, tl: 0, rise: 0, font: null, fs: 0 };
   const stack = [];
   let tm = [1, 0, 0, 1, 0, 0], tlm = tm;
@@ -232,7 +240,7 @@ async function strip(doc, page, edits) {
   const show = async (op, idx, items) => {
     const f = gs.font;
     op.show = { factor: 0, ok: false };
-    if (!f || !f.ok || !gs.fs || !gs.th) return;
+    if (!f || !f.ok || !gs.fs || !gs.th) { unknown = true; return; }
     const trm0 = mul(tm, gs.ctm);
     const sx = Math.hypot(trm0[0], trm0[1]);
     op.show = { ok: true, factor: 1000 / (gs.fs * gs.th * (sx || 1)), bytes: f.bytes };
@@ -279,6 +287,8 @@ async function strip(doc, page, edits) {
       case 'TJ': await show(o, idx, a[0] && a[0].t === 'arr' ? a[0].v : []); break;
       case "'": tm = tlm = mul([1, 0, 0, 1, 0, -gs.tl], tlm); await show(o, idx, [a[0]]); break;
       case '"': { const [aw, ac] = nums(a); gs.tw = aw; gs.tc = ac; tm = tlm = mul([1, 0, 0, 1, 0, -gs.tl], tlm); await show(o, idx, [a[2]]); break; }
+      case 'Do': case 'BI': draws.push(area(gs.ctm)); break;
+      case 'sh': draws.push([-1e9, -1e9, 1e9, 1e9]); break;
     }
   }
 
@@ -309,6 +319,12 @@ async function strip(doc, page, edits) {
       result[ei] = 'removed';
     }
   });
+  // black-out boxes: every letter touching a box goes
+  const hits = (b, r) => r[2] > b[0] && r[0] < b[2] && r[3] > b[1] && r[1] < b[3];
+  for (const b of boxes) {
+    for (const g of glyphs) if (g.xR > b[0] && g.xL < b[2] && g.yc > b[1] && g.yc < b[3]) plan.set(g, { removed: true, shift: 0 });
+    if (unknown || draws.some(d => hits(b, d))) result.flatten = true;
+  }
   if (!plan.size) return result;
 
   // pass 2: write the instructions again without those letters
@@ -351,7 +367,7 @@ async function strip(doc, page, edits) {
     if (o.op === '"') text = `${fmt(o.args[0].v)} Tw ${fmt(o.args[1].v)} Tc T* ` + arr;
     repl.push([o.start, o.end, text]);
   }
-  if (!repl.length) return result.map(() => 'failed');
+  if (!repl.length) { const r = result.map(() => 'failed'); r.flatten = result.flatten; return r; }
   let outStr = '', last = 0;
   for (const [s, e, t] of repl.sort((a, b) => a[0] - b[0])) { outStr += src.slice(last, s) + t; last = e; }
   outStr += src.slice(last);

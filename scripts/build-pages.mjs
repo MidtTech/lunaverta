@@ -126,7 +126,7 @@ function render(lang, page) {
     OG_LOCALE: lang === 'da' ? 'da_DK' : 'en_GB', OG_LOCALE_ALT: lang === 'da' ? 'en_GB' : 'da_DK',
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
     EN_PRESSED: String(lang === 'en'), DA_PRESSED: String(lang === 'da'),
-    HERO: hero, PRESET: preset, DOCK_HINT: dock, REFGRID: refGrid(lang),
+    HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
     NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };

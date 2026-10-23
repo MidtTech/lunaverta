@@ -112,7 +112,7 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'ed-card' + (pg.deleted ? ' deleted' : '');
     card.draggable = !pg.deleted; card.dataset.id = pg.id;
-    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim());
+    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim()) || S.boxes.some(b => b.pageId === pg.id);
     const num = pg.deleted ? '' : T('ed.page', { n }) + (changed ? ' · ' + T('ed.changed') : '');
     card.innerHTML = `
       <button class="ed-thumb" type="button" aria-label="${esc(T('ed.openPage', { n: num || '' }))}" ${pg.deleted ? 'disabled' : ''}><img alt="" style="transform:rotate(${pg.rotate}deg)"></button>
@@ -152,7 +152,7 @@ function renderGrid() {
 
 // ---------- one page: add text, fill in forms ----------
 function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; renderPage(); }
-function showGrid() { S.adding = false; S.editing = false; renderGrid(); }
+function showGrid() { S.adding = false; S.editing = false; S.redacting = false; renderGrid(); }
 let renderSeq = 0;
 async function renderPage() {
   const seq = ++renderSeq;
@@ -165,20 +165,22 @@ async function renderPage() {
       <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}" ${pos < live.length - 1 ? '' : 'disabled'}>›</button></span>
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${S.adding}">${esc(T('ed.addText'))}</button>
+    <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
-    ${S.editing || S.adding ? `<button class="btn sm primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>` : ''}
+    ${S.editing || S.adding || S.redacting ? `<button class="btn sm primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>` : ''}
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
   const done = $('#edDone');
-  if (done) done.onclick = () => { if (document.activeElement) document.activeElement.blur(); S.editing = false; S.adding = false; S.justDone = true; renderPage(); };
+  if (done) done.onclick = () => { if (document.activeElement) document.activeElement.blur(); S.editing = false; S.adding = false; S.redacting = false; S.justDone = true; renderPage(); };
+  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; renderPage(); };
   $('#edPrev').onclick = () => openPage(live[pos - 1].id);
   $('#edNext').onclick = () => openPage(live[pos + 1].id);
-  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; renderPage(); };
-  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; renderPage(); };
+  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; renderPage(); };
+  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
 
   const body = $('#edBody');
-  body.innerHTML = `<div class="ed-stage-wrap"><div class="ed-stage${S.adding ? ' adding' : ''}" id="edStage"><canvas></canvas><div class="ed-layer" id="edLayer"></div></div></div>`;
+  body.innerHTML = `<div class="ed-stage-wrap"><div class="ed-stage${S.adding ? ' adding' : ''}${S.redacting ? ' redacting' : ''}" id="edStage"><canvas></canvas><div class="ed-layer" id="edLayer"></div></div></div>`;
   const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
   if (seq !== renderSeq || S.view !== 'page' || S.current !== pg.id) return;
   const rot = (page.rotate + pg.rotate) % 360;
@@ -202,8 +204,10 @@ async function renderPage() {
   if (S.editing || S.edits.some(x => x.pageId === pg.id)) runs = await textRuns(page, pg, vp, layer, canvas, dpr);
   if (seq !== renderSeq) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
+  S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
+  if (S.redacting) drawBoxes(pg, vp, layer);
   const justDone = S.justDone; S.justDone = false;
-  $('#edPageHint').textContent = justDone ? T('ed.doneHint') : S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
+  $('#edPageHint').textContent = justDone ? T('ed.doneHint') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 
   stage.addEventListener('click', e => {
     if (!S.adding || e.target !== layer) return;
@@ -371,6 +375,45 @@ function textBox(t, vp, layer, rot) {
   return box;
 }
 
+// ---------- blacking out ----------
+// Boxes are kept in PDF units, so they stay put whatever the zoom or rotation.
+function blackBox(b, vp, layer) {
+  const [x1, y1, x2, y2] = vp.convertToViewportRectangle([b.x1, b.y1, b.x2, b.y2]);
+  const el = document.createElement('div');
+  el.className = 'ed-box';
+  Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
+  if (S.redacting) {
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'ed-ico ed-box-x'; x.innerHTML = ICON.x;
+    x.title = T('ed.removeBox'); x.setAttribute('aria-label', T('ed.removeBox'));
+    x.onclick = e => { e.stopPropagation(); S.boxes = S.boxes.filter(o => o !== b); S.dirty = true; el.remove(); };
+    el.appendChild(x);
+  }
+  layer.appendChild(el);
+  return el;
+}
+function drawBoxes(pg, vp, layer) {
+  layer.addEventListener('pointerdown', e => {
+    if (!S.redacting || e.target !== layer || e.button) return;
+    e.preventDefault();
+    const r = layer.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const ghost = document.createElement('div'); ghost.className = 'ed-box drawing'; layer.appendChild(ghost);
+    let ex = sx, ey = sy;
+    const move = ev => {
+      ex = Math.min(Math.max(0, ev.clientX - r.left), r.width); ey = Math.min(Math.max(0, ev.clientY - r.top), r.height);
+      Object.assign(ghost.style, { left: Math.min(sx, ex) + 'px', top: Math.min(sy, ey) + 'px', width: Math.abs(ex - sx) + 'px', height: Math.abs(ey - sy) + 'px' });
+    };
+    const up = () => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); ghost.remove();
+      if (Math.abs(ex - sx) < 4 || Math.abs(ey - sy) < 4) return;
+      const [ax, ay] = vp.convertToPdfPoint(sx, sy), [bx, by] = vp.convertToPdfPoint(ex, ey);
+      const b = { id: ++uid, pageId: pg.id, x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) };
+      S.boxes.push(b); S.dirty = true; blackBox(b, vp, layer);
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+}
+
 async function formFields(page, vp, layer) {
   let annots = [];
   try { annots = await page.getAnnotations({ intent: 'display' }); } catch (e) { return 0; }
@@ -447,16 +490,16 @@ async function save() {
       else page = (await out.copyPages(libs[pg.doc], [pg.index]))[0];
       final.push({ pg, page });
     }
-    // fields whose widgets all sit on deleted pages go too
-    if (keptMain.size < origPages.length) {
-      try {
-        const form = out.getForm(), keptRefs = new Set([...keptMain].map(i => origPages[i].ref.toString()));
-        for (const f of form.getFields()) {
-          const ws = f.acroField.getWidgets();
-          if (ws.length && ws.every(w => { const p = w.P(); return p && !keptRefs.has(p.toString()); })) form.removeField(f);
-        }
-      } catch (e) { console.warn('Form clean-up skipped', e); }
-    }
+    // Deleted pages are emptied, so nothing of them is left in the file even if
+    // a bookmark still points at them.
+    const N = k => PDFLib.PDFName.of(k), oldRefs = [];
+    origPages.forEach((p, i) => {
+      if (keptMain.has(i)) return;
+      oldRefs.push(p.node.get(N('Contents')));
+      p.node.set(N('Contents'), out.context.obj([]));
+      p.node.set(N('Resources'), out.context.obj({}));
+      p.node.delete(N('Annots'));
+    });
     for (let i = out.getPageCount() - 1; i >= 0; i--) out.removePage(i);
     for (const { page } of final) out.addPage(page);
     // 3. rotation, corrected text and added text
@@ -466,15 +509,37 @@ async function save() {
     const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
     const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
     let covered = 0;
-    for (const { pg, page } of final) {
+    const flatten = [];
+    for (const [pi, { pg, page }] of final.entries()) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
       if (pg.rotate) page.setRotation(degrees(turn));
       const mb = page.getMediaBox();
       // Changed lines: the old letters are taken out of the page. Where that
       // isn't possible, the old line is covered with its background colour.
       const eds = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig);
+      const boxes = S.boxes.filter(b => b.pageId === pg.id).map(b => [b.x1, b.y1, b.x2, b.y2]);
       let how = eds.map(() => 'failed');
-      if (eds.length) { try { how = await window.LVPdfText.strip(out, page, eds); } catch (e) { console.warn('Text removal failed', e); } }
+      if (eds.length || boxes.length) {
+        try { how = await window.LVPdfText.strip(out, page, eds, boxes); if (how.oldContents) oldRefs.push(how.oldContents); }
+        catch (e) { console.warn('Text removal failed', e); how.flatten = boxes.length > 0; }
+      }
+      // Black-out boxes: letters under them are gone (above); draw the box, and
+      // drop comments and form fields under it.
+      for (const [x1, y1, x2, y2] of boxes) page.drawRectangle({ x: x1, y: y1, width: x2 - x1, height: y2 - y1, color: rgb(0, 0, 0) });
+      if (boxes.length) {
+        const annots = page.node.lookup(N('Annots'));
+        if (annots && annots.size) {
+          const keep = [];
+          for (let i = 0; i < annots.size(); i++) {
+            const a = annots.lookup(i), r = a && a.lookup && a.lookup(N('Rect'));
+            const rc = r && r.size ? [0, 1, 2, 3].map(k => r.lookup(k).asNumber()) : null;
+            const under = rc && boxes.some(b => Math.max(rc[0], rc[2]) > b[0] && Math.min(rc[0], rc[2]) < b[2] && Math.max(rc[1], rc[3]) > b[1] && Math.min(rc[1], rc[3]) < b[3]);
+            if (!under) keep.push(annots.get(i));
+          }
+          page.node.set(N('Annots'), out.context.obj(keep));
+        }
+      }
+      if (how.flatten) flatten.push(pi);
       for (const [i, ed] of eds.entries()) {
         if (how[i] === 'kept') continue; // only words were deleted; the rest stays in its own font
         if (how[i] === 'failed' || how[i] === 'picture') { covered++; page.drawRectangle({ x: ed.x - 1, y: ed.y - ed.size * .25, width: ed.w + 2, height: ed.size * 1.2, color: col(ed.bg) }); }
@@ -493,7 +558,50 @@ async function save() {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });
       }
     }
-    const bytes = await out.save();
+    // Pages where a box covers a picture (or text LunaVerta can't read) become
+    // an image of the finished page, so nothing under the box survives.
+    if (flatten.length) {
+      await app().lib('pdfjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = app().VENDOR + 'pdf.worker.min.js';
+      const js = await pdfjsLib.getDocument({ data: await out.save(), isEvalSupported: false }).promise;
+      const pages = out.getPages();
+      for (const pi of flatten) {
+        const jp = await js.getPage(pi + 1), vp = jp.getViewport({ scale: 200 / 72, rotation: 0 });
+        const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+        const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        await jp.render({ canvasContext: ctx, viewport: vp, annotationMode: 0 }).promise;
+        const jpg = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
+        const img = await out.embedJpg(new Uint8Array(await jpg.arrayBuffer()));
+        const [bx, by, bx2, by2] = jp.view, page = pages[pi];
+        const tmp = out.addPage([bx2 - bx, by2 - by]);
+        tmp.drawImage(img, { x: bx, y: by, width: bx2 - bx, height: by2 - by });
+        oldRefs.push(page.node.get(N('Contents')));
+        page.node.set(N('Contents'), tmp.node.get(N('Contents')));
+        page.node.set(N('Resources'), tmp.node.get(N('Resources')));
+        page.node.delete(N('Annots'));
+        out.removePage(out.getPageCount() - 1);
+      }
+    }
+    // Form fields left without a visible box (deleted or blacked-out pages) go.
+    if (oldRefs.length || S.boxes.length) {
+      try {
+        const shown = new Set();
+        for (const p of out.getPages()) { const a = p.node.lookup(N('Annots')); if (a && a.size) for (let i = 0; i < a.size(); i++) shown.add(String(a.get(i))); }
+        const form = out.getForm();
+        for (const f of form.getFields()) {
+          const ws = f.acroField.getWidgets();
+          if (ws.length && ws.every(w => !shown.has(String(out.context.getObjectRef(w.dict))))) form.removeField(f);
+        }
+      } catch (e) { console.warn('Form clean-up skipped', e); }
+    }
+    // Old page drawings that are no longer used are deleted from the file.
+    const inUse = new Set();
+    for (const p of out.getPages()) { const c = p.node.get(N('Contents')); (c && c.asArray ? c.asArray() : [c]).forEach(r => inUse.add(String(r))); }
+    for (const c of oldRefs) for (const r of (c && c.asArray ? c.asArray() : [c])) if (r instanceof PDFLib.PDFRef && !inUse.has(String(r))) out.context.delete(r);
+    let bytes = await out.save();
+    // Rewrite so only what the PDF still uses is kept (removed pages, letters,
+    // pictures and fields are then really gone).
+    if (oldRefs.length || S.boxes.length) { try { bytes = await app().tidyPDF(bytes); } catch (e) { console.warn('Tidy-up skipped', e); } }
     const name = app().base(S.docs[0].file.name) + '-edited.pdf';
     app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name, blob: new Blob([bytes], { type: 'application/pdf' }) }]);
     S.dirty = false; close();
@@ -505,13 +613,15 @@ async function save() {
 }
 
 // ---------- open ----------
-async function open(files) {
-  S = { docs: [], pages: [], texts: [], edits: [], editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+async function open(files, opt = {}) {
+  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
   try { for (const f of files) await addDoc(f); }
   catch (e) { close(); app().toast(e.message); return; }
+  // The Redact PDF page opens the first page ready to black out.
+  if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
   render();
   $('#edSave').focus();
 }

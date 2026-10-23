@@ -21,6 +21,10 @@ Key facts:
 - [Merge PDF](https://lunaverta.com/merge-pdf/): Combine several PDF files (and images) into one PDF in your browser. Drag to set the order. Free and private: nothing is uploaded.
 - [Split PDF](https://lunaverta.com/split-pdf/): Split a PDF into separate one-page PDF files in your browser. Free and private: your PDF is never uploaded.
 - [Compress PDF](https://lunaverta.com/compress-pdf/): Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.
+- [Protect PDF](https://lunaverta.com/protect-pdf/): Add a password to a PDF in your browser with AES-256 encryption. Free and private: the PDF and the password never leave your device.
+- [Unlock PDF](https://lunaverta.com/unlock-pdf/): Remove the password from a PDF you can open, right in your browser. Free and private: your PDF is never uploaded.
+- [Redact PDF](https://lunaverta.com/redact-pdf/): Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.
+- [Remove PDF metadata](https://lunaverta.com/remove-pdf-metadata/): Strip author names, software, dates, attachments and scripts from a PDF before you share it. Free and private: your PDF is never uploaded.
 - [Edit PDF](https://lunaverta.com/edit-pdf/): Edit PDFs in your browser: correct text, add text, fill in forms, reorder, rotate and delete pages. Free and private, no upload.
 - [PDF to JPG](https://lunaverta.com/pdf-to-jpg/): Turn every page of a PDF into a JPG image in your browser. Free and private: your PDF is never uploaded.
 - [PDF to PNG](https://lunaverta.com/pdf-to-png/): Turn every page of a PDF into a PNG image in your browser. Lossless and sharp. Free and private, no upload.
@@ -40,6 +44,10 @@ Key facts:
 - [Saml PDF](https://lunaverta.com/da/saml-pdf/): Saml flere PDF-filer (og billeder) til én PDF i din browser. Træk for at vælge rækkefølgen. Gratis og privat: intet bliver uploadet.
 - [Del PDF](https://lunaverta.com/da/del-pdf/): Del en PDF op i separate PDF-filer med én side hver, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Komprimér PDF](https://lunaverta.com/da/komprimer-pdf/): Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Beskyt PDF](https://lunaverta.com/da/beskyt-pdf-med-adgangskode/): Sæt adgangskode på en PDF direkte i din browser med AES-256-kryptering. Gratis og privat: PDF'en og adgangskoden forlader aldrig din enhed.
+- [Lås PDF op](https://lunaverta.com/da/fjern-adgangskode-fra-pdf/): Fjern adgangskoden fra en PDF, du kan åbne, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Overstreg PDF](https://lunaverta.com/da/overstreg-pdf/): Overstreg navne, CPR-numre og anden fortrolig tekst i en PDF. Teksten fjernes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Redigér PDF](https://lunaverta.com/da/rediger-pdf/): Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.
 - [PDF til JPG](https://lunaverta.com/da/pdf-til-jpg/): Lav hver side i en PDF om til et JPG-billede direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 - [PDF til PNG](https://lunaverta.com/da/pdf-til-png/): Lav hver side i en PDF om til et PNG-billede direkte i din browser. Tabsfrit og skarpt. Gratis og privat, uden upload.

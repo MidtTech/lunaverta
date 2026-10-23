@@ -2831,3 +2831,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ```
+
+## qpdf-wasm 0.3.0 (qpdf compiled to WebAssembly)
+
+Source: https://github.com/neslinesli93/qpdf-wasm (wrapper, ISC License) and https://github.com/qpdf/qpdf (qpdf, Apache License 2.0).
+Files: docs/vendor/qpdf.js, docs/vendor/qpdf.wasm, served unmodified.
+
+qpdf is Copyright (c) 2005-2024 Jay Berkenbilt and contributors, licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0). The build includes zlib (zlib License) and libjpeg (IJG License);
+this software is based in part on the work of the Independent JPEG Group.

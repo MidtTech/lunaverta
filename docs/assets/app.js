@@ -16,7 +16,8 @@ const LIBS = {
   turndown: 'turndown.js',
   heif: 'libheif.js',
   docx: 'docx-preview.min.js',
-  h2c: 'html2canvas.min.js'
+  h2c: 'html2canvas.min.js',
+  qpdf: 'qpdf.js'
 };
 const loaded = {};
 function lib(name) {
@@ -33,7 +34,7 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','merge','split','shrink','png','jpg','txt'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','merge','split','shrink','protect','unlock','clean','png','jpg','txt'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -41,14 +42,14 @@ const KINDS = {
 };
 const OUT = {
   png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
-  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true },
+  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['edit','merge','split','shrink','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
+const ORDER = ['edit','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -1082,6 +1083,104 @@ async function cleanImage(file, o) {
   return [{ name: `${b}-clean.${e}`, blob: file.slice(0, file.size, file.type), noteKey: 'clean.none' }];
 }
 
+// ---------- qpdf: passwords and tidy rewrites ----------
+// qpdf compiled to WebAssembly (scripts/vendor.mjs). Each run reads /in.pdf and
+// writes /out.pdf in qpdf's own in-memory file system.
+let qpdfMod = null;
+async function qpdf(bytes, args) {
+  await lib('qpdf');
+  if (!qpdfMod) {
+    const res = await fetch(VENDOR + 'qpdf.wasm');
+    if (!res.ok) throw new Error(T(navigator.onLine ? 'err.lib.online' : 'err.lib.offline'));
+    qpdfMod = await window.Module({ wasmBinary: await res.arrayBuffer(), print() {}, printErr() {} });
+  }
+  const q = qpdfMod;
+  q.FS.writeFile('/in.pdf', bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+  let rc;
+  try { rc = q.callMain(args); } catch (e) { rc = e && typeof e.status === 'number' ? e.status : 2; }
+  let out = null;
+  try { if (rc === 0 || rc === 3) out = q.FS.readFile('/out.pdf'); } catch (e) {}
+  for (const f of ['/in.pdf', '/out.pdf']) try { q.FS.unlink(f); } catch (e) {}
+  return { rc, out };
+}
+async function isEncrypted(bytes) {
+  await lib('pdflib');
+  try { return (await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })).isEncrypted; }
+  catch (e) { throw new Error(T('err.pdf.read')); }
+}
+// Rewrites a PDF keeping only what it still uses, so removed pages, text and
+// data are really gone from the file.
+async function tidyPDF(bytes) {
+  const r = await qpdf(bytes, ['/in.pdf', '--object-streams=generate', '/out.pdf']);
+  return r.out || bytes;
+}
+async function protectPDF(file, pw) {
+  if (!pw) throw new Error(T('pw.missing'));
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (await isEncrypted(bytes)) throw new Error(T('err.pdf.alreadyLocked'));
+  // AES-256. The same password opens it and allows everything.
+  const r = await qpdf(bytes, ['--encrypt', pw, pw, '256', '--', '/in.pdf', '/out.pdf']);
+  if (!r.out) throw new Error(T('err.pdf.read'));
+  return [{ name: base(file.name) + '-protected.pdf', blob: new Blob([r.out], { type: 'application/pdf' }), noteKey: 'pw.protected' }];
+}
+async function unlockPDF(file, pw) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!(await isEncrypted(bytes))) throw new Error(T('err.pdf.notLocked'));
+  const r = await qpdf(bytes, ['--password=' + (pw || ''), '--decrypt', '/in.pdf', '/out.pdf']);
+  if (!r.out) throw new Error(T('pw.wrong'));
+  return [{ name: base(file.name) + '-unlocked.pdf', blob: new Blob([r.out], { type: 'application/pdf' }), noteKey: 'pw.unlocked' }];
+}
+// Removes what a PDF carries besides its pages: document information
+// (author, software, dates), XMP metadata, attachments, scripts, automatic
+// actions and comment notes.
+async function cleanPDF(file) {
+  await lib('pdflib');
+  const P = PDFLib, N = k => P.PDFName.of(k);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let doc;
+  try { doc = await P.PDFDocument.load(bytes, { updateMetadata: false }); }
+  catch (e) { throw new Error(T(/encrypt/i.test(e && e.message) ? 'err.pdf.locked' : 'err.pdf.read')); }
+  if (doc.isEncrypted) throw new Error(T('err.pdf.locked'));
+  const found = new Set();
+  const del = (dict, key, what) => { if (dict && dict.has && dict.has(N(key))) { dict.delete(N(key)); found.add(what); } };
+  if (doc.context.trailerInfo.Info) { doc.context.trailerInfo.Info = undefined; found.add('info'); }
+  const cat = doc.catalog;
+  del(cat, 'Metadata', 'meta'); del(cat, 'OpenAction', 'script'); del(cat, 'AA', 'script'); del(cat, 'PieceInfo', 'meta');
+  const names = cat.lookup(N('Names'));
+  if (names && names.has) { del(names, 'JavaScript', 'script'); del(names, 'EmbeddedFiles', 'files'); }
+  const af = cat.lookup(N('AcroForm'));
+  if (af && af.has) del(af, 'XFA', 'script');
+  const DROP = new Set(['/FileAttachment', '/Sound', '/Movie', '/Screen', '/RichMedia', '/Text', '/Popup']);
+  for (const page of doc.getPages()) {
+    del(page.node, 'AA', 'script'); del(page.node, 'PieceInfo', 'meta'); del(page.node, 'Metadata', 'meta');
+    const annots = page.node.lookup(N('Annots'));
+    if (!annots || !annots.size) continue;
+    const keep = [];
+    for (let i = 0; i < annots.size(); i++) {
+      const a = annots.lookup(i), sub = a && a.lookup && String(a.lookup(N('Subtype')) || '');
+      if (DROP.has(sub)) { found.add(sub === '/FileAttachment' ? 'files' : 'notes'); continue; }
+      const act = a && a.lookup && a.lookup(N('A'));
+      const s2 = act && act.lookup ? String(act.lookup(N('S')) || '') : '';
+      if (s2 === '/JavaScript' || s2 === '/Launch') { found.add('script'); continue; }
+      if (a && a.has) del(a, 'AA', 'script');
+      keep.push(annots.get(i));
+    }
+    page.node.set(N('Annots'), doc.context.obj(keep));
+  }
+  // metadata and scripts tucked into pictures, fonts and form fields
+  for (const [, obj] of doc.context.enumerateIndirectObjects()) {
+    const d = obj instanceof P.PDFStream ? obj.dict : obj instanceof P.PDFDict ? obj : null;
+    if (!d) continue;
+    del(d, 'Metadata', 'meta'); del(d, 'PieceInfo', 'meta');
+    if (String(d.lookup(N('S')) || '') === '/JavaScript') del(d, 'JS', 'script');
+  }
+  const saved = await doc.save({ useObjectStreams: true, updateFieldAppearances: false });
+  const out = await tidyPDF(saved);
+  const list = ['info', 'meta', 'files', 'script', 'notes'].filter(k => found.has(k)).map(k => T('pdfclean.' + k));
+  return [{ name: base(file.name) + '-clean.pdf', blob: new Blob([out], { type: 'application/pdf' }),
+    noteKey: list.length ? 'pdfclean.removed' : 'clean.none', noteVars: { what: list.join(', ') } }];
+}
+
 const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 async function convertImage(file, target, o) {
   if (target === 'clean') return cleanImage(file, o);
@@ -1097,6 +1196,9 @@ async function convertImage(file, target, o) {
 }
 async function convertPDF(file, target, o, progress) {
   if (target === 'split') return splitPDF(file, progress);
+  if (target === 'protect') return protectPDF(file, o.password);
+  if (target === 'unlock') return unlockPDF(file, o.password);
+  if (target === 'clean') return cleanPDF(file);
   await lib('pdfjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR + 'pdf.worker.min.js';
   let pdf;
@@ -1263,15 +1365,19 @@ function failJob(j, err) {
   j.status = 'err'; j.error = (err && err.message) || T('job.failed');
   console.error(err); renderJob(j); updateFoot();
 }
-function runBatch(files, target) {
+async function runBatch(files, target) {
   closeRing();
   const o = opts();
+  if (target === 'protect' || target === 'unlock') {
+    o.password = await askPassword(target);
+    if (o.password === null) return;
+  }
   const items = files.map(f => ({ f, kind: kindOf(f) })).filter(x => x.kind);
   const ok = items.filter(x => targetsFor(x.f).includes(target));
   const skipped = items.length - ok.length;
   if (target === 'edit') { // opens the PDF editor with every selected PDF
     const pdfs = ok.filter(x => x.kind === 'pdf').map(x => x.f);
-    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs);
+    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs, { redact: (document.querySelector('main[data-mode]') || {}).dataset?.mode === 'redact' });
     return;
   }
   if (target === 'merge') {
@@ -1492,12 +1598,44 @@ function renderRef() {
 renderRef();
 
 // ---------- toast ----------
+// ---------- password prompt ----------
+function askPassword(target) {
+  return new Promise(resolve => {
+    const protect = target === 'protect';
+    const d = document.createElement('dialog');
+    d.className = 'pw-dialog';
+    d.innerHTML = `<form method="dialog">
+      <h2>${esc(T(protect ? 'pw.titleProtect' : 'pw.titleUnlock'))}</h2>
+      <p class="pw-note">${esc(T(protect ? 'pw.noteProtect' : 'pw.noteUnlock'))}</p>
+      <label>${esc(T('pw.label'))}<input type="password" name="pw" autocomplete="${protect ? 'new-password' : 'current-password'}" required></label>
+      ${protect ? `<label>${esc(T('pw.repeat'))}<input type="password" name="pw2" autocomplete="new-password" required></label>` : ''}
+      <label class="pw-show"><input type="checkbox" name="show"> ${esc(T('pw.show'))}</label>
+      <p class="pw-err" role="alert" hidden></p>
+      <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary" value="ok">${esc(T(protect ? 'pw.okProtect' : 'pw.okUnlock'))}</button></div>
+    </form>`;
+    document.body.appendChild(d);
+    const f = d.querySelector('form'), err = d.querySelector('.pw-err');
+    let answer = null;
+    f.show.onchange = () => d.querySelectorAll('input[name^="pw"]').forEach(i => { i.type = f.show.checked ? 'text' : 'password'; });
+    d.querySelector('[value="cancel"]').onclick = () => d.close();
+    f.onsubmit = e => {
+      e.preventDefault();
+      const pw = f.pw.value;
+      if (!pw) return;
+      if (protect && pw !== f.pw2.value) { err.textContent = T('pw.mismatch'); err.hidden = false; f.pw2.focus(); return; }
+      answer = pw; d.close();
+    };
+    d.addEventListener('close', () => { d.remove(); resolve(answer); });
+    d.showModal(); f.pw.focus();
+  });
+}
+
 let toastT;
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m),
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF,
   addResult(srcName, target, outs) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
