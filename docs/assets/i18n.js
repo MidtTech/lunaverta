@@ -36,9 +36,12 @@ function t(key, vars) {
 // data-i18n-attr="attr:key;attr:key". Blocks with data-lang show for one language.
 function apply(root = document) {
   document.documentElement.lang = lang;
-  root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-  root.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
-  root.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => { const [a, k] = pair.split(':'); if (a && k) el.setAttribute(a.trim(), t(k.trim())); }));
+  const has = k => k in (STR[lang] || {}) || k in STR.en;
+  const tx = k => (has(k) ? t(k) : null);
+  // A missing text keeps what the page already says rather than showing its key.
+  root.querySelectorAll('[data-i18n]').forEach(el => { const s = tx(el.dataset.i18n); if (s !== null) el.textContent = s; });
+  root.querySelectorAll('[data-i18n-html]').forEach(el => { const s = tx(el.dataset.i18nHtml); if (s !== null) el.innerHTML = s; });
+  root.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => { const [a, k] = pair.split(':'); const s = a && k && tx(k.trim()); if (s) el.setAttribute(a.trim(), s); }));
   root.querySelectorAll('[data-lang]').forEach(el => { el.hidden = el.dataset.lang !== lang; });
   root.querySelectorAll('[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
   const title = document.querySelector('[data-i18n-title]');

@@ -186,6 +186,10 @@ h.update(readFileSync('src/template.html')).update(readFileSync('scripts/site-co
 const version = h.digest('hex').slice(0, 10);
 const pkgVersion = JSON.parse(readFileSync('package.json', 'utf8')).version;
 const label7 = `v${pkgVersion}+${version.slice(0, 7)}`;
-for (const p of pages) writeFileSync(p.file, readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today));
+// Asset addresses carry the version, so a new page never runs with old CSS or
+// scripts from a browser or offline cache.
+const bust = html => html.replace(/((?:\/|")assets\/[\w.-]+\.(?:css|js))(?:\?v=\w+)?"/g, `$1?v=${version}"`);
+for (const p of pages) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
+for (const f of ['docs/privacy.html', 'docs/licenses.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
 writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`));
 console.log(`Wrote ${pages.length} pages, sitemap.xml and llms.txt · ${label7}`);

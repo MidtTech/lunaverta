@@ -1,6 +1,6 @@
 // LunaVerta service worker: keeps the app working offline.
 // The app shell is stored on install; helper libraries are stored the first time they are used.
-const VERSION = '1d002fb561';
+const VERSION = '59a67b7b9d';
 const CACHE = 'lunaverta-' + VERSION;
 const SHELL = [
   './', 'index.html', 'da/', 'privacy.html', 'licenses.html', 'assets/app.css', 'assets/strings.js', 'assets/i18n.js', 'assets/app.js', 'assets/editor.js', 'manifest.webmanifest',
@@ -11,7 +11,7 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -32,8 +32,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   // Everything else: cache first, then network (and remember it for next time).
+  // Asset addresses carry ?v=<version>, so a new version is a new address.
   e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => {
     if (res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
     return res;
-  })));
+  }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || Promise.reject(new Error('offline'))))));
 });
