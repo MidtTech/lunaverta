@@ -151,7 +151,9 @@ function renderGrid() {
 // ---------- one page: add text, fill in forms ----------
 function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; renderPage(); }
 function showGrid() { S.adding = false; S.editing = false; renderGrid(); }
+let renderSeq = 0;
 async function renderPage() {
+  const seq = ++renderSeq;
   const live = S.pages.filter(p => !p.deleted), pos = live.findIndex(p => p.id === S.current);
   const pg = live[pos]; if (!pg) return renderGrid();
   $('#edTools').innerHTML = `
@@ -173,7 +175,7 @@ async function renderPage() {
   const body = $('#edBody');
   body.innerHTML = `<div class="ed-stage-wrap"><div class="ed-stage${S.adding ? ' adding' : ''}" id="edStage"><canvas></canvas><div class="ed-layer" id="edLayer"></div></div></div>`;
   const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
-  if (S.view !== 'page' || S.current !== pg.id) return;
+  if (seq !== renderSeq || S.view !== 'page' || S.current !== pg.id) return;
   const rot = (page.rotate + pg.rotate) % 360;
   const base1 = page.getViewport({ scale: 1, rotation: rot });
   const avail = Math.min(body.clientWidth - 32, 980);
@@ -185,12 +187,15 @@ async function renderPage() {
   stage.style.width = vp.width + 'px'; stage.style.height = vp.height + 'px';
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  // A newer render (say, Edit text pressed while this one ran) owns the page now.
+  if (seq !== renderSeq) return;
 
   const layer = $('#edLayer');
   let fields = 0;
   if (pg.doc === 0) fields = await formFields(page, vp, layer);
   let runs = 0;
   if (S.editing || S.edits.some(x => x.pageId === pg.id)) runs = await textRuns(page, pg, vp, layer, canvas, dpr);
+  if (seq !== renderSeq) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
   $('#edPageHint').textContent = S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 
@@ -207,10 +212,10 @@ async function renderPage() {
   });
 }
 // ---------- correcting existing text ----------
-// Text in a PDF is drawn at fixed positions, so a correction covers the old
-// line with its background colour and writes the new text in the same spot,
-// in the closest standard font, size and colour. The old text is covered,
-// not removed.
+// Text in a PDF is drawn at fixed positions. On saving, the old letters are
+// removed from the page (see pdf-text.js). Deleted words simply disappear and
+// the rest of the line keeps its font; changed text is written in the same
+// spot in the closest standard font, size and colour.
 function fontStyle(page, fontName, styles) {
   let name = '';
   try { if (page.commonObjs.has(fontName)) { const f = page.commonObjs.get(fontName); name = (f && (f.name || f.loadedName)) || ''; } } catch (e) {}
@@ -278,8 +283,14 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       undo.title = undo.ariaLabel = T('ed.undoEdit'); undo.setAttribute('aria-label', T('ed.undoEdit'));
       Object.assign(undo.style, { left: (box.left + Math.max(box.width, el.offsetWidth || box.width) + 4) + 'px', top: (box.top - 4) + 'px' });
       undo.onclick = () => { S.edits = S.edits.filter(x => x !== edit); S.dirty = true; renderPage(); };
-      layer.append(el, undo); fit();
-      requestAnimationFrame(() => { undo.style.left = (box.left + el.offsetWidth + 4) + 'px'; });
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'ed-ico ed-undo ed-delline'; del.innerHTML = ICON.del;
+      del.title = T('ed.deleteLine'); del.setAttribute('aria-label', T('ed.deleteLine'));
+      del.onclick = () => { el.value = ''; edit.text = ''; S.dirty = true; fit(); el.focus(); };
+      const place = () => { const l = box.left + el.offsetWidth + 4; undo.style.left = l + 'px'; del.style.left = (l + 30) + 'px'; del.style.top = undo.style.top; };
+      layer.append(el, undo, del); fit(); place();
+      el.addEventListener('input', place);
+      requestAnimationFrame(place);
       return el;
     };
     if (edit) { show(); continue; }
@@ -428,12 +439,19 @@ async function save() {
     const fonts = {};
     const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
     const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
+    let covered = 0;
     for (const { pg, page } of final) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
       if (pg.rotate) page.setRotation(degrees(turn));
       const mb = page.getMediaBox();
-      for (const ed of S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig)) {
-        page.drawRectangle({ x: ed.x - 1, y: ed.y - ed.size * .25, width: ed.w + 2, height: ed.size * 1.2, color: col(ed.bg) });
+      // Changed lines: the old letters are taken out of the page. Where that
+      // isn't possible, the old line is covered with its background colour.
+      const eds = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig);
+      let how = eds.map(() => 'failed');
+      if (eds.length) { try { how = await window.LVPdfText.strip(out, page, eds); } catch (e) { console.warn('Text removal failed', e); } }
+      for (const [i, ed] of eds.entries()) {
+        if (how[i] === 'kept') continue; // only words were deleted; the rest stays in its own font
+        if (how[i] === 'failed' || how[i] === 'picture') { covered++; page.drawRectangle({ x: ed.x - 1, y: ed.y - ed.size * .25, width: ed.w + 2, height: ed.size * 1.2, color: col(ed.bg) }); }
         if (!ed.text.trim()) continue;
         const f = await fontFor(ed.font), text = ed.text.replace(app().WIN_ANSI, '?');
         // Size the standard font so the original line would have had its original width.
@@ -453,7 +471,7 @@ async function save() {
     const name = app().base(S.docs[0].file.name) + '-edited.pdf';
     app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name, blob: new Blob([bytes], { type: 'application/pdf' }) }]);
     S.dirty = false; close();
-    app().toast(T('ed.saved', { name }));
+    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name }));
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed'));
     btn.disabled = false; btn.textContent = T('ed.save');
