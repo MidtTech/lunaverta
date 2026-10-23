@@ -241,7 +241,8 @@ function lineRuns(items) {
     const gap = last ? e - (last.x + last.w) : 0;
     if (sameLine && gap > -size * .3 && gap < size * .9) {
       last.str += (gap > size * .15 && !/\s$/.test(last.str) && !/^\s/.test(it.str) ? ' ' : '') + it.str;
-      last.w = Math.max(last.w, e + it.width - last.x);
+      // Spaces don't widen the line: some PDFs use one wide space to reach the next column.
+      if (it.str.trim()) last.w = Math.max(last.w, e + it.width - last.x);
     } else if (it.str.trim()) runs.push({ str: it.str, x: e, y: f, w: it.width, size, fontName: it.fontName });
   }
   return runs.map(r => ({ ...r, str: r.str.replace(/\s+$/, '') })).filter(r => r.str.trim() && r.w > 0);
@@ -282,10 +283,26 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
         fontFamily: CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
         fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`
       });
-      const fit = () => { el.style.width = `calc(${Math.max(edit.text.length, 2)}ch * .62 + 12px)`; };
+      // Size the box to its text in the font it is shown in, so all of it is visible.
+      const fit = () => {
+        const c = fit.c || (fit.c = document.createElement('canvas').getContext('2d'));
+        c.font = `${el.style.fontStyle} ${el.style.fontWeight} ${el.style.fontSize} ${el.style.fontFamily}`;
+        el.style.width = Math.ceil(c.measureText(edit.text || '  ').width + 12) + 'px';
+      };
       if (!S.editing) { layer.append(el); fit(); if (!edit.text) el.style.width = box.width + 'px'; return el; } // finished: just show the result
       el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); };
-      el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
+      // Enter finishes the line. If some text is selected, Enter deletes it
+      // first: select what should go, press Enter.
+      el.onkeydown = e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (el.selectionStart !== el.selectionEnd) {
+          el.setRangeText('', el.selectionStart, el.selectionEnd, 'end');
+          el.value = el.value.replace(/\s{2,}/g, ' ').trim();
+          edit.text = el.value; S.dirty = true; fit(); el.dispatchEvent(new Event('input'));
+        }
+        el.blur();
+      };
       const undo = document.createElement('button');
       undo.type = 'button'; undo.className = 'ed-ico ed-undo'; undo.innerHTML = ICON.undo;
       undo.title = undo.ariaLabel = T('ed.undoEdit'); undo.setAttribute('aria-label', T('ed.undoEdit'));
@@ -295,7 +312,8 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       del.type = 'button'; del.className = 'ed-ico ed-undo ed-delline'; del.innerHTML = ICON.del;
       del.title = T('ed.deleteLine'); del.setAttribute('aria-label', T('ed.deleteLine'));
       del.onclick = () => { el.value = ''; edit.text = ''; S.dirty = true; fit(); el.focus(); };
-      const place = () => { const l = box.left + el.offsetWidth + 4; undo.style.left = l + 'px'; del.style.left = (l + 30) + 'px'; del.style.top = undo.style.top; };
+      // The buttons sit just above the end of the line, so they don't hide the next column.
+      const place = () => { const l = box.left + Math.max(el.offsetWidth, box.width) - 52, t = Math.max(0, box.top - 28) + 'px'; undo.style.left = l + 'px'; del.style.left = (l + 28) + 'px'; undo.style.top = del.style.top = t; };
       layer.append(el, undo, del); fit(); place();
       el.addEventListener('input', place);
       requestAnimationFrame(place);
