@@ -453,7 +453,12 @@ async function formFields(page, vp, layer) {
 
 // ---------- saving ----------
 async function save() {
-  const btn = $('#edSave'); btn.disabled = true; btn.textContent = T('ed.saving');
+  const btn = $('#edSave');
+  // Ask where to save first, while the click still counts as the visitor's.
+  const name = app().base(S.docs[0].file.name) + '-edited.pdf';
+  const handle = await app().pickTarget(name, 'application/pdf');
+  if (handle === null) return; // cancelled: stay in the editor
+  btn.disabled = true; btn.textContent = T('ed.saving');
   try {
     await app().lib('pdflib');
     const { PDFDocument, StandardFonts, degrees, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList, rgb } = PDFLib;
@@ -602,10 +607,12 @@ async function save() {
     // Rewrite so only what the PDF still uses is kept (removed pages, letters,
     // pictures and fields are then really gone).
     if (oldRefs.length || S.boxes.length) { try { bytes = await app().tidyPDF(bytes); } catch (e) { console.warn('Tidy-up skipped', e); } }
-    const name = app().base(S.docs[0].file.name) + '-edited.pdf';
-    app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name, blob: new Blob([bytes], { type: 'application/pdf' }) }]);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    let where = handle ? handle.name : name;
+    if (handle) await app().writeTo(handle, blob); else app().download(name, blob);
+    app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name: where, blob }], true);
     S.dirty = false; close();
-    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name }));
+    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }));
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed'));
     btn.disabled = false; btn.textContent = T('ed.save');

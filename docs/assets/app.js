@@ -1432,7 +1432,7 @@ function renderJob(j, isNew) {
     <div class="info"><span class="fn" title="${esc(name)}">${esc(name)}</span>
     <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(label(j.target))}</b></span><span class="state">${esc(state)}</span>${note ? `<span>${esc(note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
     <div>${j.status === 'done' ? `<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>`;
-  const sv = el.querySelector('.save'); if (sv) sv.onclick = () => { j.saved = true; saveFile(j.out.name, j.out.blob, sv); };
+  const sv = el.querySelector('.save'); if (sv) sv.onclick = async () => { if (await saveFile(j.out.name, j.out.blob, sv)) j.saved = true; };
   const dm = el.querySelector('.dismiss'); if (dm) dm.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); };
   if (isNew) $('manifest').prepend(el);
 }
@@ -1446,12 +1446,33 @@ function updateFoot() {
 }
 
 // ---------- saving ----------
-function saveFile(filename, blob, btn) {
+// Saving: where the browser can, a "Save as" window lets the visitor choose
+// the folder and name. Elsewhere the file is downloaded as usual (the browser
+// then asks where, or uses the Downloads folder, as set up in the browser).
+const canPick = typeof window.showSaveFilePicker === 'function' && window.self === window.top;
+// Returns a file handle, null if the visitor cancelled, or undefined if the
+// browser can't show the window (then download instead).
+async function pickTarget(filename, mime) {
+  if (!canPick) return undefined;
+  const e = ext(filename);
+  try {
+    return await window.showSaveFilePicker({ suggestedName: filename, types: e ? [{ description: e.toUpperCase(), accept: { [mime || 'application/octet-stream']: ['.' + e] } }] : undefined });
+  } catch (err) { return err && err.name === 'AbortError' ? null : undefined; }
+}
+async function writeTo(handle, blob) { const w = await handle.createWritable(); await w.write(blob); await w.close(); }
+function download(filename, blob) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = filename; a.rel = 'noopener';
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+}
+async function saveFile(filename, blob, btn) {
+  const handle = await pickTarget(filename, blob.type);
+  if (handle === null) return false;
+  if (handle) { try { await writeTo(handle, blob); } catch (e) { toast(T('save.failed')); return false; } }
+  else download(filename, blob);
   if (btn && btn.classList.contains('save')) btn.textContent = T('job.saved');
+  return true;
 }
 $('saveAll').onclick = async () => {
   const done = jobs.filter(j => j.status === 'done');
@@ -1635,8 +1656,8 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF,
-  addResult(srcName, target, outs) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; finishJob(j, outs).catch(e => failJob(j, e)); }
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF, pickTarget, writeTo, download,
+  addResult(srcName, target, outs, saved) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; j.saved = !!saved; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
 gifLabels();
