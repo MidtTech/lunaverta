@@ -12,7 +12,8 @@ const ICON = {
   rotR: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v6h-6M19.4 10A8 8 0 1 0 18 17.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   del: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 
 // ---------- state ----------
@@ -111,7 +112,8 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'ed-card' + (pg.deleted ? ' deleted' : '');
     card.draggable = !pg.deleted; card.dataset.id = pg.id;
-    const num = pg.deleted ? '' : T('ed.page', { n });
+    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim());
+    const num = pg.deleted ? '' : T('ed.page', { n }) + (changed ? ' · ' + T('ed.changed') : '');
     card.innerHTML = `
       <button class="ed-thumb" type="button" aria-label="${esc(T('ed.openPage', { n: num || '' }))}" ${pg.deleted ? 'disabled' : ''}><img alt="" style="transform:rotate(${pg.rotate}deg)"></button>
       <div class="ed-card-foot">
@@ -164,8 +166,11 @@ async function renderPage() {
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${S.adding}">${esc(T('ed.addText'))}</button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
+    ${S.editing || S.adding ? `<button class="btn sm primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>` : ''}
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
+  const done = $('#edDone');
+  if (done) done.onclick = () => { if (document.activeElement) document.activeElement.blur(); S.editing = false; S.adding = false; S.justDone = true; renderPage(); };
   $('#edPrev').onclick = () => openPage(live[pos - 1].id);
   $('#edNext').onclick = () => openPage(live[pos + 1].id);
   $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; renderPage(); };
@@ -197,7 +202,8 @@ async function renderPage() {
   if (S.editing || S.edits.some(x => x.pageId === pg.id)) runs = await textRuns(page, pg, vp, layer, canvas, dpr);
   if (seq !== renderSeq) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
-  $('#edPageHint').textContent = S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
+  const justDone = S.justDone; S.justDone = false;
+  $('#edPageHint').textContent = justDone ? T('ed.doneHint') : S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 
   stage.addEventListener('click', e => {
     if (!S.adding || e.target !== layer) return;
@@ -270,12 +276,14 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       const el = document.createElement('input');
       el.type = 'text'; el.className = 'ed-edit'; el.value = edit.text; el.spellcheck = true;
       el.setAttribute('aria-label', T('ed.editLabel', { text: edit.orig }));
+      if (!S.editing) { el.readOnly = true; el.tabIndex = -1; el.classList.add('ed-done'); }
       Object.assign(el.style, {
         left: box.left + 'px', top: box.top + 'px', minWidth: box.width + 'px', height: box.height + 'px',
         fontFamily: CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
         fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`
       });
       const fit = () => { el.style.width = `calc(${Math.max(edit.text.length, 2)}ch * .62 + 12px)`; };
+      if (!S.editing) { layer.append(el); fit(); if (!edit.text) el.style.width = box.width + 'px'; return el; } // finished: just show the result
       el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); };
       el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
       const undo = document.createElement('button');

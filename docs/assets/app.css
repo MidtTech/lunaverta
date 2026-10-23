@@ -262,6 +262,9 @@ input.ed-field[type="checkbox"], input.ed-field[type="radio"] { accent-color: #2
 .ed-undo { position: absolute; background: #fff; width: 24px; height: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); color: #2f45c9; }
 .ed-undo svg { width: 14px; height: 14px; }
 .ed-delline { color: #b3261e; }
+.ed-edit.ed-done { border-color: transparent; pointer-events: none; }
+.ed-done-btn { display: inline-flex; align-items: center; gap: 6px; }
+.ed-done-btn svg { width: 16px; height: 16px; }
 
 /* One-time note: no cookies */
 .cookie-note { position: fixed; z-index: 55; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(440px, calc(100vw - 32px)); display: flex; align-items: center; gap: 12px 16px; padding: 12px 14px 12px 16px; background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); font-size: 14px; }
