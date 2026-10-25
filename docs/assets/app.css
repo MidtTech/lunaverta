@@ -334,3 +334,5 @@ html.ed-open .cookie-note { display: none; }
 @keyframes ed-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(47, 69, 201, 0); } 40% { box-shadow: 0 0 0 8px rgba(47, 69, 201, .35); } }
 #edSave.pulse { animation: ed-pulse 1.1s ease-in-out 3; }
 @media (max-width: 560px) { .ed-finish { border-radius: 16px; padding: 10px 12px; } }
+/* all pages one under the other */
+.ed-pages { display: grid; gap: 24px; }

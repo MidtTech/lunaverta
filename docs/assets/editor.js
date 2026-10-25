@@ -75,7 +75,7 @@ function labels() {
   $('#edKeep').textContent = T('ed.keep');
   $('#edDiscard').textContent = T('ed.discard');
 }
-function render() { labels(); S.view === 'page' ? renderPage() : renderGrid(); }
+function render() { labels(); S.view === 'page' ? buildPages(S.current) : renderGrid(); }
 function cancel() { if (S && S.dirty) { $('#edConfirm').hidden = false; $('#edKeep').focus(); } else close(); }
 function close() {
   const el = $('#editor'); if (el) el.remove();
@@ -150,80 +150,184 @@ function renderGrid() {
 }
 
 // ---------- one page: add text, fill in forms ----------
-function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; renderPage(); }
-function showGrid() { S.adding = false; S.editing = false; S.redacting = false; const f = $('#edFinish'); if (f) f.remove(); renderGrid(); }
+// All pages are shown one under the other, so you can scroll through the PDF
+// and edit any page. Pages are drawn when they come near the screen and let go
+// again when far away, so long PDFs stay light.
+function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; buildPages(id); }
+function showGrid() {
+  S.adding = false; S.editing = false; S.redacting = false; S.justDone = false;
+  const f = $('#edFinish'); if (f) f.remove();
+  dropPages(); renderGrid();
+}
+function dropPages() {
+  if (!S.pv) return;
+  S.pv.io.disconnect(); S.pv.body.removeEventListener('scroll', S.pv.onScroll);
+  S.pv = null;
+}
 let renderSeq = 0;
-async function renderPage() {
-  const seq = ++renderSeq;
-  const live = S.pages.filter(p => !p.deleted), pos = live.findIndex(p => p.id === S.current);
-  const pg = live[pos]; if (!pg) return renderGrid();
+// Redraws the page view: in place when it is already built (mode changes,
+// undo), from scratch otherwise.
+function renderPage() { if (S.pv && S.view === 'page') refreshModes(); else buildPages(S.current); }
+
+function pageTools() {
+  const live = S.pages.filter(p => !p.deleted);
   $('#edTools').innerHTML = `
     <button class="btn sm" type="button" id="edBack">← ${esc(T('ed.allPages'))}</button>
-    <span class="ed-pager"><button class="ed-ico" type="button" id="edPrev" aria-label="${esc(T('ed.prev'))}" ${pos ? '' : 'disabled'}>‹</button>
-      <span>${esc(T('ed.of', { n: pos + 1, total: live.length }))}</span>
-      <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}" ${pos < live.length - 1 ? '' : 'disabled'}>›</button></span>
+    <span class="ed-pager"><button class="ed-ico" type="button" id="edPrev" aria-label="${esc(T('ed.prev'))}">‹</button>
+      <span id="edPagerText"></span>
+      <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}">›</button></span>
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
-    <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${S.adding}">${esc(T('ed.addText'))}</button>
+    <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}">${esc(T('ed.addText'))}</button>
     <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
-
-  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; renderPage(); };
-  $('#edPrev').onclick = () => openPage(live[pos - 1].id);
-  $('#edNext').onclick = () => openPage(live[pos + 1].id);
-  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; renderPage(); };
-  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; renderPage(); };
+  const go = d => { const i = live.findIndex(p => p.id === S.current); const t = live[i + d]; if (t) scrollToPage(t.id, true); };
+  $('#edPrev').onclick = () => go(-1);
+  $('#edNext').onclick = () => go(1);
+  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; S.justDone = false; renderPage(); };
+  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.justDone = false; renderPage(); };
+  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.justDone = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
+  updatePager();
+}
+function updatePager() {
+  const live = S.pages.filter(p => !p.deleted), i = live.findIndex(p => p.id === S.current);
+  const t = $('#edPagerText'); if (!t) return;
+  t.textContent = T('ed.of', { n: i + 1, total: live.length });
+  $('#edPrev').disabled = i <= 0; $('#edNext').disabled = i >= live.length - 1;
+}
+function setHint() {
+  const h = $('#edPageHint'); if (!h) return;
+  const justDone = S.justDone;
+  const views = S.pv ? [...S.pv.views.values()] : [];
+  const fields = views.reduce((n, v) => n + (v.fields || 0), 0);
+  const noText = S.editing && views.some(v => v.drawn) && views.every(v => !v.drawn || v.runs === 0);
+  h.textContent = justDone ? T('ed.doneHint') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint')
+    : S.editing ? (noText ? T('ed.noText') : T('ed.editHint')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
+}
+function scrollToPage(id, smooth) {
+  const v = S.pv && S.pv.views.get(id); if (!v) return;
+  S.pv.body.scrollTo({ top: v.wrap.offsetTop - 12, behavior: smooth ? 'smooth' : 'auto' });
+  S.current = id; updatePager();
+}
 
+async function buildPages(startId) {
+  const seq = ++renderSeq;
+  dropPages();
+  const live = S.pages.filter(p => !p.deleted);
+  if (!live.length) return renderGrid();
+  if (!live.some(p => p.id === startId)) startId = live[0].id;
+  S.current = startId;
+  pageTools();
   const body = $('#edBody');
-  body.innerHTML = `<div class="ed-stage-wrap"><div class="ed-stage${S.adding ? ' adding' : ''}${S.redacting ? ' redacting' : ''}" id="edStage"><canvas></canvas><div class="ed-layer" id="edLayer"></div></div></div>`;
-  finishBar(pg);
-  const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
-  if (seq !== renderSeq || S.view !== 'page' || S.current !== pg.id) return;
-  const rot = (page.rotate + pg.rotate) % 360;
-  const base1 = page.getViewport({ scale: 1, rotation: rot });
-  const avail = Math.min(body.clientWidth - 32, 980);
-  const scale = Math.max(.4, avail / base1.width), dpr = window.devicePixelRatio || 1;
-  const vp = page.getViewport({ scale, rotation: rot });
-  const stage = $('#edStage'), canvas = stage.querySelector('canvas');
+  body.innerHTML = `<div class="ed-pages" id="edPages"></div>`;
+  const list = $('#edPages');
+  const avail = Math.min(body.clientWidth - 32, 980), dpr = window.devicePixelRatio || 1;
+  const views = new Map();
+  for (const pg of live) {
+    const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
+    if (seq !== renderSeq) return;
+    const rot = (page.rotate + pg.rotate) % 360;
+    const scale = Math.max(.4, avail / page.getViewport({ scale: 1, rotation: rot }).width);
+    const vp = page.getViewport({ scale, rotation: rot });
+    const wrap = document.createElement('div');
+    wrap.className = 'ed-stage-wrap'; wrap.dataset.id = pg.id;
+    wrap.innerHTML = `<div class="ed-stage" aria-label="${esc(T('ed.page', { n: live.indexOf(pg) + 1 }))}"><canvas></canvas><div class="ed-layer"></div></div>`;
+    const stage = wrap.firstChild;
+    stage.style.width = vp.width + 'px'; stage.style.height = vp.height + 'px';
+    const cv = stage.querySelector('canvas'); cv.width = cv.height = 0; cv.style.width = vp.width + 'px'; cv.style.height = vp.height + 'px';
+    list.appendChild(wrap);
+    const v = { pg, page, rot, scale, vp, dpr, wrap, stage, canvas: stage.querySelector('canvas'), layer: stage.querySelector('.ed-layer'), drawn: false, near: false, fields: 0, runs: 0, job: 0 };
+    stage.classList.toggle('adding', !!S.adding); stage.classList.toggle('redacting', !!S.redacting);
+    stage.addEventListener('click', e => addTextAt(v, e));
+    views.set(pg.id, v);
+  }
+  const io = new IntersectionObserver(entries => {
+    for (const en of entries) {
+      const v = views.get(+en.target.dataset.id); if (!v) continue;
+      v.near = en.isIntersecting;
+      if (v.near) drawPage(v); else releasePage(v);
+    }
+  }, { root: body, rootMargin: '1200px 0px' });
+  // The page across the middle of the screen is the current one.
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(() => {
+      ticking = false;
+      const mid = body.getBoundingClientRect().top + body.clientHeight / 2;
+      for (const v of views.values()) {
+        const r = v.wrap.getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid) { if (S.current !== v.pg.id) { S.current = v.pg.id; updatePager(); } break; }
+      }
+    });
+  };
+  S.pv = { views, io, body, onScroll };
+  body.addEventListener('scroll', onScroll, { passive: true });
+  views.forEach(v => io.observe(v.wrap));
+  scrollToPage(startId);
+  finishBar(); setHint();
+}
+async function drawPage(v) {
+  if (v.drawn) return;
+  v.drawn = true;
+  const job = ++v.job, { canvas, vp, dpr } = v;
   canvas.width = Math.floor(vp.width * dpr); canvas.height = Math.floor(vp.height * dpr);
   canvas.style.width = vp.width + 'px'; canvas.style.height = vp.height + 'px';
-  stage.style.width = vp.width + 'px'; stage.style.height = vp.height + 'px';
   const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  await page.render({ canvasContext: ctx, viewport: vp }).promise;
-  // A newer render (say, Edit text pressed while this one ran) owns the page now.
-  if (seq !== renderSeq) return;
-
-  const layer = $('#edLayer');
-  let fields = 0;
-  if (pg.doc === 0) fields = await formFields(page, vp, layer);
-  let runs = 0;
-  if (S.editing || S.edits.some(x => x.pageId === pg.id)) runs = await textRuns(page, pg, vp, layer, canvas, dpr);
-  if (seq !== renderSeq) return;
+  try { await v.page.render({ canvasContext: ctx, viewport: vp }).promise; } catch (e) { return; }
+  if (job !== v.job || !v.drawn) return;
+  await fillLayer(v);
+}
+function releasePage(v) {
+  if (!v.drawn || v.layer.contains(document.activeElement)) return;
+  v.drawn = false; v.job++;
+  v.canvas.width = v.canvas.height = 0;
+  const fresh = document.createElement('div'); fresh.className = 'ed-layer';
+  v.layer.replaceWith(fresh); v.layer = fresh;
+}
+// Puts the clickable lines, form fields, added text and boxes on a drawn page,
+// in a fresh layer so no old handlers linger.
+async function fillLayer(v) {
+  const job = v.job, { pg, page, vp, rot, canvas, dpr } = v;
+  const layer = document.createElement('div'); layer.className = 'ed-layer';
+  v.layer.replaceWith(layer); v.layer = layer;
+  v.fields = pg.doc === 0 ? await formFields(page, vp, layer) : 0;
+  if (job !== v.job) return;
+  v.runs = (S.editing || S.edits.some(x => x.pageId === pg.id)) ? await textRuns(page, pg, vp, layer, canvas, dpr) : 0;
+  if (job !== v.job) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
   S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
   if (S.redacting) drawBoxes(pg, vp, layer);
-  const justDone = S.justDone; S.justDone = false;
-  $('#edPageHint').textContent = justDone ? T('ed.doneHint') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint') : S.editing ? (runs ? T('ed.editHint') : T('ed.noText')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
-
-  stage.addEventListener('click', e => {
-    if (!S.adding || e.target !== layer) return;
-    const r = layer.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
-    const size = S.size || 12;
-    const [px, py] = vp.convertToPdfPoint(x, y + size * scale * .85); // baseline under the click
-    const t = { id: ++uid, pageId: pg.id, x: px, y: py, size, rot, text: '' };
-    S.texts.push(t); S.dirty = true; S.adding = false;
-    $('#edAddText').classList.remove('primary'); $('#edAddText').setAttribute('aria-pressed', 'false');
-    stage.classList.remove('adding'); $('#edPageHint').textContent = T('ed.pageHint');
-    textBox(t, vp, layer, rot).querySelector('textarea').focus();
-  });
+  setHint();
+}
+// Mode changes: new toolbar, and the drawn pages get their layers again.
+function refreshModes() {
+  pageTools();
+  for (const v of S.pv.views.values()) {
+    v.stage.classList.toggle('adding', !!S.adding); v.stage.classList.toggle('redacting', !!S.redacting);
+    if (v.drawn) { v.job++; fillLayer(v); }
+  }
+  finishBar(); setHint();
+}
+function addTextAt(v, e) {
+  if (!S.adding || e.target !== v.layer) return;
+  const r = v.layer.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  const size = S.size || 12;
+  const [px, py] = v.vp.convertToPdfPoint(x, y + size * v.scale * .85); // baseline under the click
+  const t = { id: ++uid, pageId: v.pg.id, x: px, y: py, size, rot: v.rot, text: '' };
+  S.texts.push(t); S.dirty = true; S.adding = false;
+  $('#edAddText').classList.remove('primary'); $('#edAddText').setAttribute('aria-pressed', 'false');
+  S.pv.views.forEach(o => o.stage.classList.remove('adding'));
+  finishBar(); $('#edPageHint').textContent = T('ed.pageHint');
+  textBox(t, v.vp, v.layer, v.rot).querySelector('textarea').focus();
 }
 // ---------- finishing a page ----------
 // While editing text, blacking out or adding text, a bar at the bottom of the
 // page says what has been done and holds the Done button, so it is always
 // clear how to finish.
-function finishBar(pg) {
+function finishBar() {
   let bar = $('#edFinish');
   const mode = S.editing ? 'edit' : S.redacting ? 'redact' : S.adding ? 'add' : '';
   if (!mode) { if (bar) bar.remove(); return; }
@@ -234,13 +338,13 @@ function finishBar(pg) {
   bar.innerHTML = `<span class="ed-finish-text" id="edFinishText"></span>
     <button class="btn primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>`;
   $('#edDone').onclick = finishPage;
-  updateFinish(pg);
+  updateFinish();
 }
-function updateFinish(pg) {
+function updateFinish() {
   const el = $('#edFinishText'); if (!el) return;
-  pg = pg || { id: S.current };
-  const lines = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig).length;
-  const boxes = S.boxes.filter(b => b.pageId === pg.id).length;
+  const live = new Set(S.pages.filter(p => !p.deleted).map(p => p.id));
+  const lines = S.edits.filter(x => live.has(x.pageId) && x.text !== x.orig).length;
+  const boxes = S.boxes.filter(b => live.has(b.pageId)).length;
   el.textContent = S.editing ? (lines ? T('ed.barEdit', { n: lines }) : T('ed.barEditNone'))
     : S.redacting ? (boxes ? T('ed.barRedact', { n: boxes }) : T('ed.barRedactNone'))
     : T('ed.barAdd');
