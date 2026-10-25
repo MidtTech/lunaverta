@@ -65,7 +65,6 @@ function build() {
     for (const f of files) { try { await addDoc(f); S.dirty = true; } catch (err) { app().toast(err.message); } }
     render();
   };
-  el.addEventListener('keydown', e => { if (e.key === 'Escape' && !e.target.closest('textarea, input, select')) { e.preventDefault(); S.view === 'page' ? showGrid() : cancel(); } });
 }
 function labels() {
   $('#edTitle').textContent = T('ed.title');
@@ -152,7 +151,7 @@ function renderGrid() {
 
 // ---------- one page: add text, fill in forms ----------
 function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; renderPage(); }
-function showGrid() { S.adding = false; S.editing = false; S.redacting = false; renderGrid(); }
+function showGrid() { S.adding = false; S.editing = false; S.redacting = false; const f = $('#edFinish'); if (f) f.remove(); renderGrid(); }
 let renderSeq = 0;
 async function renderPage() {
   const seq = ++renderSeq;
@@ -167,11 +166,9 @@ async function renderPage() {
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${S.adding}">${esc(T('ed.addText'))}</button>
     <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
-    ${S.editing || S.adding || S.redacting ? `<button class="btn sm primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>` : ''}
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
-  const done = $('#edDone');
-  if (done) done.onclick = () => { if (document.activeElement) document.activeElement.blur(); S.editing = false; S.adding = false; S.redacting = false; S.justDone = true; renderPage(); };
+
   $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; renderPage(); };
   $('#edPrev').onclick = () => openPage(live[pos - 1].id);
   $('#edNext').onclick = () => openPage(live[pos + 1].id);
@@ -181,6 +178,7 @@ async function renderPage() {
 
   const body = $('#edBody');
   body.innerHTML = `<div class="ed-stage-wrap"><div class="ed-stage${S.adding ? ' adding' : ''}${S.redacting ? ' redacting' : ''}" id="edStage"><canvas></canvas><div class="ed-layer" id="edLayer"></div></div></div>`;
+  finishBar(pg);
   const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
   if (seq !== renderSeq || S.view !== 'page' || S.current !== pg.id) return;
   const rot = (page.rotate + pg.rotate) % 360;
@@ -221,6 +219,39 @@ async function renderPage() {
     textBox(t, vp, layer, rot).querySelector('textarea').focus();
   });
 }
+// ---------- finishing a page ----------
+// While editing text, blacking out or adding text, a bar at the bottom of the
+// page says what has been done and holds the Done button, so it is always
+// clear how to finish.
+function finishBar(pg) {
+  let bar = $('#edFinish');
+  const mode = S.editing ? 'edit' : S.redacting ? 'redact' : S.adding ? 'add' : '';
+  if (!mode) { if (bar) bar.remove(); return; }
+  if (!bar) {
+    bar = document.createElement('div'); bar.id = 'edFinish'; bar.className = 'ed-finish'; bar.setAttribute('role', 'status');
+    $('#editor').appendChild(bar);
+  }
+  bar.innerHTML = `<span class="ed-finish-text" id="edFinishText"></span>
+    <button class="btn primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>`;
+  $('#edDone').onclick = finishPage;
+  updateFinish(pg);
+}
+function updateFinish(pg) {
+  const el = $('#edFinishText'); if (!el) return;
+  pg = pg || { id: S.current };
+  const lines = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig).length;
+  const boxes = S.boxes.filter(b => b.pageId === pg.id).length;
+  el.textContent = S.editing ? (lines ? T('ed.barEdit', { n: lines }) : T('ed.barEditNone'))
+    : S.redacting ? (boxes ? T('ed.barRedact', { n: boxes }) : T('ed.barRedactNone'))
+    : T('ed.barAdd');
+}
+function finishPage() {
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  S.editing = false; S.adding = false; S.redacting = false; S.justDone = true;
+  renderPage();
+  const sv = $('#edSave'); sv.classList.remove('pulse'); void sv.offsetWidth; sv.classList.add('pulse');
+}
+
 // ---------- correcting existing text ----------
 // Text in a PDF is drawn at fixed positions. On saving, the old letters are
 // removed from the page (see pdf-text.js). Deleted words simply disappear and
@@ -294,12 +325,15 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
         el.style.width = Math.ceil(c.measureText(edit.text || '  ').width + 12) + 'px';
       };
       if (!S.editing) { layer.append(el); fit(); if (!edit.text) el.style.width = box.width + 'px'; return el; } // finished: just show the result
-      el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); };
-      // Enter finishes the line. If some text is selected, Enter deletes it
-      // first: select what should go, press Enter.
+      el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); updateFinish(); };
+      // Enter (or the tick) finishes the line. If some text is selected, Enter
+      // deletes it first: select what should go, press Enter. Esc also finishes.
       el.onkeydown = e => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); el.blur(); return; }
         if (e.key !== 'Enter') return;
-        e.preventDefault();
+        e.preventDefault(); finishLine();
+      };
+      const finishLine = () => {
         if (el.selectionStart !== el.selectionEnd) {
           el.setRangeText('', el.selectionStart, el.selectionEnd, 'end');
           el.value = el.value.replace(/\s{2,}/g, ' ').trim();
@@ -307,35 +341,64 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
         }
         el.blur();
       };
+      const ok = document.createElement('button');
+      ok.type = 'button'; ok.className = 'ed-ico ed-undo ed-ok'; ok.innerHTML = ICON.tick;
+      ok.title = T('ed.finishLine'); ok.setAttribute('aria-label', T('ed.finishLine'));
+      ok.onclick = () => finishLine();
       const undo = document.createElement('button');
       undo.type = 'button'; undo.className = 'ed-ico ed-undo'; undo.innerHTML = ICON.undo;
       undo.title = undo.ariaLabel = T('ed.undoEdit'); undo.setAttribute('aria-label', T('ed.undoEdit'));
       Object.assign(undo.style, { left: (box.left + Math.max(box.width, el.offsetWidth || box.width) + 4) + 'px', top: (box.top - 4) + 'px' });
       undo.onclick = () => { S.edits = S.edits.filter(x => x !== edit); S.dirty = true; renderPage(); };
+      const badge = document.createElement('span');
+      badge.className = 'ed-badge'; badge.innerHTML = ICON.tick; badge.setAttribute('aria-hidden', 'true');
       const del = document.createElement('button');
       del.type = 'button'; del.className = 'ed-ico ed-undo ed-delline'; del.innerHTML = ICON.del;
       del.title = T('ed.deleteLine'); del.setAttribute('aria-label', T('ed.deleteLine'));
       del.onclick = () => { el.value = ''; edit.text = ''; S.dirty = true; fit(); el.focus(); };
       // The buttons sit just above the end of the line, so they don't hide the next column.
-      const place = () => { const l = box.left + Math.max(el.offsetWidth, box.width) - 52, t = Math.max(0, box.top - 28) + 'px'; undo.style.left = l + 'px'; del.style.left = (l + 28) + 'px'; undo.style.top = del.style.top = t; };
-      layer.append(el, undo, del); fit(); place();
+      const btns = [ok, undo, del];
+      const place = () => {
+        const end = box.left + Math.max(el.offsetWidth, box.width), t = Math.max(0, box.top - 30) + 'px';
+        btns.forEach((b, i) => { b.style.left = (end - 82 + i * 28) + 'px'; b.style.top = t; });
+        badge.style.left = (end - 9) + 'px'; badge.style.top = (box.top - 9) + 'px';
+      };
+      // The buttons show only for the line being edited; a finished line gets a tick.
+      btns.forEach(b => b.addEventListener('pointerdown', e => e.preventDefault())); // keep the line focused
+      const state = active => {
+        btns.forEach(b => { b.hidden = !active; });
+        el.classList.toggle('ed-set', !active && edit.text !== edit.orig);
+        badge.hidden = active || edit.text === edit.orig;
+      };
+      el.addEventListener('focus', () => state(true));
+      el.addEventListener('blur', () => {
+        // A line clicked but left unchanged goes back to normal.
+        if (edit.text === edit.orig) {
+          S.edits = S.edits.filter(x => x !== edit); edit = null;
+          [el, ...btns, badge].forEach(n => n.remove()); addHit(); updateFinish(); return;
+        }
+        state(false); updateFinish();
+      });
+      layer.append(el, ...btns, badge); fit(); place(); state(false);
       el.addEventListener('input', place);
       requestAnimationFrame(place);
       return el;
     };
-    if (edit) { show(); continue; }
-    const hit = document.createElement('button');
-    hit.type = 'button'; hit.className = 'ed-run';
-    hit.setAttribute('aria-label', T('ed.editLabel', { text: r.str }));
-    Object.assign(hit.style, { left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' });
-    hit.onclick = () => {
-      const c = sampleColours(canvas, dpr, box);
-      edit = { key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: r.str, font: fontStyle(page, r.fontName, tc.styles), ink: c.ink, bg: c.bg };
-      S.edits.push(edit); S.dirty = true;
-      hit.remove();
-      const el = show(); el.focus(); el.select();
+    const addHit = () => {
+      const hit = document.createElement('button');
+      hit.type = 'button'; hit.className = 'ed-run';
+      hit.setAttribute('aria-label', T('ed.editLabel', { text: r.str }));
+      Object.assign(hit.style, { left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' });
+      hit.onclick = () => {
+        const c = sampleColours(canvas, dpr, box);
+        edit = { key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: r.str, font: fontStyle(page, r.fontName, tc.styles), ink: c.ink, bg: c.bg };
+        S.edits.push(edit); S.dirty = true;
+        hit.remove();
+        const el = show(); el.focus(); el.select();
+      };
+      layer.appendChild(hit);
     };
-    layer.appendChild(hit);
+    if (edit) show(); else addHit();
   }
   return runs.length;
 }
@@ -386,7 +449,7 @@ function blackBox(b, vp, layer) {
     const x = document.createElement('button');
     x.type = 'button'; x.className = 'ed-ico ed-box-x'; x.innerHTML = ICON.x;
     x.title = T('ed.removeBox'); x.setAttribute('aria-label', T('ed.removeBox'));
-    x.onclick = e => { e.stopPropagation(); S.boxes = S.boxes.filter(o => o !== b); S.dirty = true; el.remove(); };
+    x.onclick = e => { e.stopPropagation(); S.boxes = S.boxes.filter(o => o !== b); S.dirty = true; el.remove(); updateFinish(); };
     el.appendChild(x);
   }
   layer.appendChild(el);
@@ -408,7 +471,7 @@ function drawBoxes(pg, vp, layer) {
       if (Math.abs(ex - sx) < 4 || Math.abs(ey - sy) < 4) return;
       const [ax, ay] = vp.convertToPdfPoint(sx, sy), [bx, by] = vp.convertToPdfPoint(ex, ey);
       const b = { id: ++uid, pageId: pg.id, x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) };
-      S.boxes.push(b); S.dirty = true; blackBox(b, vp, layer);
+      S.boxes.push(b); S.dirty = true; blackBox(b, vp, layer); updateFinish();
     };
     addEventListener('pointermove', move); addEventListener('pointerup', up);
   });
@@ -633,5 +696,15 @@ async function open(files, opt = {}) {
   $('#edSave').focus();
 }
 document.addEventListener('lv-lang', () => { if (S) render(); });
+// Esc: finishes a line, then the page, then goes back to all pages.
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || !S || !$('#editor')) return;
+  // In a line being edited, Esc finishes that line (handled there).
+  if (!e.target.closest || e.target.closest('.ed-edit')) return;
+  if (e.target.closest('textarea, input, select')) return;
+  e.preventDefault();
+  if (S.view === 'page' && (S.editing || S.adding || S.redacting)) finishPage();
+  else S.view === 'page' ? showGrid() : cancel();
+});
 window.LVEditor = { open };
 })();
