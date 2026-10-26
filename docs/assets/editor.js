@@ -707,7 +707,7 @@ async function findAll(re, progress, judge) {
   }
   return hits;
 }
-// Prices: finds amounts and leaves other numbers (measurements, U-values,
+// Prices: finds amounts and leaves other numbers (measurements, technical values,
 // dates, quantities, order numbers) alone. A number counts as a price when it
 // has a currency (kr., DKK, €, ,-) or is written like money (18.175,94);
 // a plain number with two decimals (0,00 or 499,00) counts when its line
@@ -780,7 +780,7 @@ function segments(ln) {
   if (s0 < ln.str.length) out.push([s0, ln.str.length]);
   return out.filter(([a, b]) => ln.str.slice(a, b).trim());
 }
-// Words that show a text is about money. Every supplier lays out invoices
+// Words that show a text is about money. Every sender lays out invoices
 // differently, so this is a broad list in Danish and English.
 const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?(?!\s?[-.]?\s?(?:nr|nummer|reg))|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
 async function findPriceText(progress) {
