@@ -336,3 +336,38 @@ html.ed-open .cookie-note { display: none; }
 @media (max-width: 560px) { .ed-finish { border-radius: 16px; padding: 10px 12px; } }
 /* all pages one under the other */
 .ed-pages { display: grid; gap: 24px; }
+/* find and remove */
+.ed-findpanel { position: fixed; z-index: 80; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); display: flex; flex-direction: column; gap: 10px; padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px; background: var(--raised); color: var(--ink); border-left: 1px solid var(--line); box-shadow: -10px 0 30px rgba(0, 0, 0, .15); }
+.ed-find-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ed-find-head h2 { margin: 0; font-size: 18px; }
+.ed-find-form { display: flex; gap: 8px; }
+.ed-find-form input { flex: 1; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.ed-find-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.ed-chip { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.ed-chip.on, .ed-chip:hover { border-color: #2f45c9; color: #2f45c9; }
+.ed-find-status { font-size: 14px; font-weight: 500; min-height: 1.4em; }
+.ed-find-list { flex: 1; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 4px 0; }
+.ed-find-list:empty { display: none; }
+.ed-find-page { position: sticky; top: 0; background: var(--raised); font: 500 12px var(--f-mono); color: var(--muted); padding: 6px 12px 4px; text-transform: uppercase; letter-spacing: .04em; }
+.ed-find-hit { display: flex; align-items: flex-start; gap: 8px; padding: 6px 12px; font-size: 13.5px; line-height: 1.4; cursor: pointer; }
+.ed-find-hit:hover { background: var(--surface); }
+.ed-find-hit input { margin-top: 3px; }
+.ed-find-hit .ctx { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--muted); }
+.ed-find-hit mark { background: #ffe58a; color: #111; border-radius: 3px; padding: 0 2px; font-weight: 600; }
+.ed-find-hit.done mark { background: transparent; color: var(--muted); text-decoration: line-through; }
+.ed-find-hit .tag { font-size: 12px; color: #1e8e3e; white-space: nowrap; }
+.ed-find-foot { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
+.ed-find-foot[hidden] { display: none; }
+.ed-find-sel { display: flex; gap: 14px; font-size: 13.5px; }
+.ed-find-mode { border: 0; margin: 0; padding: 0; display: flex; gap: 16px; font-size: 14px; }
+.ed-find-mode label { display: flex; align-items: center; gap: 6px; }
+.linkish { font: inherit; background: none; border: 0; padding: 0; color: #2f45c9; text-decoration: underline; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+html.ed-finding #editor .ed-body { padding-right: min(420px, 0px); }
+@media (min-width: 900px) { html.ed-finding #editor .ed-body, html.ed-finding #editor .ed-bar { margin-right: 400px; } html.ed-finding .ed-finish { left: calc((100vw - 400px) / 2); } }
+.ed-box.blank { background: rgba(255, 255, 255, .85); outline: 1.5px dashed #b3261e; outline-offset: -1px; }
+.ed-flash { position: absolute; border: 3px solid #f5b400; border-radius: 4px; pointer-events: none; opacity: 0; }
+.ed-flash.go { animation: ed-flash 1.2s ease-out; }
+@keyframes ed-flash { 0% { opacity: 1; transform: scale(1.15); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+#edFind { display: inline-flex; align-items: center; gap: 6px; }
+#edFind svg { width: 15px; height: 15px; }

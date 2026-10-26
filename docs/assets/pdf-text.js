@@ -194,23 +194,21 @@ const apply = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[
 // removed. result.flatten is true when something else lies under a box (a
 // picture, a drawing in a sub-page, or text LunaVerta can't read): such a page
 // must be turned into an image for the black-out to be safe.
-async function strip(doc, page, edits, boxes = []) {
+// Reads a page's drawing instructions and finds every letter: its code, its
+// character and where it is drawn (PDF units). Also notes pictures and text
+// in fonts that can't be read.
+async function readPage(doc, page) {
   const P = window.PDFLib, N = k => P.PDFName.of(k);
-  const result = edits.map(() => 'failed');
-  result.flatten = false;
   const decode = st => (st instanceof P.PDFRawStream ? P.decodePDFRawStream(st).decode() : st.getContents ? st.getContents() : new Uint8Array());
   const bin = u8 => { let s = ''; for (let k = 0; k < u8.length; k += 8192) s += String.fromCharCode.apply(null, u8.subarray(k, k + 8192)); return s; };
   const streamText = st => bin(decode(st));
-  let src;
-  try {
-    const c = page.node.Contents();
-    if (!c) return result;
-    result.oldContents = page.node.get(N('Contents'));
-    const parts = [];
-    if (c.size && !(c instanceof P.PDFStream)) for (let k = 0; k < c.size(); k++) parts.push(streamText(c.lookup(k)));
-    else parts.push(streamText(c));
-    src = parts.join('\n');
-  } catch (e) { console.warn('Could not read page content', e); result.flatten = boxes.length > 0; return result; }
+  const c = page.node.Contents();
+  if (!c) return null;
+  const oldContents = page.node.get(N('Contents'));
+  const parts = [];
+  if (c.size && !(c instanceof P.PDFStream)) for (let k = 0; k < c.size(); k++) parts.push(streamText(c.lookup(k)));
+  else parts.push(streamText(c));
+  const src = parts.join('\n');
   const ops = tokenize(src);
   const res = page.node.Resources();
   const fontDict = res && res.lookup(N('Font'));
@@ -260,7 +258,7 @@ async function strip(doc, page, edits, boxes = []) {
         const [x1] = apply(m, w0 * gs.fs * gs.th, gs.rise);
         const [, yc] = apply(m, 0, gs.rise + gs.fs * .3);
         const [xa] = apply(m, adv, gs.rise);
-        glyphs.push({ op: idx, k: k++, code, xL: Math.min(x0, x1), xR: Math.max(x0, x1), xc: (x0 + x1) / 2, yc, y0, adv: xa - x0, ch: charOf(f, code), hidden: gs.tr === 3 || gs.tr === 7, upright: Math.abs(m[1]) < 1e-6 && Math.abs(m[2]) < 1e-6 && m[0] > 0 });
+        glyphs.push({ op: idx, k: k++, code, xL: Math.min(x0, x1), xR: Math.max(x0, x1), xc: (x0 + x1) / 2, yc, y0, adv: xa - x0, ch: charOf(f, code), size: Math.abs(m[3]) * gs.fs, hidden: gs.tr === 3 || gs.tr === 7, upright: Math.abs(m[1]) < 1e-6 && Math.abs(m[2]) < 1e-6 && m[0] > 0 });
         tm = mul([1, 0, 0, 1, adv, 0], tm);
       }
     }
@@ -291,6 +289,18 @@ async function strip(doc, page, edits, boxes = []) {
       case 'sh': draws.push([-1e9, -1e9, 1e9, 1e9]); break;
     }
   }
+  return { src, ops, glyphs, draws, unknown, oldContents };
+}
+
+async function strip(doc, page, edits, boxes = []) {
+  const P = window.PDFLib, N = k => P.PDFName.of(k);
+  const result = edits.map(() => 'failed');
+  result.flatten = false;
+  let rd;
+  try { rd = await readPage(doc, page); } catch (e) { console.warn('Could not read page content', e); result.flatten = boxes.length > 0; return result; }
+  if (!rd) return result;
+  const { src, ops, glyphs, draws, unknown } = rd;
+  result.oldContents = rd.oldContents;
 
   // decide, per line, which letters go and how far the rest moves
   const plan = new Map(); // glyph -> { removed, shift }
@@ -322,7 +332,8 @@ async function strip(doc, page, edits, boxes = []) {
   // black-out boxes: every letter touching a box goes
   const hits = (b, r) => r[2] > b[0] && r[0] < b[2] && r[3] > b[1] && r[1] < b[3];
   for (const b of boxes) {
-    for (const g of glyphs) if (g.xR > b[0] && g.xL < b[2] && g.yc > b[1] && g.yc < b[3]) plan.set(g, { removed: true, shift: 0 });
+    // b[4]: found text, where only letters centred in the box go (neighbours stay)
+    for (const g of glyphs) if ((b[4] ? g.xc > b[0] && g.xc < b[2] : g.xR > b[0] && g.xL < b[2]) && g.yc > b[1] && g.yc < b[3]) plan.set(g, { removed: true, shift: 0 });
     if (unknown || draws.some(d => hits(b, d))) result.flatten = true;
   }
   if (!plan.size) return result;
@@ -422,5 +433,5 @@ function deletionSpans(ed, inBox) {
   return spans;
 }
 
-window.LVPdfText = { strip, tokenize };
+window.LVPdfText = { strip, readPage, tokenize };
 })();

@@ -13,6 +13,7 @@ const ICON = {
   del: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   tick: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5 10 17.5 19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 
@@ -78,6 +79,7 @@ function labels() {
 function render() { labels(); S.view === 'page' ? buildPages(S.current) : renderGrid(); }
 function cancel() { if (S && S.dirty) { $('#edConfirm').hidden = false; $('#edKeep').focus(); } else close(); }
 function close() {
+  closeFind();
   const el = $('#editor'); if (el) el.remove();
   document.documentElement.classList.remove('ed-open');
   S = null;
@@ -100,8 +102,9 @@ async function thumb(pg) {
 }
 function renderGrid() {
   S.view = 'grid';
-  $('#edTools').innerHTML = `<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
+  $('#edTools').innerHTML = `<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
   $('#edAdd').onclick = () => $('#edAddInput').click();
+  $('#edFind').onclick = openFind;
   const body = $('#edBody');
   body.innerHTML = `<div class="ed-grid" id="edGrid"></div>`;
   const grid = $('#edGrid');
@@ -179,6 +182,7 @@ function pageTools() {
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}">${esc(T('ed.addText'))}</button>
     <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
+    <button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
@@ -189,6 +193,7 @@ function pageTools() {
   $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.justDone = false; renderPage(); };
   $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.justDone = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
+  $('#edFind').onclick = openFind;
   updatePager();
 }
 function updatePager() {
@@ -547,7 +552,7 @@ function textBox(t, vp, layer, rot) {
 function blackBox(b, vp, layer) {
   const [x1, y1, x2, y2] = vp.convertToViewportRectangle([b.x1, b.y1, b.x2, b.y2]);
   const el = document.createElement('div');
-  el.className = 'ed-box';
+  el.className = 'ed-box' + (b.blank ? ' blank' : '');
   Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
   if (S.redacting) {
     const x = document.createElement('button');
@@ -579,6 +584,222 @@ function drawBoxes(pg, vp, layer) {
     };
     addEventListener('pointermove', move); addEventListener('pointerup', up);
   });
+}
+
+// ---------- find and remove ----------
+// Search all pages for text (or amounts, CPR numbers, e-mails, phone numbers),
+// tick the hits to remove, and remove them all at once. Each hit becomes a box
+// that deletes the letters under it when the PDF is saved: "blank" boxes leave
+// the spot empty, black boxes black it out.
+const QUICK = {
+  prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
+  cpr: /\b\d{6}[-\s]?\d{4}\b/g,
+  emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
+  phones: /(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b/g
+};
+const textCache = new Map(), libDocs = new Map();
+// The page's text as lines, with each character's position. The exact letter
+// positions come from reading the page (pdf-text.js), the same way they are
+// removed; pdf.js text (positions estimated) is the fallback.
+async function pageLines(pg) {
+  const key = pg.doc + ':' + pg.index;
+  if (textCache.has(key)) return textCache.get(key);
+  const est = await estimatedLines(pg);
+  let exact = null;
+  try { exact = await exactLines(pg); } catch (e) { console.warn('Exact text positions unavailable', e); }
+  const count = ls => ls.reduce((n, l) => n + l.str.replace(/\s/g, '').length, 0);
+  const lines = exact && count(exact) >= count(est) * .9 ? exact : est;
+  textCache.set(key, lines);
+  return lines;
+}
+async function exactLines(pg) {
+  await app().lib('pdflib');
+  if (!libDocs.has(pg.doc)) libDocs.set(pg.doc, S.docs[pg.doc].file.arrayBuffer().then(b => PDFLib.PDFDocument.load(new Uint8Array(b), { updateMetadata: false })));
+  const doc = await libDocs.get(pg.doc);
+  const rd = await window.LVPdfText.readPage(doc, doc.getPage(pg.index));
+  if (!rd) return null;
+  const rows = [];
+  for (const g of rd.glyphs) {
+    if (!g.upright || !g.ch || !g.size) continue;
+    let row = rows.find(r => Math.abs(r.y - g.y0) < g.size * .25 && Math.abs(r.size - g.size) < g.size * .5);
+    if (!row) rows.push(row = { y: g.y0, size: g.size, gl: [] });
+    row.gl.push(g);
+  }
+  return rows.map(row => {
+    row.gl.sort((p, q) => p.xL - q.xL);
+    let str = '', pos = [], end = null;
+    for (const g of row.gl) {
+      const ch = g.ch.normalize('NFKC');
+      if (end !== null) {
+        const gap = g.xL - end;
+        const sep = gap > row.size * 1.5 ? '\t\t' : gap > row.size * .2 && !/\s$/.test(str) && !/^\s/.test(ch) ? ' ' : '';
+        for (const c of sep) { str += c; pos.push(null); }
+      }
+      for (const c of ch) { str += c; pos.push(/\s/.test(c) ? null : [g.xL, g.xR]); }
+      end = Math.max(end ?? -Infinity, g.xR);
+    }
+    return { str, pos, y: row.y, size: row.size };
+  });
+}
+async function estimatedLines(pg) {
+  const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
+  let items = [];
+  try { items = (await page.getTextContent()).items; } catch (e) {}
+  const rows = [];
+  for (const it of items) {
+    if (!it.str || !it.transform) continue;
+    const [a, b, c, d, e, f] = it.transform;
+    if (Math.abs(b) > .01 || Math.abs(c) > .01 || a <= 0 || d <= 0 || !it.width) continue;
+    let row = rows.find(r => Math.abs(r.y - f) < d * .25 && Math.abs(r.size - d) < d * .5);
+    if (!row) rows.push(row = { y: f, size: d, items: [] });
+    row.items.push({ str: it.str, x: e, w: it.width });
+  }
+  const lines = rows.map(row => {
+    row.items.sort((p, q) => p.x - q.x);
+    let str = '', pos = [], end = null;
+    for (const it of row.items) {
+      if (end !== null) {
+        const gap = it.x - end;
+        // a wide gap is a new column: two tabs keep a search from running across it
+        const sep = gap > row.size * 1.5 ? '\t\t' : gap > row.size * .15 && !/\s$/.test(str) ? ' ' : '';
+        for (const ch of sep) { str += ch; pos.push(null); }
+      }
+      const n = it.str.length;
+      for (let k = 0; k < n; k++) { str += it.str[k]; pos.push([it.x + it.w * k / n, it.x + it.w * (k + 1) / n]); }
+      end = it.x + it.w;
+    }
+    return { str, pos, y: row.y, size: row.size };
+  });
+  return lines;
+}
+async function findAll(re, progress) {
+  const hits = [];
+  const live = S.pages.filter(p => !p.deleted);
+  for (const [i, pg] of live.entries()) {
+    for (const ln of await pageLines(pg)) {
+      re.lastIndex = 0; let m;
+      while ((m = re.exec(ln.str))) {
+        if (!m[0]) { re.lastIndex++; continue; }
+        let s0 = m.index, s1 = m.index + m[0].length;
+        while (s0 < s1 && /\s/.test(ln.str[s0])) s0++;
+        while (s1 > s0 && /\s/.test(ln.str[s1 - 1])) s1--;
+        const xs = ln.pos.slice(s0, s1).filter(Boolean);
+        if (!xs.length) continue;
+        const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
+        hits.push({ pg, n: i + 1, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
+          x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95, on: true });
+      }
+    }
+    if (progress) progress(i + 1, live.length);
+  }
+  // hits already covered by a box are shown as removed
+  for (const h of hits) h.done = S.boxes.some(b => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1);
+  return hits;
+}
+function openFind() {
+  let panel = $('#edFindPanel');
+  if (panel) { panel.querySelector('input[type="search"]').focus(); return; }
+  panel = document.createElement('aside');
+  panel.id = 'edFindPanel'; panel.className = 'ed-findpanel'; panel.setAttribute('aria-labelledby', 'edFindTitle');
+  panel.innerHTML = `
+    <div class="ed-find-head"><h2 id="edFindTitle">${esc(T('find.title'))}</h2><button type="button" class="ed-ico" id="edFindClose" aria-label="${esc(T('find.close'))}" title="${esc(T('find.close'))}">${ICON.x}</button></div>
+    <form class="ed-find-form" id="edFindForm"><input type="search" id="edFindQ" placeholder="${esc(T('find.placeholder'))}" aria-label="${esc(T('find.placeholder'))}" autocomplete="off"><button class="btn sm primary" type="submit">${esc(T('find.go'))}</button></form>
+    <div class="ed-find-quick"><span>${esc(T('find.quick'))}</span>${Object.keys(QUICK).map(k => `<button type="button" class="ed-chip" data-q="${k}">${esc(T('find.' + k))}</button>`).join('')}</div>
+    <div class="ed-find-status" id="edFindStatus" role="status"></div>
+    <div class="ed-find-list" id="edFindList"></div>
+    <div class="ed-find-foot" id="edFindFoot" hidden>
+      <div class="ed-find-sel"><button type="button" class="linkish" id="edFindAll">${esc(T('find.all'))}</button><button type="button" class="linkish" id="edFindNone">${esc(T('find.noneSel'))}</button></div>
+      <fieldset class="ed-find-mode"><legend class="sr-only">${esc(T('find.how'))}</legend>
+        <label><input type="radio" name="edFindMode" value="blank" checked> ${esc(T('find.modeBlank'))}</label>
+        <label><input type="radio" name="edFindMode" value="black"> ${esc(T('find.modeBlack'))}</label></fieldset>
+      <button type="button" class="btn primary" id="edFindRemove"></button>
+    </div>`;
+  $('#editor').appendChild(panel);
+  document.documentElement.classList.add('ed-finding');
+  relayout();
+  let hits = [], lastAdded = [];
+  const status = $('#edFindStatus'), list = $('#edFindList'), foot = $('#edFindFoot');
+  const count = () => {
+    const sel = hits.filter(h => h.on && !h.done).length;
+    const btn = $('#edFindRemove'); btn.textContent = T('find.remove', { n: sel }); btn.disabled = !sel;
+  };
+  const show = () => {
+    const open = hits.filter(h => !h.done), pages = new Set(open.map(h => h.n)).size;
+    status.textContent = hits.length ? T('find.count', { n: open.length }) + (open.length ? ' ' + T('find.pages', { n: pages }) : '') : T('find.none');
+    list.innerHTML = '';
+    let lastN = 0;
+    for (const h of hits) {
+      if (h.n !== lastN) { const hd = document.createElement('div'); hd.className = 'ed-find-page'; hd.textContent = T('ed.page', { n: h.n }); list.appendChild(hd); lastN = h.n; }
+      const row = document.createElement('label');
+      row.className = 'ed-find-hit' + (h.done ? ' done' : '');
+      row.innerHTML = `<input type="checkbox" ${h.on && !h.done ? 'checked' : ''} ${h.done ? 'disabled' : ''}><span class="ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</span>${h.done ? `<span class="tag">${esc(T('find.already'))}</span>` : ''}`;
+      row.querySelector('input').onchange = e => { h.on = e.target.checked; count(); };
+      row.addEventListener('mouseenter', () => peek(h));
+      row.addEventListener('focusin', () => peek(h));
+      list.appendChild(row);
+    }
+    foot.hidden = !open.length; count();
+  };
+  const run = async re => {
+    status.textContent = T('find.searching'); list.innerHTML = ''; foot.hidden = true;
+    hits = await findAll(re, (i, n) => { status.textContent = T('find.searching') + ` ${i}/${n}`; });
+    show();
+  };
+  $('#edFindForm').onsubmit = e => {
+    e.preventDefault();
+    const q = $('#edFindQ').value.trim(); if (!q) return;
+    panel.querySelectorAll('.ed-chip').forEach(c => c.classList.remove('on'));
+    run(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'gi'));
+  };
+  panel.querySelectorAll('.ed-chip').forEach(c => c.onclick = () => {
+    panel.querySelectorAll('.ed-chip').forEach(o => o.classList.toggle('on', o === c));
+    $('#edFindQ').value = ''; run(new RegExp(QUICK[c.dataset.q].source, QUICK[c.dataset.q].flags));
+  });
+  $('#edFindAll').onclick = () => { hits.forEach(h => { if (!h.done) h.on = true; }); show(); };
+  $('#edFindNone').onclick = () => { hits.forEach(h => { h.on = false; }); show(); };
+  $('#edFindRemove').onclick = () => {
+    const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
+    lastAdded = [];
+    for (const h of hits) if (h.on && !h.done) {
+      const b = { id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: true };
+      S.boxes.push(b); lastAdded.push(b); h.done = true;
+    }
+    S.dirty = true;
+    show();
+    status.innerHTML = `${esc(T('find.removed', { n: lastAdded.length }))} <button type="button" class="linkish" id="edFindUndo">${esc(T('find.undo'))}</button>`;
+    $('#edFindUndo').onclick = () => {
+      const gone = new Set(lastAdded); S.boxes = S.boxes.filter(b => !gone.has(b));
+      hits.forEach(h => { h.done = S.boxes.some(b => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1); });
+      lastAdded = []; show(); refreshAfterFind();
+    };
+    refreshAfterFind();
+  };
+  $('#edFindClose').onclick = closeFind;
+  $('#edFindQ').focus();
+}
+function closeFind() {
+  const p = $('#edFindPanel'); if (!p) return;
+  p.remove(); document.documentElement.classList.remove('ed-finding');
+  relayout();
+}
+// On wide screens the panel sits beside the pages, so the pages are laid out again to fit.
+function relayout() { if (S && S.view === 'page' && S.pv && innerWidth >= 900) buildPages(S.current); }
+function refreshAfterFind() {
+  if (S.view === 'page' && S.pv) { for (const v of S.pv.views.values()) if (v.drawn) { v.job++; fillLayer(v); } updateFinish(); }
+  else if (S.view === 'grid') renderGrid();
+}
+// Shows where a hit is: scrolls the page view to it and flashes the spot.
+function peek(h) {
+  if (S.view !== 'page' || !S.pv) return;
+  const v = S.pv.views.get(h.pg.id); if (!v) return;
+  const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
+  const top = v.wrap.offsetTop + v.stage.offsetTop + Math.min(y1, y2), body = S.pv.body;
+  if (top < body.scrollTop + 40 || top > body.scrollTop + body.clientHeight - 80) body.scrollTo({ top: top - body.clientHeight / 3, behavior: 'smooth' });
+  let f = $('#edFlash');
+  if (!f) { f = document.createElement('div'); f.id = 'edFlash'; f.className = 'ed-flash'; }
+  v.stage.appendChild(f);
+  Object.assign(f.style, { left: Math.min(x1, x2) - 3 + 'px', top: Math.min(y1, y2) - 3 + 'px', width: Math.abs(x2 - x1) + 6 + 'px', height: Math.abs(y2 - y1) + 6 + 'px' });
+  f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
 }
 
 async function formFields(page, vp, layer) {
@@ -689,7 +910,8 @@ async function save() {
       // Changed lines: the old letters are taken out of the page. Where that
       // isn't possible, the old line is covered with its background colour.
       const eds = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig);
-      const boxes = S.boxes.filter(b => b.pageId === pg.id).map(b => [b.x1, b.y1, b.x2, b.y2]);
+      const boxList = S.boxes.filter(b => b.pageId === pg.id);
+      const boxes = boxList.map(b => [b.x1, b.y1, b.x2, b.y2, !!(b.blank || b.found)]);
       let how = eds.map(() => 'failed');
       if (eds.length || boxes.length) {
         try { how = await window.LVPdfText.strip(out, page, eds, boxes); if (how.oldContents) oldRefs.push(how.oldContents); }
@@ -697,7 +919,9 @@ async function save() {
       }
       // Black-out boxes: letters under them are gone (above); draw the box, and
       // drop comments and form fields under it.
-      for (const [x1, y1, x2, y2] of boxes) page.drawRectangle({ x: x1, y: y1, width: x2 - x1, height: y2 - y1, color: rgb(0, 0, 0) });
+      // Deleted (blank) text needs no box, unless the page has to become an
+      // image (text in a picture): then it is painted over in white.
+      for (const b of boxList) if (!b.blank || how.flatten) page.drawRectangle({ x: b.x1, y: b.y1, width: b.x2 - b.x1, height: b.y2 - b.y1, color: b.blank ? rgb(1, 1, 1) : rgb(0, 0, 0) });
       if (boxes.length) {
         const annots = page.node.lookup(N('Annots'));
         if (annots && annots.size) {
@@ -789,7 +1013,7 @@ async function save() {
 // ---------- open ----------
 async function open(files, opt = {}) {
   S = { docs: [], pages: [], texts: [], edits: [], boxes: [], redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
-  thumbCache.clear();
+  thumbCache.clear(); textCache.clear(); libDocs.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
   try { for (const f of files) await addDoc(f); }
