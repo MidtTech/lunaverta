@@ -34,7 +34,7 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','merge','split','shrink','protect','unlock','clean','png','jpg','txt'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','merge','split','protect','unlock','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -59,10 +59,14 @@ const base = name => (name || 'file').replace(/\.[^.]+$/, '');
 function kindOfExt(e) { for (const k in KINDS) if (KINDS[k].exts.includes(e)) return k; return null; }
 function kindOf(file) { return kindOfExt(ext(file.name)) || kindOfMime(file.type); }
 function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) if (re.test(t)) return k; return null; }
+// Tools kept out of the ring for a kind, but still used by their own pages
+// (Compress PDF, Remove PDF metadata, PDF to text, Remove prices).
+const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices'] };
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
   const list = KINDS[k].targets.filter(t => t !== e);
+  if (PRESET && (PAGE_ONLY[k] || []).includes(PRESET)) list.push(PRESET);
   if (k === 'image') list.push('merge'); // images can join a PDF merge
   return list;
 }

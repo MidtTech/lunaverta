@@ -273,7 +273,7 @@ export const TOOLS = [
 // written into the HTML (search engines and AI crawlers often don't run JavaScript).
 export const KINDS = {
   image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ico', 'bmp', 'clean'] },
-  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean', 'png', 'jpg', 'txt'] },
+  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'merge', 'split', 'protect', 'unlock', 'png', 'jpg'] },
   doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
   data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'html', 'md'] },
   audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
