@@ -595,6 +595,8 @@ function drawBoxes(pg, vp, layer) {
 // Suggestions: kinds of text people usually want gone before sharing a PDF.
 const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
+  // only as labels or headings (start of a line or column), not inside sentences
+  priceWords: /(?<=^|\t)(?:pris(?:er)?|stykpris|enhedspris|totalpris|beløb|varebeløb|momsbeløb|moms|rabat|total|i alt|subtotal|netto|brutto|rentesats|rente|renter|gebyr|DKK|EUR|kr\.)(?=$|\t|\s?[:\d])/gi,
   cpr: /\b(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4}\b/g,
   accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
@@ -689,12 +691,15 @@ async function findAll(re, progress, judge) {
         let s0 = m.index, s1 = m.index + m[0].length;
         while (s0 < s1 && /\s/.test(ln.str[s0])) s0++;
         while (s1 > s0 && /\s/.test(ln.str[s1 - 1])) s1--;
+        // judge: 0 = skip, a number = how sure, or { kind, grow } to take in a few more characters (a % sign)
+        let kind = judge ? judge(ln.str.slice(s0, s1), ln.str.slice(0, s0), ln.str.slice(s1), ln.str) : 1;
+        let rate = false;
+        if (kind && typeof kind === 'object') { s1 += kind.grow || 0; rate = !!kind.rate; kind = kind.kind; }
+        if (!kind) continue;
         const xs = ln.pos.slice(s0, s1).filter(Boolean);
         if (!xs.length) continue;
         const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
-        const kind = judge ? judge(ln.str.slice(s0, s1), ln.str.slice(0, s0), ln.str.slice(s1), ln.str) : 1;
-        if (!kind) continue;
-        hits.push({ pg, n: i + 1, kind, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
+        hits.push({ pg, n: i + 1, kind, rate, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
           x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95 });
       }
     }
@@ -709,6 +714,10 @@ async function findAll(re, progress, judge) {
 // talks about money or it sits in the same column as other prices.
 const MONEY = /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?)?-?(?:\d{1,3}(?:[.  ,]\d{3})+|\d+)(?:[.,]\d{2}(?!\d)|,-)?(?:\s?(?:kr\.?|DKK|EUR|€|,-)(?![A-Za-zÆØÅæøå]))?/gi;
 const CUR = /kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-/i;
+const RATE_WORDS = /moms|rabat|rente|renter|rentesats|gebyr|afgift|tillæg|vat|discount|interest|fee/i;
+const PAY_WORDS = /betaling|betales|forfald|rettidig|sidste frist|due|payment/i;
+// column headings above prices (Pris, Beløb …) and words about money, for the "Price words" suggestion
+const PRICE_HEAD = /(?<![A-Za-zæøåÆØÅ])(?:pris|priser|stykpris|enhedspris|à-pris|a-pris|totalpris|beløb|total|i alt|moms|rabat|price|amount|unit price|subtotal)(?![A-Za-zæøåÆØÅ])/gi;
 const MONEY_WORDS = /\b(?:pris|priser|stykpris|enhedspris|beløb|total|totalt|i alt|subtotal|moms|rabat|netto|brutto|sum|at betale|price|amount|vat|discount|dkk|kr)\b/i;
 function judgePrice(m, before, after, line) {
   const num = m.replace(/(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-)/gi, '').trim();
@@ -716,6 +725,9 @@ function judgePrice(m, before, after, line) {
   // not part of a date, a range like 4-20-4, a size like 728 x 2178, or a code
   if (/[\d./-]$/.test(before) || /^[./-]?\d/.test(after) || /^[./]\d{4}/.test(after)) return 0;
   if (/[x×]\s*$/i.test(before) || /^\s*[x×]\s*\d/i.test(after)) return 0;
+  // a rate on a line about VAT, discount or interest: 25,00 % moms, 2,00 % rente
+  const pct = /^\s*%/.exec(after);
+  if (pct) return { kind: RATE_WORDS.test(line) ? 2 : 1, grow: pct[0].length, rate: true };
   // a value with a unit or label that isn't money
   if (/(?:\b[UgRλ][a-z]{0,2}\s*[=:]|værdi\s*:?|nr\.?\s*:?|no\.?\s*:?|#)\s*$/i.test(before)) return 0;
   if (/^\s*(?:mm|cm|m²|m2|m³|m3|m\b|km|kg|g\b|t\b|l\b|ml|%|‰|w\b|kw|kwh|°|stk|pcs|timer|t\.|dage|sider|år)/i.test(after)) return 0;
@@ -731,8 +743,17 @@ function judgePrice(m, before, after, line) {
 async function findPrices(progress) {
   const hits = await findAll(new RegExp(MONEY.source, MONEY.flags), progress, judgePrice);
   const strong = hits.filter(h => h.kind === 2);
-  // plain decimals count when right-aligned with a price on the same page
-  return hits.filter(h => h.kind === 2 || strong.some(s => s.pg.id === h.pg.id && Math.abs(s.x2 - h.x2) < 2.5));
+  const heads = await findAll(new RegExp(PRICE_HEAD.source, PRICE_HEAD.flags));
+  // plain decimals count when right-aligned with a price, or under a Pris/Beløb heading
+  const rateHeads = await findAll(new RegExp(RATE_WORDS.source, 'gi'));
+  const keep = hits.filter(h => h.kind === 2
+    // a percentage just under a heading like Rentesats or Moms
+    || (h.rate && rateHeads.some(c => c.pg.id === h.pg.id && h.y2 < c.y1 + 1 && c.y1 - h.y2 < 30 && h.x2 > c.x1 - 20 && h.x1 < c.x2 + 20))
+    || (!h.rate && strong.some(s => s.pg.id === h.pg.id && Math.abs(s.x2 - h.x2) < 2.5))
+    || (!h.rate && heads.some(c => c.pg.id === h.pg.id && h.y2 < c.y1 + 1 && h.x2 > c.x1 - 12 && h.x1 < c.x2 + 12)));
+  // payment dates (Betaling 02.12.26, Forfald …)
+  const dates = await findAll(new RegExp(CATS.dates.source, CATS.dates.flags), null, (m, b, a, line) => (PAY_WORDS.test(line) ? 2 : 0));
+  return keep.concat(dates.filter(d => !keep.some(k => sameSpot(k, d))));
 }
 const covers = (b, h) => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1;
 const sameSpot = (a, b) => a.pg.id === b.pg.id && Math.abs(a.x1 - b.x1) < 1 && Math.abs(a.x2 - b.x2) < 1 && Math.abs(a.y1 - b.y1) < 1;
@@ -1124,8 +1145,9 @@ async function open(files, opt = {}) {
   if (opt.find) {
     await openFind();
     // "Prices" opens with the prices marked; Redact lets the visitor choose.
-    const c = opt.preset && document.querySelector(`#edFindCats .ed-cat[data-k="${opt.preset}"]:not([disabled])`);
-    if (c && S && S.find && !S.find.active.size) c.click();
+    // Prices: the amounts and the words about them (Moms, Pris, Beløb …).
+    const want = opt.preset === 'prices' ? ['prices', 'priceWords'] : opt.preset ? [opt.preset] : [];
+    if (S && S.find && !S.find.active.size) for (const k of want) { const c = document.querySelector(`#edFindCats .ed-cat[data-k="${k}"]:not([disabled])`); if (c) c.click(); }
   }
   $('#edSave').focus();
 }
