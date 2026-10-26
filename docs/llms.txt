@@ -67,4 +67,4 @@ Key facts:
 - [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](https://lunaverta.com/licenses.html)
 - [Source code](https://github.com/MidtTech/lunaverta)
-- Publisher: Midt-Tech, Hammershusvej 72, 1. tv., 8210 Aarhus V, Denmark, CVR 34256276, lee@midttech.com
+- Publisher: Midt-Tech, Aarhus, Denmark, CVR 34256276, lee@midttech.com

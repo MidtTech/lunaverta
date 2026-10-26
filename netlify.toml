@@ -1,4 +1,0 @@
-# Headers live in docs/_headers. No build step is needed: the site is plain files.
-[build]
-  publish = "docs"
-  command = ""

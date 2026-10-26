@@ -1,8 +1,5 @@
 node_modules/
 .DS_Store
-.vercel/
-.netlify/
-.wrangler/
 
-# Files saved from Claude sessions, not part of the site
+# Local working files, not part of the site
 Claude outputs/

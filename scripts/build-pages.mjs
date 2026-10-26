@@ -82,7 +82,7 @@ ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
 
 // ---------- structured data ----------
 const org = { '@type': 'Organization', '@id': SITE + '/#org', name: COMPANY.name, url: COMPANY.url, email: COMPANY.email, vatID: 'DK' + COMPANY.cvr,
-  address: { '@type': 'PostalAddress', streetAddress: COMPANY.street, postalCode: COMPANY.zip, addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
+  address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
 function jsonLd(lang, page, faqItems) {
   const graph = [org,
     { '@type': 'WebSite', '@id': SITE + '/#site', name: 'LunaVerta', url: SITE + '/', inLanguage: ['en', 'da'], publisher: { '@id': SITE + '/#org' } },
@@ -174,7 +174,7 @@ ${TOOLS.map(tl => `- [${tl.da.name}](${url('da', tl.slug.da)}): ${tl.da.desc}`).
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](${SITE}/licenses.html)
 - [Source code](${REPO})
-- Publisher: ${COMPANY.name}, ${COMPANY.street}, ${COMPANY.zip} ${COMPANY.city}, Denmark, CVR ${COMPANY.cvr}, ${COMPANY.email}
+- Publisher: ${COMPANY.name}, ${COMPANY.city}, Denmark, CVR ${COMPANY.cvr}, ${COMPANY.email}
 `);
 
 // ---------- version stamp (content hash of everything except the pages themselves) ----------

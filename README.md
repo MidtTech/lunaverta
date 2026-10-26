@@ -1,97 +1,39 @@
 # LunaVerta
 
-A private file converter that runs entirely in the browser. It also edits PDFs (reorder, rotate and delete pages, correct existing text, add text, fill in forms), merges, splits and shrinks PDFs, removes hidden location data from photos, and is available in English and Danish (following the browser's language, with a switch at the top). Drop files on a ring of formats and convert images, PDFs, Word documents, spreadsheets, audio and video. Nothing is uploaded, there are no cookies or trackers, and it works offline once loaded.
+Free, private file conversion and PDF editing in the browser: [lunaverta.com](https://lunaverta.com)
 
-Live site (once deployed): https://lunaverta.com
+Everything happens on your own device. Files are never uploaded, there are no accounts, cookies, trackers or ads, and it works offline once loaded. Available in English and Danish.
 
-## What's in the box
+## What it does
 
-```
-docs/                   ← the whole website. Deploy this folder, nothing else.
-  index.html            converter
-  privacy.html          GDPR-style privacy notice (no cookies, no uploads)
-  licenses.html         open-source credits
-  404.html
-  assets/app.js, app.css, i18n.js (all texts in English and Danish), editor.js (PDF editor)
-  vendor/               self-hosted helper libraries (PDF.js, jsPDF, SheetJS, Mammoth, lamejs, libheif …)
-  fonts/                self-hosted fonts (no Google Fonts calls, which matters for GDPR)
-  icons/, og.png        app icons, install screenshots and social-share image
-  manifest.webmanifest  makes it installable, and lets the installed app open files from the OS
-  sw.js                 service worker for offline use
-  _headers              security and caching headers (Netlify, Cloudflare Pages)
-  robots.txt, sitemap.xml
-vercel.json             same headers for Vercel
-netlify.toml            tells Netlify to publish docs/
-src/template.html       page template; scripts/build-pages.mjs writes every page from it
-scripts/                vendor.mjs (refresh libraries), build-pages.mjs (pages, sitemap, llms.txt, version), site-content.mjs (page texts)
-```
+- **Convert** images (including HEIC), PDFs, Word documents, spreadsheets, audio and video. Drop files on the page and pick a format from the ring.
+- **Edit PDFs**: reorder, rotate and delete pages, add pages from other PDFs, correct or delete existing text, add text, fill in forms. Scroll through all pages and edit any of them.
+- **Remove sensitive information**: suggestions for prices, VAT and payment details, CPR, account and card numbers, e-mails, phone numbers, addresses, dates and order numbers. Toggle each mark on the page, click any text or line to add it, drag a box over anything else, then save a new version. Removed text is deleted from the file, not just covered.
+- **Black out** areas by hand, **protect** a PDF with a password (AES-256) or **unlock** one, **merge**, **split** and **compress** PDFs, and strip hidden data from PDFs and photos.
 
-There is no build step and no server code. Any static host works.
+## How it is built
 
-## Before you go live
-
-1. **Register the domain.** `lunaverta.com` showed no registration in the .com registry on 22 October 2026. Register it before anything else.
-2. **Company details.** The footer and privacy page name Midt-Tech (CVR 34256276) with contact lee@midttech.com. Update both if they change.
-3. **If you use a different domain**, search and replace `lunaverta.com` in `docs/index.html`, `docs/robots.txt` and `docs/sitemap.xml`.
-4. **Rebuild the pages** each time you change files: `node scripts/build-pages.mjs` (or `npm run build`). It writes all pages in English and Danish, sitemap.xml and llms.txt, and stamps the version so returning visitors get the update.
-
-## Run it locally
+A static site with no server code: plain HTML, CSS and JavaScript, with self-hosted libraries (PDF.js, pdf-lib, qpdf, jsPDF, SheetJS, Mammoth, docx-preview, libheif, lamejs and others, see `docs/licenses.html` and `THIRD_PARTY_NOTICES.md`). A strict Content Security Policy lets pages connect only to their own site.
 
 ```
+docs/                 the website (published as is)
+src/template.html     page template
+scripts/              build-pages.mjs (pages in both languages, sitemap, llms.txt, version),
+                      site-content.mjs (page texts), vendor.mjs (copies libraries into docs/)
+```
+
+## Run and build
+
+```
+npm install
+npm run build        # copies the libraries and writes all pages
 npm run serve        # http://localhost:8080
 ```
 
 Service workers only run on `localhost` or HTTPS, so open it through the server, not as a file.
 
-## Deploy
+## License
 
-Pick one. All are free for a site this size and serve HTTPS automatically.
+MIT, see `LICENSE`. The bundled libraries and fonts keep their own licenses.
 
-**Cloudflare Pages** (EU-friendly, fast everywhere)
-1. Push this folder to a GitHub repository.
-2. Cloudflare dashboard → Workers & Pages → Create → Pages → Connect to Git.
-3. Build command: leave empty. Build output directory: `docs`.
-4. Add your custom domain under the project's Custom domains tab.
-Or from the command line: `npx wrangler pages deploy docs --project-name lunaverta`
-
-**Netlify**
-1. Netlify → Add new site → Import from Git (it reads `netlify.toml`), or drag the `docs` folder onto app.netlify.com/drop.
-2. Domain settings → Add custom domain.
-
-**Vercel**
-1. Vercel → Add New → Project → import the repository. It reads `vercel.json` (output directory `docs`).
-2. Settings → Domains → add your domain.
-
-**GitHub Pages** (current setup)
-1. Push to the `main` branch.
-2. Settings → Pages → Source: **Deploy from a branch**, Branch: `main`, folder: `/docs`, then Save.
-3. Settings → Pages → Custom domain. GitHub Pages can't send custom headers, so the security policy comes from the `<meta>` tag in each page instead. Everything still works.
-
-## Updating the libraries
-
-Versions are pinned in `package.json`. To update:
-
-```
-npm install
-npm run build        # copies fresh files into docs/vendor and docs/fonts, stamps the cache
-```
-
-Test HEIC, PDF, Word, Excel and MP3 conversions afterwards.
-
-## Notes
-
-- **Security policy:** scripts only load from the site itself. `'wasm-unsafe-eval'` is allowed so the HEIC decoder (WebAssembly) can run; plain `eval` is not.
-- **Licenses:** LunaVerta's code is MIT. lamejs and libheif are LGPL-3.0 and are served as separate, unmodified files, which LGPL allows. See `THIRD_PARTY_NOTICES.md`.
-- **Browser support:** current Chrome, Edge, Firefox and Safari. "Open with LunaVerta" from the file manager needs an installed app in Chrome or Edge on desktop.
-- **Not included:** video-to-video re-encoding and legacy Office formats (DOC, PPT). Those need FFmpeg or LibreOffice, which are very heavy in a browser.
-
-## Search engines and AI assistants (SEO / GEO)
-
-- Every page is written as finished HTML in English (`/`) and Danish (`/da/`), with `hreflang` links between them, so search engines and AI crawlers read the text without running JavaScript.
-- One page per tool (for example `/heic-to-jpg/` and `/da/heic-til-jpg/`), each with its own title, description, heading, steps and questions, and the converter set to that tool.
-- Structured data (schema.org): Organization, WebSite, WebApplication, FAQPage, HowTo and BreadcrumbList.
-- `sitemap.xml` with language alternates, `robots.txt` that welcomes AI crawlers, and `llms.txt` with a plain summary for AI assistants.
-
-**Add a tool page:** add an entry to `TOOLS` in `scripts/site-content.mjs` (both languages), then run `node scripts/build-pages.mjs`.
-
-**After deploying:** add lunaverta.com to [Google Search Console](https://search.google.com/search-console) and [Bing Webmaster Tools](https://www.bing.com/webmasters) and submit `https://lunaverta.com/sitemap.xml`. Bing also feeds ChatGPT search and Copilot.
+Made by [Midt-Tech](https://midttech.com/), CVR 34256276.

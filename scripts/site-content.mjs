@@ -6,7 +6,7 @@ export const SITE = 'https://lunaverta.com';
 
 export const COMPANY = {
   name: 'Midt-Tech', url: 'https://midttech.com/', cvr: '34256276', email: 'lee@midttech.com',
-  street: 'Hammershusvej 72, 1. tv.', zip: '8210', city: 'Aarhus V', country: 'DK'
+  city: 'Aarhus', country: 'DK'
 };
 
 export const HOME = {
