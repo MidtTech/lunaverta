@@ -34,7 +34,7 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','prices','redact','merge','split','shrink','protect','unlock','clean','png','jpg','txt'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','merge','split','shrink','protect','unlock','clean','png','jpg','txt'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -49,7 +49,7 @@ const OUT = {
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['edit','prices','redact','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
+const ORDER = ['edit','redact','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -1300,6 +1300,8 @@ const PRESET = (document.querySelector('main[data-preset]') || {}).dataset?.pres
 function afterAdd(added, x, y) {
   if (!added.length) return;
   const files = added.map(a => a.file), targets = fileTargets(files);
+  // Prices is not in the ring; it lives in the editor. Its page opens the editor with prices marked.
+  if (PRESET === 'prices') { const pdfs = files.filter(f => kindOf(f) === 'pdf'); if (pdfs.length && window.LVEditor) { window.LVEditor.open(pdfs, { find: true, preset: 'prices' }); return; } }
   if (PRESET && PRESET !== 'merge' && targets.includes(PRESET)) { runBatch(files, PRESET); return; }
   if (PRESET === 'merge') return; // merge waits until the files are in order; the MERGE button is first and highlighted
   // A short "getting ready" moment first, so the ring doesn't jump at the visitor.
