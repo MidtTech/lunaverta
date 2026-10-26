@@ -678,7 +678,7 @@ async function estimatedLines(pg) {
   });
   return lines;
 }
-async function findAll(re, progress) {
+async function findAll(re, progress, judge) {
   const hits = [];
   const live = S.pages.filter(p => !p.deleted);
   for (const [i, pg] of live.entries()) {
@@ -692,13 +692,47 @@ async function findAll(re, progress) {
         const xs = ln.pos.slice(s0, s1).filter(Boolean);
         if (!xs.length) continue;
         const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
-        hits.push({ pg, n: i + 1, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
+        const kind = judge ? judge(ln.str.slice(s0, s1), ln.str.slice(0, s0), ln.str.slice(s1), ln.str) : 1;
+        if (!kind) continue;
+        hits.push({ pg, n: i + 1, kind, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
           x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95 });
       }
     }
     if (progress) progress(i + 1, live.length);
   }
   return hits;
+}
+// Prices: finds amounts and leaves other numbers (measurements, U-values,
+// dates, quantities, order numbers) alone. A number counts as a price when it
+// has a currency (kr., DKK, €, ,-) or is written like money (18.175,94);
+// a plain number with two decimals (0,00 or 499,00) counts when its line
+// talks about money or it sits in the same column as other prices.
+const MONEY = /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?)?-?(?:\d{1,3}(?:[.  ,]\d{3})+|\d+)(?:[.,]\d{2}(?!\d)|,-)?(?:\s?(?:kr\.?|DKK|EUR|€|,-)(?![A-Za-zÆØÅæøå]))?/gi;
+const CUR = /kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-/i;
+const MONEY_WORDS = /\b(?:pris|priser|stykpris|enhedspris|beløb|total|totalt|i alt|subtotal|moms|rabat|netto|brutto|sum|at betale|price|amount|vat|discount|dkk|kr)\b/i;
+function judgePrice(m, before, after, line) {
+  const num = m.replace(/(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-)/gi, '').trim();
+  if (!/\d/.test(num)) return 0;
+  // not part of a date, a range like 4-20-4, a size like 728 x 2178, or a code
+  if (/[\d./-]$/.test(before) || /^[./-]?\d/.test(after) || /^[./]\d{4}/.test(after)) return 0;
+  if (/[x×]\s*$/i.test(before) || /^\s*[x×]\s*\d/i.test(after)) return 0;
+  // a value with a unit or label that isn't money
+  if (/(?:\b[UgRλ][a-z]{0,2}\s*[=:]|værdi\s*:?|nr\.?\s*:?|no\.?\s*:?|#)\s*$/i.test(before)) return 0;
+  if (/^\s*(?:mm|cm|m²|m2|m³|m3|m\b|km|kg|g\b|t\b|l\b|ml|%|‰|w\b|kw|kwh|°|stk|pcs|timer|t\.|dage|sider|år)/i.test(after)) return 0;
+  const cur = CUR.test(m) || /(?:kr\.?|DKK|EUR|€|\$)\s?$/i.test(before) || /^\s?(?:kr|DKK|€|,-)/i.test(after);
+  const dec = /\d[.,]\d{2}$/.test(num), thou = /\d[.  ,]\d{3}(?:[.,]\d{2})?$/.test(num);
+  if (cur && (dec || thou || /\d/.test(num))) return 2;      // with a currency
+  if (dec && thou) return 2;                                  // 18.175,94
+  const money = MONEY_WORDS.test(line) || /(?:^|\s)à\s/.test(line);
+  if (thou && money) return 2;                                // Pris i alt: 1.234
+  if (dec) return money ? 2 : 1;                              // 0,00: decided by its column below
+  return 0;
+}
+async function findPrices(progress) {
+  const hits = await findAll(new RegExp(MONEY.source, MONEY.flags), progress, judgePrice);
+  const strong = hits.filter(h => h.kind === 2);
+  // plain decimals count when right-aligned with a price on the same page
+  return hits.filter(h => h.kind === 2 || strong.some(s => s.pg.id === h.pg.id && Math.abs(s.x2 - h.x2) < 2.5));
 }
 const covers = (b, h) => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1;
 const sameSpot = (a, b) => a.pg.id === b.pg.id && Math.abs(a.x1 - b.x1) < 1 && Math.abs(a.x2 - b.x2) < 1 && Math.abs(a.y1 - b.y1) < 1;
@@ -811,7 +845,7 @@ async function openFind() {
   status.textContent = T('find.scanning');
   for (const k of Object.keys(CATS)) {
     if (!S || S.find !== F) return;
-    F.cats[k] = (await findAll(new RegExp(CATS[k].source, CATS[k].flags))).map(h => ({ ...h, on: true, cat: k }));
+    F.cats[k] = (k === 'prices' ? await findPrices() : await findAll(new RegExp(CATS[k].source, CATS[k].flags))).map(h => ({ ...h, on: true, cat: k }));
     if (!S || S.find !== F) return;
     drawCats();
   }
@@ -1089,7 +1123,8 @@ async function open(files, opt = {}) {
   // Opened to remove sensitive text: the suggestions panel opens, with amounts switched on.
   if (opt.find) {
     await openFind();
-    const c = document.querySelector('#edFindCats .ed-cat[data-k="prices"]:not([disabled])');
+    // "Prices" opens with the prices marked; Redact lets the visitor choose.
+    const c = opt.preset && document.querySelector(`#edFindCats .ed-cat[data-k="${opt.preset}"]:not([disabled])`);
     if (c && S && S.find && !S.find.active.size) c.click();
   }
   $('#edSave').focus();

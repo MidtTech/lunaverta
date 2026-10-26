@@ -119,7 +119,7 @@ function render(lang, page) {
   </section>`;
   const preset = page.tool ? page.tool.preset : '';
   const dock = !page.tool ? `<p data-i18n-html="dock.hint">${HOME[lang].dock}</p>`
-    : `<p>${preset === 'merge' ? L.dockMerge : (preset === 'edit' || preset === 'redact') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset)))}</p>`;
+    : `<p>${preset === 'merge' ? L.dockMerge : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset)))}</p>`;
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [`<link rel="alternate" hreflang="${lang}" href="${page.url}">`, `<link rel="alternate" hreflang="${other}" href="${page.alt}">`, `<link rel="alternate" hreflang="x-default" href="${lang === 'en' ? page.url : page.alt}">`].join('\n'),

@@ -23,6 +23,7 @@ Key facts:
 - [Compress PDF](https://lunaverta.com/compress-pdf/): Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.
 - [Protect PDF](https://lunaverta.com/protect-pdf/): Add a password to a PDF in your browser with AES-256 encryption. Free and private: the PDF and the password never leave your device.
 - [Unlock PDF](https://lunaverta.com/unlock-pdf/): Remove the password from a PDF you can open, right in your browser. Free and private: your PDF is never uploaded.
+- [Remove prices from PDF](https://lunaverta.com/remove-prices-from-pdf/): Find every price in a quote or invoice and remove them all at once, keeping measurements and other details. Free and private: no upload.
 - [Redact PDF](https://lunaverta.com/redact-pdf/): Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.
 - [Remove PDF metadata](https://lunaverta.com/remove-pdf-metadata/): Strip author names, software, dates, attachments and scripts from a PDF before you share it. Free and private: your PDF is never uploaded.
 - [Edit PDF](https://lunaverta.com/edit-pdf/): Edit PDFs in your browser: correct text, add text, fill in forms, reorder, rotate and delete pages. Free and private, no upload.
@@ -46,6 +47,7 @@ Key facts:
 - [Komprimér PDF](https://lunaverta.com/da/komprimer-pdf/): Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Beskyt PDF](https://lunaverta.com/da/beskyt-pdf-med-adgangskode/): Sæt adgangskode på en PDF direkte i din browser med AES-256-kryptering. Gratis og privat: PDF'en og adgangskoden forlader aldrig din enhed.
 - [Lås PDF op](https://lunaverta.com/da/fjern-adgangskode-fra-pdf/): Fjern adgangskoden fra en PDF, du kan åbne, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Fjern priser fra PDF](https://lunaverta.com/da/fjern-priser-fra-pdf/): Find alle priser i et tilbud eller en faktura, og fjern dem på én gang, mens mål og andre oplysninger bliver stående. Gratis og privat: uden upload.
 - [Overstreg PDF](https://lunaverta.com/da/overstreg-pdf/): Overstreg navne, CPR-numre og anden fortrolig tekst i en PDF. Teksten fjernes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Redigér PDF](https://lunaverta.com/da/rediger-pdf/): Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.

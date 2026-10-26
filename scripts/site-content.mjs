@@ -121,6 +121,15 @@ export const TOOLS = [
       h1: 'Fjern adgangskoden fra en PDF', lead: 'Træt af at skrive adgangskoden hver gang? Kender du adgangskoden, laver LunaVerta en kopi uden. Du skal kende adgangskoden: LunaVerta knækker ikke PDF\'er.',
       steps: ['Vælg en PDF med adgangskode.', 'Skriv adgangskoden, og tryk Lås op.', 'Gem kopien uden adgangskode.'],
       faq: [['Kan den åbne en PDF, hvis jeg ikke kender adgangskoden?', 'Nej. Du skal bruge den adgangskode, PDF\'en åbnes med. LunaVerta gætter eller knækker ikke adgangskoder.'], ['Bliver andet ændret?', 'Nej. Sider, tekst, links og formularfelter er uændrede. Kun adgangskoden og krypteringen fjernes.']] } },
+  { id: 'remove-prices', preset: 'prices', slug: { en: 'remove-prices-from-pdf', da: 'fjern-priser-fra-pdf' },
+    en: { name: 'Remove prices from PDF', title: 'Remove prices from a PDF · Keep everything else', desc: 'Find every price in a quote or invoice and remove them all at once, keeping measurements and other details. Free and private: no upload.',
+      h1: 'Remove prices from a PDF', lead: 'Share a quote or order without the prices. LunaVerta finds the amounts on every page and leaves measurements, U-values, dates and other numbers alone. You check the marks, then save a new version.',
+      steps: ['Choose a PDF. Every price is found and marked in yellow on the pages.', 'Click a mark to keep that price, or search for anything else to remove.', 'Press Remove and save new version. The prices are deleted from the copy; your original is untouched.'],
+      faq: [['How does it tell prices from other numbers?', 'A number counts as a price when it has a currency (kr., DKK, €, ,-), is written like money (18.175,94), or stands in a column of prices or on a line about money. Measurements, U-values, weights, percentages, dates and order numbers are left alone.'], ['Are the prices really gone?', 'Yes. The digits are deleted from the PDF, not covered, so they can\'t be copied or searched for. You can also choose a black box instead.']] },
+    da: { name: 'Fjern priser fra PDF', title: 'Fjern priser fra en PDF · Behold alt andet', desc: 'Find alle priser i et tilbud eller en faktura, og fjern dem på én gang, mens mål og andre oplysninger bliver stående. Gratis og privat: uden upload.',
+      h1: 'Fjern priser fra en PDF', lead: 'Del et tilbud eller en ordre uden priserne. LunaVerta finder beløbene på alle sider og lader mål, U-værdier, datoer og andre tal være. Du tjekker markeringerne og gemmer en ny version.',
+      steps: ['Vælg en PDF. Alle priser findes og markeres med gult på siderne.', 'Klik på en markering for at beholde den pris, eller søg efter andet, der skal væk.', 'Tryk Fjern og gem ny version. Priserne slettes i kopien; din original er uændret.'],
+      faq: [['Hvordan kender den priser fra andre tal?', 'Et tal regnes som en pris, når det har en valuta (kr., DKK, €, ,-), er skrevet som et beløb (18.175,94) eller står i en kolonne med priser eller på en linje om penge. Mål, U-værdier, vægt, procenter, datoer og ordrenumre bliver stående.'], ['Er priserne virkelig væk?', 'Ja. Cifrene slettes fra PDF\'en og bliver ikke bare dækket, så de ikke kan kopieres eller søges frem. Du kan også vælge en sort boks i stedet.']] } },
   { id: 'redact-pdf', preset: 'redact', slug: { en: 'redact-pdf', da: 'overstreg-pdf' },
     en: { name: 'Redact PDF', title: 'Redact PDF · Black out text for real, no upload', desc: 'Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.',
       h1: 'Redact a PDF', lead: 'Black out confidential information before you share a PDF. The text under each black box is deleted from the file, so it can\'t be copied, searched or uncovered.',
@@ -264,10 +273,10 @@ export const TOOLS = [
 // written into the HTML (search engines and AI crawlers often don't run JavaScript).
 export const KINDS = {
   image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ico', 'bmp', 'clean'] },
-  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean', 'png', 'jpg', 'txt'] },
+  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'prices', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean', 'png', 'jpg', 'txt'] },
   doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
   data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'html', 'md'] },
   audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
   video: { color: '--c-video', exts: ['mp4', 'webm', 'mov', 'm4v', 'mkv'], targets: ['gif', 'mp3', 'wav', 'png', 'jpg'] }
 };
-export const TOOL_TARGETS = ['edit', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean'];
+export const TOOL_TARGETS = ['edit', 'prices', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean'];
