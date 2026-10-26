@@ -79,7 +79,7 @@ function labels() {
 function render() { labels(); S.view === 'page' ? buildPages(S.current) : renderGrid(); }
 function cancel() { if (S && S.dirty) { $('#edConfirm').hidden = false; $('#edKeep').focus(); } else close(); }
 function close() {
-  closeFind();
+  closeFind(true);
   const el = $('#editor'); if (el) el.remove();
   document.documentElement.classList.remove('ed-open');
   S = null;
@@ -232,7 +232,7 @@ async function buildPages(startId) {
   const views = new Map();
   for (const pg of live) {
     const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
-    if (seq !== renderSeq) return;
+    if (seq !== renderSeq || !S) return;
     const rot = (page.rotate + pg.rotate) % 360;
     const scale = Math.max(.4, avail / page.getViewport({ scale: 1, rotation: rot }).width);
     const vp = page.getViewport({ scale, rotation: rot });
@@ -305,6 +305,7 @@ async function fillLayer(v) {
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
   S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
   if (S.redacting) drawBoxes(pg, vp, layer);
+  hitMarks(v);
   setHint();
 }
 // Mode changes: new toolbar, and the drawn pages get their layers again.
@@ -591,11 +592,16 @@ function drawBoxes(pg, vp, layer) {
 // tick the hits to remove, and remove them all at once. Each hit becomes a box
 // that deletes the letters under it when the PDF is saved: "blank" boxes leave
 // the spot empty, black boxes black it out.
-const QUICK = {
+// Suggestions: kinds of text people usually want gone before sharing a PDF.
+const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
-  cpr: /\b\d{6}[-\s]?\d{4}\b/g,
+  cpr: /\b(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4}\b/g,
+  accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
-  phones: /(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b/g
+  phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)/g,
+  addresses: /\b[A-ZÆØÅ][a-zæøåé]+(?:vej|gade|allé|alle|vænge|plads|torv|stræde|parken|boulevard|have|toften|bakken|høj|vang|park|sti|gyde)\s\d{1,4}[A-Za-z]?(?:,?\s?\d{1,2}\.?\s?(?:th|tv|mf)\.?)?|\b(?:[1-9]\d{3})\s(?:[A-ZÆØÅ][a-zæøå]+)(?:\s[A-ZÆØÅ][a-zæøå]+)?(?=\s|,|$)/g,
+  dates: /(?<![\d./-])(?:0?[1-9]|[12]\d|3[01])([./-])(?:0?[1-9]|1[0-2])\1(?:\d{4}|\d{2})(?![\d./-]?\d)|\b\d{1,2}\.?\s(?:januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december|january|february|march|may|june|july|october)\s\d{4}\b/gi,
+  refs: /(?<=(?:ordre|faktura|kunde|tilbuds?|sags|order|invoice|customer|quote)\s?(?:nr\.?|nummer|no\.?|#)?\s?:?\s?)\d[\d-]{3,}/gi
 };
 const textCache = new Map(), libDocs = new Map();
 // The page's text as lines, with each character's position. The exact letter
@@ -687,24 +693,28 @@ async function findAll(re, progress) {
         if (!xs.length) continue;
         const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
         hits.push({ pg, n: i + 1, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
-          x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95, on: true });
+          x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95 });
       }
     }
     if (progress) progress(i + 1, live.length);
   }
-  // hits already covered by a box are shown as removed
-  for (const h of hits) h.done = S.boxes.some(b => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1);
   return hits;
 }
-function openFind() {
+const covers = (b, h) => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1;
+const sameSpot = (a, b) => a.pg.id === b.pg.id && Math.abs(a.x1 - b.x1) < 1 && Math.abs(a.x2 - b.x2) < 1 && Math.abs(a.y1 - b.y1) < 1;
+
+// The panel. S.find holds the suggestions: per category its hits, which
+// categories are switched on, and each hit's on/off (also clickable on the pages).
+async function openFind() {
   let panel = $('#edFindPanel');
   if (panel) { panel.querySelector('input[type="search"]').focus(); return; }
   panel = document.createElement('aside');
   panel.id = 'edFindPanel'; panel.className = 'ed-findpanel'; panel.setAttribute('aria-labelledby', 'edFindTitle');
   panel.innerHTML = `
     <div class="ed-find-head"><h2 id="edFindTitle">${esc(T('find.title'))}</h2><button type="button" class="ed-ico" id="edFindClose" aria-label="${esc(T('find.close'))}" title="${esc(T('find.close'))}">${ICON.x}</button></div>
-    <form class="ed-find-form" id="edFindForm"><input type="search" id="edFindQ" placeholder="${esc(T('find.placeholder'))}" aria-label="${esc(T('find.placeholder'))}" autocomplete="off"><button class="btn sm primary" type="submit">${esc(T('find.go'))}</button></form>
-    <div class="ed-find-quick"><span>${esc(T('find.quick'))}</span>${Object.keys(QUICK).map(k => `<button type="button" class="ed-chip" data-q="${k}">${esc(T('find.' + k))}</button>`).join('')}</div>
+    <p class="ed-find-intro">${esc(T('find.intro'))}</p>
+    <div class="ed-find-cats" id="edFindCats" role="group" aria-label="${esc(T('find.suggest'))}"></div>
+    <form class="ed-find-form" id="edFindForm"><input type="search" id="edFindQ" placeholder="${esc(T('find.placeholder'))}" aria-label="${esc(T('find.placeholder'))}" autocomplete="off"><button class="btn sm" type="submit">${esc(T('find.add'))}</button></form>
     <div class="ed-find-status" id="edFindStatus" role="status"></div>
     <div class="ed-find-list" id="edFindList"></div>
     <div class="ed-find-foot" id="edFindFoot" hidden>
@@ -712,75 +722,108 @@ function openFind() {
       <fieldset class="ed-find-mode"><legend class="sr-only">${esc(T('find.how'))}</legend>
         <label><input type="radio" name="edFindMode" value="blank" checked> ${esc(T('find.modeBlank'))}</label>
         <label><input type="radio" name="edFindMode" value="black"> ${esc(T('find.modeBlack'))}</label></fieldset>
-      <button type="button" class="btn primary" id="edFindRemove"></button>
+      <div class="ed-find-btns"><button type="button" class="btn" id="edFindApply"></button><button type="button" class="btn primary" id="edFindSave"></button></div>
     </div>`;
   $('#editor').appendChild(panel);
   document.documentElement.classList.add('ed-finding');
-  relayout();
-  let hits = [], lastAdded = [];
-  const status = $('#edFindStatus'), list = $('#edFindList'), foot = $('#edFindFoot');
-  const count = () => {
-    const sel = hits.filter(h => h.on && !h.done).length;
-    const btn = $('#edFindRemove'); btn.textContent = T('find.remove', { n: sel }); btn.disabled = !sel;
+  const F = S.find = { cats: {}, active: new Set(), custom: [], hits: [] };
+  const status = $('#edFindStatus'), list = $('#edFindList'), foot = $('#edFindFoot'), catsEl = $('#edFindCats');
+  // the hits shown: those of the switched-on categories, one per spot
+  const collect = () => {
+    const out = [];
+    for (const k of [...Object.keys(CATS), 'custom']) {
+      if (!F.active.has(k)) continue;
+      for (const h of (k === 'custom' ? F.custom : F.cats[k] || [])) if (!out.some(o => sameSpot(o, h))) out.push(h);
+    }
+    out.sort((a, b) => a.n - b.n || b.y1 - a.y1 || a.x1 - b.x1);
+    out.forEach(h => { h.done = S.boxes.some(b => covers(b, h)); });
+    F.hits = out;
   };
-  const show = () => {
-    const open = hits.filter(h => !h.done), pages = new Set(open.map(h => h.n)).size;
-    status.textContent = hits.length ? T('find.count', { n: open.length }) + (open.length ? ' ' + T('find.pages', { n: pages }) : '') : T('find.none');
+  const drawCats = () => {
+    catsEl.innerHTML = Object.keys(CATS).map(k => {
+      const n = F.cats[k] ? F.cats[k].length : null;
+      return `<button type="button" class="ed-cat${F.active.has(k) ? ' on' : ''}" data-k="${k}" aria-pressed="${F.active.has(k)}" ${n === 0 ? 'disabled' : ''}>
+        <span class="ed-cat-name">${esc(T('find.cat.' + k))}</span><span class="ed-cat-n">${n === null ? '…' : n}</span>
+        <span class="ed-cat-ex">${n ? esc(F.cats[k].slice(0, 2).map(h => h.text).join(', ')) : esc(T(n === 0 ? 'find.noneFound' : 'find.searching'))}</span></button>`;
+    }).join('');
+    catsEl.querySelectorAll('.ed-cat').forEach(b => b.onclick = () => {
+      const k = b.dataset.k;
+      if (F.active.has(k)) F.active.delete(k); else { F.active.add(k); (F.cats[k] || []).forEach(h => { h.on = true; }); }
+      update();
+    });
+  };
+  const count = () => {
+    const sel = F.hits.filter(h => h.on && !h.done).length;
+    $('#edFindApply').textContent = T('find.remove', { n: sel }); $('#edFindApply').disabled = !sel;
+    $('#edFindSave').textContent = T('find.removeSave', { n: sel }); $('#edFindSave').disabled = !sel && !S.boxes.length;
+  };
+  const drawList = () => {
+    const open = F.hits.filter(h => !h.done), pages = new Set(open.map(h => h.n)).size;
+    status.textContent = !F.active.size ? T('find.pick') : F.hits.length ? T('find.count', { n: open.length }) + (open.length ? ' ' + T('find.pages', { n: pages }) : '') : T('find.none');
     list.innerHTML = '';
     let lastN = 0;
-    for (const h of hits) {
+    for (const h of F.hits) {
       if (h.n !== lastN) { const hd = document.createElement('div'); hd.className = 'ed-find-page'; hd.textContent = T('ed.page', { n: h.n }); list.appendChild(hd); lastN = h.n; }
       const row = document.createElement('label');
       row.className = 'ed-find-hit' + (h.done ? ' done' : '');
       row.innerHTML = `<input type="checkbox" ${h.on && !h.done ? 'checked' : ''} ${h.done ? 'disabled' : ''}><span class="ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</span>${h.done ? `<span class="tag">${esc(T('find.already'))}</span>` : ''}`;
-      row.querySelector('input').onchange = e => { h.on = e.target.checked; count(); };
+      row.querySelector('input').onchange = e => { h.on = e.target.checked; count(); paintHits(); };
       row.addEventListener('mouseenter', () => peek(h));
       row.addEventListener('focusin', () => peek(h));
+      h.row = row;
       list.appendChild(row);
     }
-    foot.hidden = !open.length; count();
+    foot.hidden = !F.hits.length && !S.boxes.length; count();
   };
-  const run = async re => {
-    status.textContent = T('find.searching'); list.innerHTML = ''; foot.hidden = true;
-    hits = await findAll(re, (i, n) => { status.textContent = T('find.searching') + ` ${i}/${n}`; });
-    show();
+  const update = () => { collect(); drawCats(); drawList(); paintHits(); };
+  F.toggle = h => { h.on = !h.on; const cb = h.row && h.row.querySelector('input'); if (cb) cb.checked = h.on; count(); };
+  // apply: every ticked hit becomes a removal box
+  const apply = () => {
+    const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
+    let n = 0;
+    for (const h of F.hits) if (h.on && !h.done) { S.boxes.push({ id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: true }); n++; }
+    if (n) S.dirty = true;
+    return n;
   };
-  $('#edFindForm').onsubmit = e => {
+  $('#edFindApply').onclick = () => {
+    const before = S.boxes.length, n = apply(), added = S.boxes.slice(before);
+    update(); refreshAfterFind();
+    status.innerHTML = `${esc(T('find.removed', { n }))} <button type="button" class="linkish" id="edFindUndo">${esc(T('find.undo'))}</button>`;
+    $('#edFindUndo').onclick = () => { const gone = new Set(added); S.boxes = S.boxes.filter(b => !gone.has(b)); update(); refreshAfterFind(); };
+  };
+  $('#edFindSave').onclick = () => { apply(); save({ suffix: '-redacted' }); };
+  $('#edFindForm').onsubmit = async e => {
     e.preventDefault();
     const q = $('#edFindQ').value.trim(); if (!q) return;
-    panel.querySelectorAll('.ed-chip').forEach(c => c.classList.remove('on'));
-    run(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'gi'));
+    status.textContent = T('find.searching');
+    const found = await findAll(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'gi'));
+    found.forEach(h => { h.on = true; });
+    F.custom = F.custom.concat(found.filter(h => !F.custom.some(o => sameSpot(o, h))));
+    F.active.add('custom'); $('#edFindQ').value = '';
+    update();
   };
-  panel.querySelectorAll('.ed-chip').forEach(c => c.onclick = () => {
-    panel.querySelectorAll('.ed-chip').forEach(o => o.classList.toggle('on', o === c));
-    $('#edFindQ').value = ''; run(new RegExp(QUICK[c.dataset.q].source, QUICK[c.dataset.q].flags));
-  });
-  $('#edFindAll').onclick = () => { hits.forEach(h => { if (!h.done) h.on = true; }); show(); };
-  $('#edFindNone').onclick = () => { hits.forEach(h => { h.on = false; }); show(); };
-  $('#edFindRemove').onclick = () => {
-    const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
-    lastAdded = [];
-    for (const h of hits) if (h.on && !h.done) {
-      const b = { id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: true };
-      S.boxes.push(b); lastAdded.push(b); h.done = true;
-    }
-    S.dirty = true;
-    show();
-    status.innerHTML = `${esc(T('find.removed', { n: lastAdded.length }))} <button type="button" class="linkish" id="edFindUndo">${esc(T('find.undo'))}</button>`;
-    $('#edFindUndo').onclick = () => {
-      const gone = new Set(lastAdded); S.boxes = S.boxes.filter(b => !gone.has(b));
-      hits.forEach(h => { h.done = S.boxes.some(b => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1); });
-      lastAdded = []; show(); refreshAfterFind();
-    };
-    refreshAfterFind();
-  };
+  $('#edFindAll').onclick = () => { F.hits.forEach(h => { if (!h.done) h.on = true; }); drawList(); paintHits(); };
+  $('#edFindNone').onclick = () => { F.hits.forEach(h => { h.on = false; }); drawList(); paintHits(); };
   $('#edFindClose').onclick = closeFind;
-  $('#edFindQ').focus();
+  relayout();
+  drawCats(); drawList();
+  // Look for every kind of suggestion straight away.
+  status.textContent = T('find.scanning');
+  for (const k of Object.keys(CATS)) {
+    if (!S || S.find !== F) return;
+    F.cats[k] = (await findAll(new RegExp(CATS[k].source, CATS[k].flags))).map(h => ({ ...h, on: true, cat: k }));
+    if (!S || S.find !== F) return;
+    drawCats();
+  }
+  update();
 }
-function closeFind() {
+function closeFind(leaving) {
   const p = $('#edFindPanel'); if (!p) return;
   p.remove(); document.documentElement.classList.remove('ed-finding');
-  relayout();
+  if (!S) return;
+  S.find = null;
+  if (leaving) return;
+  paintHits(); relayout();
 }
 // On wide screens the panel sits beside the pages, so the pages are laid out again to fit.
 function relayout() { if (S && S.view === 'page' && S.pv && innerWidth >= 900) buildPages(S.current); }
@@ -788,7 +831,28 @@ function refreshAfterFind() {
   if (S.view === 'page' && S.pv) { for (const v of S.pv.views.values()) if (v.drawn) { v.job++; fillLayer(v); } updateFinish(); }
   else if (S.view === 'grid') renderGrid();
 }
-// Shows where a hit is: scrolls the page view to it and flashes the spot.
+// The suggested spots on the pages: yellow means "will be removed", outlined
+// means "stays". Clicking one switches it.
+function hitMarks(v) {
+  v.layer.querySelectorAll('.ed-hit').forEach(n => n.remove());
+  if (!S.find) return;
+  for (const h of S.find.hits) {
+    if (h.pg.id !== v.pg.id || h.done) continue;
+    const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'ed-hit' + (h.on ? ' on' : '');
+    el.setAttribute('aria-pressed', String(!!h.on)); el.setAttribute('aria-label', T(h.on ? 'find.markOn' : 'find.markOff', { text: h.text }));
+    el.title = T(h.on ? 'find.markOn' : 'find.markOff', { text: h.text });
+    Object.assign(el.style, { left: Math.min(x1, x2) - 1 + 'px', top: Math.min(y1, y2) - 1 + 'px', width: Math.abs(x2 - x1) + 2 + 'px', height: Math.abs(y2 - y1) + 2 + 'px' });
+    el.onclick = e => { e.stopPropagation(); S.find.toggle(h); paintHits(); };
+    v.layer.appendChild(el);
+  }
+}
+function paintHits() {
+  if (S && S.view === 'page' && S.pv) for (const v of S.pv.views.values()) if (v.drawn) hitMarks(v);
+  if (S && S.view === 'grid') { /* thumbnails don't show marks */ }
+}
+// Shows where a hit is: opens the page view if needed, scrolls to it and flashes the spot.
 function peek(h) {
   if (S.view !== 'page' || !S.pv) return;
   const v = S.pv.views.get(h.pg.id); if (!v) return;
@@ -840,10 +904,10 @@ async function formFields(page, vp, layer) {
 }
 
 // ---------- saving ----------
-async function save() {
+async function save(opt) {
   const btn = $('#edSave');
   // Ask where to save first, while the click still counts as the visitor's.
-  const name = app().base(S.docs[0].file.name) + '-edited.pdf';
+  const name = app().base(S.docs[0].file.name) + ((opt && opt.suffix) || '-edited') + '.pdf';
   const handle = await app().pickTarget(name, 'application/pdf');
   if (handle === null) return; // cancelled: stay in the editor
   btn.disabled = true; btn.textContent = T('ed.saving');
@@ -1020,7 +1084,14 @@ async function open(files, opt = {}) {
   catch (e) { close(); app().toast(e.message); return; }
   // The Redact PDF page opens the first page ready to black out.
   if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
+  if (opt.find && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
   render();
+  // Opened to remove sensitive text: the suggestions panel opens, with amounts switched on.
+  if (opt.find) {
+    await openFind();
+    const c = document.querySelector('#edFindCats .ed-cat[data-k="prices"]:not([disabled])');
+    if (c && S && S.find && !S.find.active.size) c.click();
+  }
   $('#edSave').focus();
 }
 document.addEventListener('lv-lang', () => { if (S) render(); });
