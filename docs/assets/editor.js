@@ -114,7 +114,7 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'ed-card' + (pg.deleted ? ' deleted' : '');
     card.draggable = !pg.deleted; card.dataset.id = pg.id;
-    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim()) || S.boxes.some(b => b.pageId === pg.id);
+    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim()) || S.boxes.some(b => b.pageId === pg.id) || S.images.some(im => im.pageId === pg.id);
     const num = pg.deleted ? '' : T('ed.page', { n }) + (changed ? ' · ' + T('ed.changed') : '');
     card.innerHTML = `
       <button class="ed-thumb" type="button" aria-label="${esc(T('ed.openPage', { n: num || '' }))}" ${pg.deleted ? 'disabled' : ''}><img alt="" style="transform:rotate(${pg.rotate}deg)"></button>
@@ -182,6 +182,7 @@ function pageTools() {
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}">${esc(T('ed.addText'))}</button>
     <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
+    <button class="btn sm" type="button" id="edSign">${esc(T('ed.sign'))}</button>
     <button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
@@ -194,6 +195,7 @@ function pageTools() {
   $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.justDone = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
   $('#edFind').onclick = openFind;
+  $('#edSign').onclick = () => { S.editing = S.adding = S.redacting = false; openSign(); };
   updatePager();
 }
 function updatePager() {
@@ -304,6 +306,7 @@ async function fillLayer(v) {
   if (job !== v.job) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
   S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
+  S.images.filter(im => im.pageId === pg.id).forEach(im => sigBox(v, im));
   if (S.redacting) drawBoxes(pg, vp, layer);
   hitMarks(v);
   setHint();
@@ -318,6 +321,14 @@ function refreshModes() {
   finishBar(); setHint();
 }
 function addTextAt(v, e) {
+  // placing a signature: it goes where the page was clicked, 150 points wide
+  if (S.placing && (e.target === v.layer || e.target.classList.contains('ed-seg'))) {
+    const r = v.layer.getBoundingClientRect(), [px, py] = v.vp.convertToPdfPoint(e.clientX - r.left, e.clientY - r.top);
+    const w = 150, h = w * S.placing.ratio;
+    const im = { id: ++uid, pageId: v.pg.id, x: px - w / 2, y: py - h / 2, w, h, src: S.placing.src };
+    S.images.push(im); S.dirty = true; placingMode(false); sigBox(v, im); setHint();
+    return;
+  }
   if (!S.adding || e.target !== v.layer) return;
   const r = v.layer.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
   const size = S.size || 12;
@@ -546,6 +557,137 @@ function textBox(t, vp, layer, rot) {
   });
   place(); layer.appendChild(box); grow();
   return box;
+}
+
+// ---------- signatures ----------
+// Draw a signature or choose a picture of one, then click a page to place it.
+// It can be moved and resized, and is written into the PDF as a picture.
+// Signatures are only remembered (in this browser) when the visitor asks.
+const SIG_KEY = 'lunaverta-signatures';
+const savedSigs = () => { try { return JSON.parse(localStorage.getItem(SIG_KEY) || '[]'); } catch (e) { return []; } };
+const storeSigs = list => { try { localStorage.setItem(SIG_KEY, JSON.stringify(list.slice(0, 6))); } catch (e) {} };
+// Crops to the ink and, if asked, makes near-white pixels transparent.
+function cleanSig(src, dropWhite) {
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0);
+  const img = ctx.getImageData(0, 0, c.width, c.height), d = img.data;
+  let x1 = c.width, y1 = c.height, x2 = -1, y2 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const i = (y * c.width + x) * 4;
+    if (dropWhite && d[i] > 225 && d[i + 1] > 225 && d[i + 2] > 225) d[i + 3] = 0;
+    if (d[i + 3] > 20) { if (x < x1) x1 = x; if (x > x2) x2 = x; if (y < y1) y1 = y; if (y > y2) y2 = y; }
+  }
+  if (x2 < 0) return null;
+  ctx.putImageData(img, 0, 0);
+  const pad = 4, out = document.createElement('canvas');
+  out.width = x2 - x1 + 1 + pad * 2; out.height = y2 - y1 + 1 + pad * 2;
+  out.getContext('2d').drawImage(c, x1 - pad, y1 - pad, out.width, out.height, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+function openSign() {
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog sig-dialog';
+  d.innerHTML = `<form method="dialog">
+    <h2>${esc(T('sign.title'))}</h2>
+    <div class="sig-tabs" role="tablist">
+      <button type="button" role="tab" data-tab="draw" aria-selected="true">${esc(T('sign.draw'))}</button>
+      <button type="button" role="tab" data-tab="upload" aria-selected="false">${esc(T('sign.upload'))}</button>
+      <button type="button" role="tab" data-tab="saved" aria-selected="false">${esc(T('sign.saved'))}</button>
+    </div>
+    <div class="sig-pane" data-pane="draw"><p class="pw-note">${esc(T('sign.drawHint'))}</p><canvas class="sig-pad" width="560" height="200"></canvas><button type="button" class="linkish" data-act="clear">${esc(T('sign.clear'))}</button></div>
+    <div class="sig-pane" data-pane="upload" hidden><label>${esc(T('sign.pick'))}<input type="file" accept="image/*"></label><label class="pw-show"><input type="checkbox" name="white" checked> ${esc(T('sign.white'))}</label><img class="sig-preview" alt="" hidden></div>
+    <div class="sig-pane" data-pane="saved" hidden><div class="sig-saved"></div></div>
+    <label class="pw-show"><input type="checkbox" name="remember"> ${esc(T('sign.remember'))}</label>
+    <p class="pw-err" role="alert" hidden></p>
+    <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary">${esc(T('sign.place'))}</button></div>
+  </form>`;
+  document.body.appendChild(d);
+  const f = d.querySelector('form'), err = d.querySelector('.pw-err');
+  let tab = 'draw', chosen = null, upload = null;
+  d.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+    tab = b.dataset.tab;
+    d.querySelectorAll('[data-tab]').forEach(o => o.setAttribute('aria-selected', String(o === b)));
+    d.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== tab; });
+  });
+  // drawing pad
+  const pad = d.querySelector('.sig-pad'), pctx = pad.getContext('2d');
+  pctx.lineWidth = 2.6; pctx.lineCap = pctx.lineJoin = 'round'; pctx.strokeStyle = '#0b1a5c';
+  let drawing = false, inked = false, last = null;
+  const at = e => { const r = pad.getBoundingClientRect(); return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height]; };
+  pad.addEventListener('pointerdown', e => { drawing = true; last = at(e); pad.setPointerCapture(e.pointerId); });
+  pad.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    const p = at(e);
+    pctx.beginPath(); pctx.moveTo(last[0], last[1]); pctx.quadraticCurveTo(last[0], last[1], (last[0] + p[0]) / 2, (last[1] + p[1]) / 2); pctx.lineTo(p[0], p[1]); pctx.stroke();
+    last = p; inked = true;
+  });
+  pad.addEventListener('pointerup', () => { drawing = false; });
+  d.querySelector('[data-act="clear"]').onclick = () => { pctx.clearRect(0, 0, pad.width, pad.height); inked = false; };
+  // picture
+  const prev = d.querySelector('.sig-preview');
+  const loadUpload = async () => {
+    const file = d.querySelector('input[type="file"]').files[0]; if (!file) return;
+    const im = await createImageBitmap(file);
+    const k = Math.min(1, 1200 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+    c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+    upload = cleanSig(c, f.white.checked); prev.src = upload || ''; prev.hidden = !upload;
+  };
+  d.querySelector('input[type="file"]').onchange = loadUpload;
+  f.white.onchange = loadUpload;
+  // saved ones
+  const drawSaved = () => {
+    const list = savedSigs(), box = d.querySelector('.sig-saved');
+    box.innerHTML = list.length ? list.map((src, i) => `<div class="sig-item${chosen === src ? ' on' : ''}"><button type="button" data-i="${i}" aria-label="${esc(T('sign.use'))}"><img src="${src}" alt=""></button><button type="button" class="ed-ico" data-del="${i}" aria-label="${esc(T('sign.forget'))}" title="${esc(T('sign.forget'))}">${ICON.x}</button></div>`).join('') : `<p class="pw-note">${esc(T('sign.none'))}</p>`;
+    box.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { chosen = list[+b.dataset.i]; drawSaved(); });
+    box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => { const l = savedSigs(); l.splice(+b.dataset.del, 1); storeSigs(l); chosen = null; drawSaved(); });
+  };
+  drawSaved();
+  if (savedSigs().length) d.querySelector('[data-tab="saved"]').click();
+  d.querySelector('[value="cancel"]').onclick = () => d.close();
+  f.onsubmit = e => {
+    e.preventDefault();
+    const src = tab === 'draw' ? (inked ? cleanSig(pad, false) : null) : tab === 'upload' ? upload : chosen;
+    if (!src) { err.textContent = T('sign.empty'); err.hidden = false; return; }
+    if (f.remember.checked && tab !== 'saved') storeSigs([src, ...savedSigs().filter(s => s !== src)]);
+    d.close();
+    const im = new Image();
+    im.onload = () => { S.placing = { src, ratio: im.height / im.width }; placingMode(true); };
+    im.src = src;
+  };
+  d.addEventListener('close', () => d.remove());
+  d.showModal();
+}
+function placingMode(on) {
+  document.documentElement.classList.toggle('ed-placing', on);
+  const h = $('#edPageHint'); if (h && on) h.textContent = T('sign.placeHint');
+  if (!on) S.placing = null;
+}
+// a placed signature: drag to move, corner to resize, × to remove
+function sigBox(v, im) {
+  const el = document.createElement('div');
+  el.className = 'ed-img';
+  el.innerHTML = `<img src="${im.src}" alt="" draggable="false"><span class="ed-img-size" title="${esc(T('sign.resize'))}" aria-hidden="true"></span><button type="button" class="ed-ico ed-box-x" aria-label="${esc(T('sign.remove'))}" title="${esc(T('sign.remove'))}">${ICON.x}</button>`;
+  const place = () => {
+    const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([im.x, im.y, im.x + im.w, im.y + im.h]);
+    Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
+  };
+  place();
+  el.querySelector('.ed-box-x').onclick = e => { e.stopPropagation(); S.images = S.images.filter(o => o !== im); S.dirty = true; el.remove(); };
+  el.addEventListener('pointerdown', e => {
+    if (e.target.closest('.ed-box-x')) return;
+    e.preventDefault(); e.stopPropagation();
+    const resize = e.target.classList.contains('ed-img-size');
+    const start = { x: e.clientX, y: e.clientY, im: { ...im } }, k = 1 / v.scale;
+    const move = ev => {
+      const dx = (ev.clientX - start.x) * k, dy = (ev.clientY - start.y) * k;
+      if (resize) { const w = Math.max(20, start.im.w + dx), h = w * (start.im.h / start.im.w); im.w = w; im.h = h; im.y = start.im.y + start.im.h - h; }
+      else { im.x = start.im.x + dx; im.y = start.im.y - dy; }
+      S.dirty = true; place();
+    };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+  v.layer.appendChild(el);
 }
 
 // ---------- blacking out ----------
@@ -811,6 +953,24 @@ async function findPriceText(progress) {
 const covers = (b, h) => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1;
 const sameSpot = (a, b) => a.pg.id === b.pg.id && Math.abs(a.x1 - b.x1) < 1 && Math.abs(a.x2 - b.x2) < 1 && Math.abs(a.y1 - b.y1) < 1;
 
+// Templates: the choices made for one sender's documents, kept in this
+// browser only. A template remembers which suggestions were on, which texts
+// were kept or added, and marked areas and lines (by page number). It is
+// recognised again by the sender's CVR number, e-mail domain or website.
+const TPL_KEY = 'lunaverta-templates';
+const loadTpls = () => { try { return JSON.parse(localStorage.getItem(TPL_KEY) || '[]'); } catch (e) { return []; } };
+const saveTpls = list => { try { localStorage.setItem(TPL_KEY, JSON.stringify(list.slice(0, 50))); } catch (e) {} };
+const FREE_MAIL = /^(gmail|hotmail|outlook|live|yahoo|icloud|me|mail|msn|protonmail|proton)\./i;
+async function docKeys() {
+  const keys = new Set();
+  for (const pg of S.pages.filter(p => !p.deleted).slice(0, 3)) for (const ln of await pageLines(pg)) {
+    for (const m of ln.str.matchAll(/(?:CVR|SE|VAT)[\s.:-]*(?:nr\.?|no\.?)?[\s.:-]*(?:DK)?[\s-]?(\d{2}\s?\d{2}\s?\d{2}\s?\d{2})\b/gi)) keys.add('cvr:' + m[1].replace(/\s/g, ''));
+    for (const m of ln.str.matchAll(/@([\w-]+(?:\.[\w-]+)+)/g)) if (!FREE_MAIL.test(m[1])) keys.add('dom:' + m[1].toLowerCase());
+    for (const m of ln.str.matchAll(/\bwww\.([\w-]+(?:\.[\w-]+)+)/gi)) keys.add('dom:' + m[1].toLowerCase());
+  }
+  return [...keys].slice(0, 6);
+}
+
 // The panel. S.find holds the suggestions: per category its hits, which
 // categories are switched on, and each hit's on/off (also clickable on the pages).
 async function openFind() {
@@ -821,6 +981,9 @@ async function openFind() {
   panel.innerHTML = `
     <div class="ed-find-head"><h2 id="edFindTitle">${esc(T('find.title'))}</h2><button type="button" class="ed-ico" id="edFindClose" aria-label="${esc(T('find.close'))}" title="${esc(T('find.close'))}">${ICON.x}</button></div>
     <p class="ed-find-intro">${esc(T('find.intro'))}</p>
+    <div class="ed-tpl"><label for="edTplSel">${esc(T('tpl.label'))}</label><select id="edTplSel"></select>
+      <button type="button" class="linkish" id="edTplSave">${esc(T('tpl.save'))}</button><button type="button" class="linkish" id="edTplDel" hidden>${esc(T('tpl.delete'))}</button></div>
+    <form class="ed-tpl-form" id="edTplForm" hidden><input id="edTplName" maxlength="40" placeholder="${esc(T('tpl.namePh'))}" aria-label="${esc(T('tpl.namePh'))}"><button class="btn sm primary" type="submit">${esc(T('tpl.saveBtn'))}</button></form>
     <div class="ed-find-cats" id="edFindCats" role="group" aria-label="${esc(T('find.suggest'))}"></div>
     <form class="ed-find-form" id="edFindForm"><input type="search" id="edFindQ" placeholder="${esc(T('find.placeholder'))}" aria-label="${esc(T('find.placeholder'))}" autocomplete="off"><button class="btn sm" type="submit">${esc(T('find.add'))}</button></form>
     <div class="ed-find-status" id="edFindStatus" role="status"></div>
@@ -936,6 +1099,61 @@ async function openFind() {
     F.active.add('custom'); $('#edFindQ').value = '';
     update();
   };
+  // ---- templates ("remember my choices") ----
+  const drawTpls = sel => {
+    const list = loadTpls(), el = $('#edTplSel');
+    el.innerHTML = `<option value="">${esc(T('tpl.none'))}</option>` + list.map(t => `<option value="${t.id}"${t.id === sel ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
+    $('#edTplDel').hidden = !el.value;
+  };
+  const applyTpl = async (t, auto) => {
+    F.active = new Set((t.cats || []).filter(k => F.cats[k] && F.cats[k].length));
+    for (const k of Object.keys(F.cats)) (F.cats[k] || []).forEach(h => { h.on = !(t.keep || []).includes(h.text); });
+    F.custom = [];
+    const live = S.pages.filter(p => !p.deleted);
+    for (const text of t.remove || []) {
+      const found = await findAll(new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'g'));
+      for (const h of found) if (!F.custom.some(o => sameSpot(o, h))) { h.on = true; h.cat = 'custom'; F.custom.push(h); }
+    }
+    for (const a of t.areas || []) if (live[a.n - 1]) F.custom.push({ pg: live[a.n - 1], n: a.n, area: true, line: !!a.line, text: T(a.line ? 'find.line' : 'find.area'), before: '', after: '', x1: a.x1, y1: a.y1, x2: a.x2, y2: a.y2, on: true, cat: 'custom' });
+    if (F.custom.length) F.active.add('custom');
+    const m = panel.querySelector(`input[name="edFindMode"][value="${t.mode === 'black' ? 'black' : 'blank'}"]`); if (m) m.checked = true;
+    update();
+    status.textContent = T(auto ? 'tpl.autoUsed' : 'tpl.used', { name: t.name });
+  };
+  F.drawTpls = drawTpls; F.applyTpl = applyTpl;
+  drawTpls();
+  $('#edTplSel').onchange = async () => {
+    const t = loadTpls().find(o => o.id === $('#edTplSel').value);
+    $('#edTplDel').hidden = !t;
+    if (t) await applyTpl(t, false);
+  };
+  $('#edTplSave').onclick = () => {
+    const f = $('#edTplForm'); f.hidden = !f.hidden;
+    const cur = loadTpls().find(o => o.id === $('#edTplSel').value);
+    $('#edTplName').value = cur ? cur.name : ''; if (!f.hidden) $('#edTplName').focus();
+  };
+  $('#edTplForm').onsubmit = async e => {
+    e.preventDefault();
+    const name = $('#edTplName').value.trim(); if (!name) return;
+    const uniq = a => [...new Set(a)];
+    const t = {
+      id: (loadTpls().find(o => o.name.toLowerCase() === name.toLowerCase()) || {}).id || 't' + Date.now().toString(36),
+      name, keys: await docKeys(), at: Date.now(),
+      cats: [...F.active].filter(k => k !== 'custom'),
+      keep: uniq(Object.values(F.cats).flat().filter(h => !h.on && !h.done).map(h => h.text)).slice(0, 200),
+      remove: uniq(F.custom.filter(h => !h.area && h.on).map(h => h.text)).slice(0, 100),
+      areas: F.custom.filter(h => h.area && h.on).map(h => ({ n: h.n, line: !!h.line, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2 })).slice(0, 100),
+      mode: (panel.querySelector('input[name="edFindMode"]:checked') || {}).value || 'blank'
+    };
+    saveTpls([t, ...loadTpls().filter(o => o.id !== t.id)]);
+    $('#edTplForm').hidden = true; drawTpls(t.id);
+    status.textContent = T(t.keys.length ? 'tpl.saved' : 'tpl.savedManual', { name });
+  };
+  $('#edTplDel').onclick = () => {
+    const id = $('#edTplSel').value; if (!id) return;
+    saveTpls(loadTpls().filter(o => o.id !== id)); drawTpls('');
+    status.textContent = T('tpl.deleted');
+  };
   $('#edFindAll').onclick = () => { F.hits.forEach(h => { if (!h.done) h.on = true; }); drawList(); paintHits(); };
   $('#edFindNone').onclick = () => { F.hits.forEach(h => { h.on = false; }); drawList(); paintHits(); };
   $('#edFindClose').onclick = closeFind;
@@ -950,6 +1168,10 @@ async function openFind() {
     drawCats();
   }
   update();
+  // a saved template for this sender is used straight away
+  const keys = await docKeys(), tpl = loadTpls().find(t => t.keys && t.keys.some(k => keys.includes(k)));
+  drawTpls(tpl && tpl.id);
+  if (tpl) await applyTpl(tpl, true);
 }
 function closeFind(leaving) {
   const p = $('#edFindPanel'); if (!p) return;
@@ -1172,6 +1394,7 @@ async function save(opt) {
     const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
     const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
     let covered = 0;
+    const sigCache = {};
     const flatten = [];
     for (const [pi, { pg, page }] of final.entries()) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
@@ -1220,6 +1443,11 @@ async function save(opt) {
         page.drawText(text, { x, y: ed.y, size, font: f, color: col(ed.ink) });
       }
       // Text is drawn turned with the page, so it reads upright however the page is shown.
+      // signatures and other pictures
+      for (const im of S.images.filter(x => x.pageId === pg.id)) {
+        sigCache[im.src] = sigCache[im.src] || await out.embedPng(await (await fetch(im.src)).arrayBuffer());
+        page.drawImage(sigCache[im.src], { x: im.x, y: im.y, width: im.w, height: im.h });
+      }
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });
       }
@@ -1284,7 +1512,7 @@ async function save(opt) {
 
 // ---------- open ----------
 async function open(files, opt = {}) {
-  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], images: [], placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear(); textCache.clear(); libDocs.clear(); pathCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
@@ -1309,6 +1537,7 @@ document.addEventListener('lv-lang', () => { if (S) render(); });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !S || !$('#editor')) return;
   // In a line being edited, Esc finishes that line (handled there).
+  if (S.placing) { placingMode(false); setHint(); return; }
   if (!e.target.closest || e.target.closest('.ed-edit')) return;
   if (e.target.closest('textarea, input, select')) return;
   e.preventDefault();

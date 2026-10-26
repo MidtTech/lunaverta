@@ -32,7 +32,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.css?v=a9721715a0">
+<link rel="stylesheet" href="/assets/app.css?v=640aa79568">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · Del PDF","url":"https://lunaverta.com/da/del-pdf/","inLanguage":"da","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Del en PDF op i separate PDF-filer med én side hver, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"da","mainEntity":[{"@type":"Question","name":"Kan jeg vælge bestemte sider?","acceptedAnswer":{"@type":"Answer","text":"Brug Redigér til at slette de sider, du ikke skal bruge, eller del op og behold de filer, du vil have."}},{"@type":"Question","name":"Bevarer siderne kvaliteten?","acceptedAnswer":{"@type":"Answer","text":"Ja. Siderne kopieres, som de er, med tekst, billeder og links."}},{"@type":"Question","name":"Bliver mine filer uploadet?","acceptedAnswer":{"@type":"Answer","text":"Nej. LunaVerta har ingen server, der modtager filer. Alle konverteringer sker i din browser, på din egen enhed, og resultatet gemmes direkte i dine overførsler."}},{"@type":"Question","name":"Virker det uden internet?","acceptedAnswer":{"@type":"Answer","text":"Ja. Efter dit første besøg ligger appen på din enhed. Hjælpeværktøjerne til PDF, Word, Excel, MP3 og HEIC gemmes første gang, du bruger dem, og virker derefter også uden internet."}},{"@type":"Question","name":"Hvad koster det?","acceptedAnswer":{"@type":"Answer","text":"Ingenting. Der er ingen konti, reklamer, cookies eller sporing."}}]},{"@type":"HowTo","name":"Del en PDF op i enkelte sider","inLanguage":"da","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Vælg en PDF, eller slip den på siden."},{"@type":"HowToStep","position":2,"text":"LunaVerta deler den op i én PDF pr. side."},{"@type":"HowToStep","position":3,"text":"Gem siderne, som samles i en .zip."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Forside","item":"https://lunaverta.com/da/"},{"@type":"ListItem","position":2,"name":"Del PDF","item":"https://lunaverta.com/da/del-pdf/"}]}]}
 </script>
@@ -119,9 +119,9 @@
     <h2 id="h-ref" data-i18n="ref.h">Hvad kan konverteres til hvad</h2>
     <div class="ref-grid" id="refGrid"><div class="kind" style="--k:var(--c-image)"><h3>Billeder</h3>
   <p class="from">Fra PNG · JPG · WEBP · GIF · BMP · AVIF · SVG · ICO · HEIC · HEIF</p>
-  <p class="to">Til <b>PNG · JPG · WEBP · GIF · PDF · ICO · BMP · RENS</b></p><p class="note">HEIC-billeder fra iPhone virker også. Rens fjerner placering og andre skjulte data uden at miste kvalitet.</p></div><div class="kind" style="--k:var(--c-doc)"><h3>PDF</h3>
+  <p class="to">Til <b>PNG · JPG · WEBP · GIF · PDF · OCR · ICO · BMP · RENS</b></p><p class="note">HEIC-billeder fra iPhone virker også. Rens fjerner placering og andre skjulte data uden at miste kvalitet.</p></div><div class="kind" style="--k:var(--c-doc)"><h3>PDF</h3>
   <p class="from">Fra PDF</p>
-  <p class="to">Til <b>REDIGÉR · ANONYMISÉR · SAML · DEL OP · BESKYT · LÅS OP · PNG · JPG</b></p><p class="note">Redigér sider, tekst og formularer, overstreg tekst, saml, del op, gør mindre, tilføj eller fjern adgangskode, fjern skjulte data, eller lav siderne om til billeder eller tekst.</p></div><div class="kind" style="--k:var(--c-doc)"><h3>Dokumenter</h3>
+  <p class="to">Til <b>REDIGÉR · ANONYMISÉR · OCR · SAML · DEL OP · BESKYT · LÅS OP · PNG · JPG</b></p><p class="note">Redigér sider, tekst og formularer, overstreg tekst, saml, del op, gør mindre, tilføj eller fjern adgangskode, fjern skjulte data, eller lav siderne om til billeder eller tekst.</p></div><div class="kind" style="--k:var(--c-doc)"><h3>Dokumenter</h3>
   <p class="from">Fra DOCX · MD · TXT · HTML</p>
   <p class="to">Til <b>PDF · HTML · MD · TXT</b></p><p class="note">Word til PDF bevarer sidelayout, skrifttyper, farver, tabeller, billeder, sidehoveder og sidefødder, og teksten kan stadig søges i.</p></div><div class="kind" style="--k:var(--c-data)"><h3>Regneark og data</h3>
   <p class="from">Fra XLSX · XLS · ODS · CSV · TSV · JSON</p>
@@ -162,6 +162,7 @@
       <li><a href="/da/komprimer-pdf/">Komprimér PDF</a></li>
       <li><a href="/da/beskyt-pdf-med-adgangskode/">Beskyt PDF</a></li>
       <li><a href="/da/fjern-adgangskode-fra-pdf/">Lås PDF op</a></li>
+      <li><a href="/da/goer-pdf-soegbar/">OCR: gør en PDF søgbar</a></li>
       <li><a href="/da/fjern-priser-fra-pdf/">Fjern priser fra PDF</a></li>
       <li><a href="/da/overstreg-pdf/">Overstreg PDF</a></li>
       <li><a href="/da/fjern-metadata-fra-pdf/">Fjern metadata fra PDF</a></li>
@@ -195,7 +196,7 @@
   </section>
 
   <footer>
-    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span data-i18n="foot.madeBy">Lavet af</span> <a href="https://midttech.com/" rel="noopener">Midt-Tech</a> · CVR 34256276 · <span id="buildVer" title="Built 2026-10-26">v1.0.0+a972171</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span data-i18n="foot.madeBy">Lavet af</span> <a href="https://midttech.com/" rel="noopener">Midt-Tech</a> · CVR 34256276 · <span id="buildVer" title="Built 2026-10-26">v1.0.0+640aa79</span></span>
     <nav aria-label="Site"><a href="/privacy.html" data-i18n="nav.privacy">Privatliv</a><a href="/licenses.html" data-i18n="nav.licenses">Open source-licenser</a></nav>
   </footer>
 </div>
@@ -204,10 +205,10 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Vælg et format"><svg viewBox="0 0 320 320" id="ringSvg"></svg></div>
 <div id="toast" role="status"></div>
 <noscript><p style="padding:16px">LunaVerta konverterer filer med JavaScript i din browser. Slå JavaScript til for at bruge den.</p></noscript>
-<script src="/assets/strings.js?v=a9721715a0"></script>
-<script src="/assets/i18n.js?v=a9721715a0"></script>
-<script src="/assets/app.js?v=a9721715a0"></script>
-<script src="/assets/editor.js?v=a9721715a0"></script>
-<script src="/assets/pdf-text.js?v=a9721715a0"></script>
+<script src="/assets/strings.js?v=640aa79568"></script>
+<script src="/assets/i18n.js?v=640aa79568"></script>
+<script src="/assets/app.js?v=640aa79568"></script>
+<script src="/assets/editor.js?v=640aa79568"></script>
+<script src="/assets/pdf-text.js?v=640aa79568"></script>
 </body>
 </html>

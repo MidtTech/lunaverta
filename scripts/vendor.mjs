@@ -20,7 +20,15 @@ const VENDOR = {
   'html2canvas.min.js': nm('html2canvas/dist/html2canvas.min.js'),
   'pdf-lib.min.js': nm('pdf-lib/dist/pdf-lib.min.js'),
   'qpdf.js': nm('@neslinesli93/qpdf-wasm/dist/qpdf.js'),
-  'qpdf.wasm': nm('@neslinesli93/qpdf-wasm/dist/qpdf.wasm')
+  'qpdf.wasm': nm('@neslinesli93/qpdf-wasm/dist/qpdf.wasm'),
+  // OCR (text recognition): tesseract.js, its engine and Danish and English language data
+  'tesseract/tesseract.min.js': nm('tesseract.js/dist/tesseract.min.js'),
+  'tesseract/worker.min.js': nm('tesseract.js/dist/worker.min.js'),
+  'tesseract/tesseract-core-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-lstm.wasm.js'),
+  'tesseract/tesseract-core-simd-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-simd-lstm.wasm.js'),
+  'tesseract/tesseract-core-relaxedsimd-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js'),
+  'tesseract/lang/dan.traineddata.gz': nm('@tesseract.js-data/dan/4.0.0_best_int/dan.traineddata.gz'),
+  'tesseract/lang/eng.traineddata.gz': nm('@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz')
 };
 const FONTS = [
   ['bricolage-grotesque', [500, 700]],
@@ -28,7 +36,7 @@ const FONTS = [
   ['ibm-plex-mono', [400, 500]]
 ];
 
-mkdirSync('docs/vendor', { recursive: true });
+mkdirSync('docs/vendor/tesseract/lang', { recursive: true });
 mkdirSync('docs/fonts', { recursive: true });
 for (const [out, src] of Object.entries(VENDOR)) copyFileSync(src, join('docs/vendor', out));
 for (const [fam, weights] of FONTS)

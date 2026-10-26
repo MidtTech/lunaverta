@@ -2840,3 +2840,10 @@ Files: docs/vendor/qpdf.js, docs/vendor/qpdf.wasm, served unmodified.
 qpdf is Copyright (c) 2005-2024 Jay Berkenbilt and contributors, licensed under the Apache License, Version 2.0
 (https://www.apache.org/licenses/LICENSE-2.0). The build includes zlib (zlib License) and libjpeg (IJG License);
 this software is based in part on the work of the Independent JPEG Group.
+
+## Tesseract.js 7.0.0, tesseract.js-core 7.0.0 and language data
+
+Source: https://github.com/naptha/tesseract.js and https://github.com/naptha/tesseract.js-core (Apache License 2.0),
+built from Tesseract OCR (https://github.com/tesseract-ocr/tesseract, Apache License 2.0).
+Language data: Danish and English "best_int" models from tessdata (Apache License 2.0), via @tesseract.js-data/dan and @tesseract.js-data/eng.
+Files: docs/vendor/tesseract/, served unmodified.

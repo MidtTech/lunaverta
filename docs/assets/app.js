@@ -17,7 +17,8 @@ const LIBS = {
   heif: 'libheif.js',
   docx: 'docx-preview.min.js',
   h2c: 'html2canvas.min.js',
-  qpdf: 'qpdf.js'
+  qpdf: 'qpdf.js',
+  tesseract: 'tesseract/tesseract.min.js'
 };
 const loaded = {};
 function lib(name) {
@@ -33,8 +34,8 @@ function lib(name) {
 
 // ---------- formats ----------
 const KINDS = {
-  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','merge','split','protect','unlock','png','jpg'] },
+  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','clean'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -42,14 +43,14 @@ const KINDS = {
 };
 const OUT = {
   png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
-  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
+  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['edit','redact','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
+const ORDER = ['edit','redact','ocr','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -1191,9 +1192,96 @@ async function cleanPDF(file) {
     noteKey: list.length ? 'pdfclean.removed' : 'clean.none', noteVars: { what: list.join(', ') } }];
 }
 
+// ---------- OCR: make scans and photos of text searchable ----------
+// Tesseract reads the text in the picture (Danish and English) on this device.
+// The result is a PDF with the picture as before and the recognised words as
+// invisible text on top, so the text can be searched, selected and copied.
+let ocrWorker = null, ocrProgress = null;
+async function ocrEngine() {
+  await lib('tesseract');
+  if (!ocrWorker) {
+    ocrWorker = await window.Tesseract.createWorker(['dan', 'eng'], 1, {
+      workerPath: VENDOR + 'tesseract/worker.min.js',
+      corePath: VENDOR + 'tesseract/',
+      langPath: VENDOR + 'tesseract/lang',
+      workerBlobURL: false, gzip: true,
+      logger: m => { if (ocrProgress && m.status === 'recognizing text') ocrProgress(m.progress || 0); }
+    });
+  }
+  return ocrWorker;
+}
+async function ocrWords(canvas, onPart) {
+  const w = await ocrEngine();
+  ocrProgress = onPart;
+  try {
+    const { data } = await w.recognize(canvas, {}, { blocks: true, text: true });
+    const words = [];
+    for (const b of data.blocks || []) for (const p of b.paragraphs || []) for (const l of p.lines || []) for (const wd of l.words || [])
+      if (wd.text && wd.text.trim() && wd.confidence > 30) words.push(wd);
+    return words;
+  } finally { ocrProgress = null; }
+}
+// Writes words (pixel boxes) as invisible text (render mode 3, as scanners
+// do), stretched to each word's width; toPt turns pixels into page units.
+function drawWords(page, font, words, toPt) {
+  const P = PDFLib, key = page.node.newFontDictionary(font.name, font.ref);
+  const ops = [P.pushGraphicsState(), P.beginText(), P.setTextRenderingMode(P.TextRenderingMode.Invisible)];
+  for (const wd of words) {
+    const text = wd.text.replace(WIN_ANSI, '?');
+    const [ax, ay] = toPt(wd.bbox.x0, wd.bbox.y1), [bx, by] = toPt(wd.bbox.x1, wd.bbox.y0);
+    const x = Math.min(ax, bx), y = Math.min(ay, by), w = Math.abs(bx - ax), h = Math.abs(by - ay);
+    const size = Math.max(1, h * .9), natural = font.widthOfTextAtSize(text, size);
+    if (!natural || !w) continue;
+    ops.push(P.setFontAndSize(key, size), P.setCharacterSqueeze(Math.max(10, Math.min(500, w / natural * 100))),
+      P.setTextMatrix(1, 0, 0, 1, x, y + h * .18), P.showText(font.encodeText(text)));
+  }
+  ops.push(P.endText(), P.popGraphicsState());
+  page.pushOperators(...ops);
+}
+async function ocrPDF(file, pdf, progress) {
+  const doc = await loadPdfBytes(new Uint8Array(await file.arrayBuffer()));
+  const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const pages = doc.getPages();
+  let done = 0;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    // pages that already have text are left as they are
+    const tc = await page.getTextContent();
+    if (tc.items.map(t => t.str).join('').replace(/\s/g, '').length > 20) { progress(i / pdf.numPages); continue; }
+    const vp1 = page.getViewport({ scale: 1, rotation: 0 });
+    const scale = Math.min(3, 3500 / Math.max(vp1.width, vp1.height));
+    const vp = page.getViewport({ scale, rotation: 0 });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const words = await ocrWords(c, f => progress((i - 1 + f) / pdf.numPages));
+    drawWords(pages[i - 1], font, words, (px, py) => vp.convertToPdfPoint(px, py));
+    if (words.length) done++;
+    progress(i / pdf.numPages);
+  }
+  if (!done) return [{ name: file.name, blob: file.slice(0, file.size, 'application/pdf'), noteKey: 'ocr.none' }];
+  const bytes = await doc.save({ useObjectStreams: true });
+  return [{ name: base(file.name) + '-ocr.pdf', blob: new Blob([bytes], { type: 'application/pdf' }), noteKey: 'ocr.done', noteVars: { n: done } }];
+}
+async function ocrImage(file, progress) {
+  await lib('pdflib');
+  const { img, w, h } = await decodeImage(file);
+  const c = drawToCanvas(img, w, h, 3500, '#ffffff');
+  const words = await ocrWords(c, f => progress(f * .95));
+  const doc = await PDFLib.PDFDocument.create();
+  const k = 72 / 150; // the picture at 150 dpi
+  const page = doc.addPage([c.width * k, c.height * k]);
+  const jpg = await doc.embedJpg(new Uint8Array(await (await canvasToBlob(c, 'image/jpeg', .88)).arrayBuffer()));
+  page.drawImage(jpg, { x: 0, y: 0, width: c.width * k, height: c.height * k });
+  drawWords(page, await doc.embedFont(PDFLib.StandardFonts.Helvetica), words, (px, py) => [px * k, (c.height - py) * k]);
+  const bytes = await doc.save({ useObjectStreams: true });
+  return [{ name: base(file.name) + '-ocr.pdf', blob: new Blob([bytes], { type: 'application/pdf' }), noteKey: words.length ? 'ocr.words' : 'ocr.noText', noteVars: { n: words.length } }];
+}
+
 const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
-async function convertImage(file, target, o) {
+async function convertImage(file, target, o, progress) {
   if (target === 'clean') return cleanImage(file, o);
+  if (target === 'ocr') return ocrImage(file, progress);
   const { img, w, h } = await decodeImage(file);
   const flat = target === 'jpg' || target === 'bmp' || target === 'pdf';
   const c = drawToCanvas(img, w, h, o.maxDim, flat ? '#ffffff' : null);
@@ -1215,6 +1303,7 @@ async function convertPDF(file, target, o, progress) {
   try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise; }
   catch (e) { throw new Error(T(e && e.name === 'PasswordException' ? 'err.pdf.locked' : 'err.pdf.read')); }
   if (target === 'shrink') return shrinkPDF(file, pdf, progress);
+  if (target === 'ocr') return ocrPDF(file, pdf, progress);
   const b = base(file.name), out = [], pad = String(pdf.numPages).length;
   if (target === 'txt') {
     const pages = [];
@@ -1269,7 +1358,7 @@ async function convertVideo(file, target, o, progress) {
     return [{ name: b + '.gif', blob: gif }];
   } finally { URL.revokeObjectURL(v.src); }
 }
-const CONVERT = { image: convertImage, pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t, o, p) => convertDoc(f, t, o, p), data: (f, t) => convertData(f, t) };
+const CONVERT = { image: (f, t, o, p) => convertImage(f, t, o, p), pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t, o, p) => convertDoc(f, t, o, p), data: (f, t) => convertData(f, t) };
 
 async function zipOf(files, onProgress) {
   await lib('jszip');

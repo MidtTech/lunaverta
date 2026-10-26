@@ -121,6 +121,15 @@ export const TOOLS = [
       h1: 'Fjern adgangskoden fra en PDF', lead: 'Træt af at skrive adgangskoden hver gang? Kender du adgangskoden, laver LunaVerta en kopi uden. Du skal kende adgangskoden: LunaVerta knækker ikke PDF\'er.',
       steps: ['Vælg en PDF med adgangskode.', 'Skriv adgangskoden, og tryk Lås op.', 'Gem kopien uden adgangskode.'],
       faq: [['Kan den åbne en PDF, hvis jeg ikke kender adgangskoden?', 'Nej. Du skal bruge den adgangskode, PDF\'en åbnes med. LunaVerta gætter eller knækker ikke adgangskoder.'], ['Bliver andet ændret?', 'Nej. Sider, tekst, links og formularfelter er uændrede. Kun adgangskoden og krypteringen fjernes.']] } },
+  { id: 'ocr', preset: 'ocr', slug: { en: 'ocr-pdf', da: 'goer-pdf-soegbar' },
+    en: { name: 'OCR: make a PDF searchable', title: 'OCR · Make scanned PDFs searchable, no upload', desc: 'Recognise the text in scanned PDFs and photos, in Danish and English, so it can be searched and copied. Free and private: runs on your device.',
+      h1: 'Make a scanned PDF searchable', lead: 'A scan is just a picture of text. OCR reads the words and adds them as invisible text on the page, so you can search, select and copy. It runs on your own device, in Danish and English.',
+      steps: ['Choose a scanned PDF or a photo of a document.', 'LunaVerta reads the text on each page. The first time, the language data (about 5 MB) is loaded.', 'Save the searchable PDF. It looks exactly like before.'],
+      faq: [['Is my document uploaded for OCR?', 'No. The text recognition runs in your browser, on your own device.'], ['What about pages that already have text?', 'They are left as they are; only pages without text are read.'], ['Can I remove names or prices from a scan afterwards?', 'Yes. Open the searchable PDF in the editor and use Remove sensitive: the found text is painted over and the page is saved as a picture, so nothing is left.']] },
+    da: { name: 'OCR: gør en PDF søgbar', title: 'OCR · Gør scannede PDF\'er søgbare, uden upload', desc: 'Genkend teksten i scannede PDF\'er og fotos, på dansk og engelsk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.',
+      h1: 'Gør en scannet PDF søgbar', lead: 'En scanning er bare et billede af tekst. OCR læser ordene og lægger dem som usynlig tekst på siden, så du kan søge, markere og kopiere. Det kører på din egen enhed, på dansk og engelsk.',
+      steps: ['Vælg en scannet PDF eller et foto af et dokument.', 'LunaVerta læser teksten på hver side. Første gang hentes sprogdata (ca. 5 MB).', 'Gem den søgbare PDF. Den ser præcis ud som før.'],
+      faq: [['Bliver mit dokument uploadet til OCR?', 'Nej. Tekstgenkendelsen kører i din browser, på din egen enhed.'], ['Hvad med sider, der allerede har tekst?', 'De bliver, som de er; kun sider uden tekst bliver læst.'], ['Kan jeg fjerne navne eller priser fra en scanning bagefter?', 'Ja. Åbn den søgbare PDF i editoren, og brug Fjern følsomt: den fundne tekst males over, og siden gemmes som et billede, så intet er tilbage.']] } },
   { id: 'remove-prices', preset: 'prices', slug: { en: 'remove-prices-from-pdf', da: 'fjern-priser-fra-pdf' },
     en: { name: 'Remove prices from PDF', title: 'Remove prices from a PDF · Keep everything else', desc: 'Find every price in a quote or invoice and remove them all at once, keeping measurements and other details. Free and private: no upload.',
       h1: 'Remove prices from a PDF', lead: 'Share a quote or order without the prices. LunaVerta finds the amounts on every page and leaves measurements, quantities, percentages, dates and other numbers alone. You check the marks, then save a new version.',
@@ -272,11 +281,11 @@ export const TOOLS = [
 // Mirror of the formats in app.js, for the "What converts to what" grid that is
 // written into the HTML (search engines and AI crawlers often don't run JavaScript).
 export const KINDS = {
-  image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ico', 'bmp', 'clean'] },
-  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'merge', 'split', 'protect', 'unlock', 'png', 'jpg'] },
+  image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ocr', 'ico', 'bmp', 'clean'] },
+  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'ocr', 'merge', 'split', 'protect', 'unlock', 'png', 'jpg'] },
   doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
   data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'html', 'md'] },
   audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
   video: { color: '--c-video', exts: ['mp4', 'webm', 'mov', 'm4v', 'mkv'], targets: ['gif', 'mp3', 'wav', 'png', 'jpg'] }
 };
-export const TOOL_TARGETS = ['edit', 'prices', 'redact', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean'];
+export const TOOL_TARGETS = ['edit', 'prices', 'redact', 'ocr', 'merge', 'split', 'shrink', 'protect', 'unlock', 'clean'];
