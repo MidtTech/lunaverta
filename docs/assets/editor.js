@@ -693,13 +693,13 @@ async function findAll(re, progress, judge) {
         while (s1 > s0 && /\s/.test(ln.str[s1 - 1])) s1--;
         // judge: 0 = skip, a number = how sure, or { kind, grow } to take in a few more characters (a % sign)
         let kind = judge ? judge(ln.str.slice(s0, s1), ln.str.slice(0, s0), ln.str.slice(s1), ln.str) : 1;
-        let rate = false;
-        if (kind && typeof kind === 'object') { s1 += kind.grow || 0; rate = !!kind.rate; kind = kind.kind; }
+        let rate = false, dot = false;
+        if (kind && typeof kind === 'object') { s1 += kind.grow || 0; rate = !!kind.rate; dot = !!kind.dot; kind = kind.kind; }
         if (!kind) continue;
         const xs = ln.pos.slice(s0, s1).filter(Boolean);
         if (!xs.length) continue;
         const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
-        hits.push({ pg, n: i + 1, kind, rate, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
+        hits.push({ pg, n: i + 1, kind, rate, dot, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
           x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95 });
       }
     }
@@ -717,7 +717,7 @@ const CUR = /kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-/i;
 const RATE_WORDS = /moms|rabat|rente|renter|rentesats|gebyr|afgift|tillæg|vat|discount|interest|fee/i;
 const PAY_WORDS = /betaling|betales|forfald|rettidig|sidste frist|due|payment/i;
 // column headings above prices (Pris, Beløb …) and words about money, for the "Price words" suggestion
-const PRICE_HEAD = /(?<![A-Za-zæøåÆØÅ])(?:pris|priser|stykpris|enhedspris|à-pris|a-pris|totalpris|beløb|total|i alt|moms|rabat|price|amount|unit price|subtotal)(?![A-Za-zæøåÆØÅ])/gi;
+const PRICE_HEAD = /(?<![A-Za-zæøåÆØÅ])(?:pris|priser|stykpris|enhedspris|à-pris|a-pris|totalpris|beløb|total(?!\s?\/\s?gennemsnit)|i alt|moms(?!\s?[-.]?\s?(?:nr|nummer|reg))|rabat|price|amount|unit price|subtotal)(?![A-Za-zæøåÆØÅ])/gi;
 const MONEY_WORDS = /\b(?:pris|priser|stykpris|enhedspris|beløb|total|totalt|i alt|subtotal|moms|rabat|netto|brutto|sum|at betale|price|amount|vat|discount|dkk|kr)\b/i;
 function judgePrice(m, before, after, line) {
   const num = m.replace(/(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD|,-)/gi, '').trim();
@@ -734,15 +734,22 @@ function judgePrice(m, before, after, line) {
   const cur = CUR.test(m) || /(?:kr\.?|DKK|EUR|€|\$)\s?$/i.test(before) || /^\s?(?:kr|DKK|€|,-)/i.test(after);
   const dec = /\d[.,]\d{2}$/.test(num), thou = /\d[.  ,]\d{3}(?:[.,]\d{2})?$/.test(num);
   if (cur && (dec || thou || /\d/.test(num))) return 2;      // with a currency
+  // 0.72 (point decimals, no currency): a measurement in Danish documents; decided below
+  if (/^-?\d+\.\d{2}$/.test(num)) return { kind: 1, dot: true };
   if (dec && thou) return 2;                                  // 18.175,94
-  const money = MONEY_WORDS.test(line) || /(?:^|\s)à\s/.test(line);
+  // averages ("Total / gennemsnit") are not money
+  const money = (MONEY_WORDS.test(line) || /(?:^|\s)à\s/.test(line)) && !/gennemsnit|middel|average|mean/i.test(line);
   if (thou && money) return 2;                                // Pris i alt: 1.234
   if (dec) return money ? 2 : 1;                              // 0,00: decided by its column below
   return 0;
 }
 async function findPrices(progress) {
-  const hits = await findAll(new RegExp(MONEY.source, MONEY.flags), progress, judgePrice);
-  const strong = hits.filter(h => h.kind === 2);
+  let hits = await findAll(new RegExp(MONEY.source, MONEY.flags), progress, judgePrice);
+  // A document that writes money with decimal commas (3.951,34) uses points
+  // for other things (0.72, 1.59): those are not prices.
+  const comma = hits.some(h => h.kind === 2 && /\d,\d{2}|,-/.test(h.text));
+  if (comma) hits = hits.filter(h => !h.dot);
+  const strong = hits.filter(h => h.kind === 2 && !h.dot);
   const heads = await findAll(new RegExp(PRICE_HEAD.source, PRICE_HEAD.flags));
   // plain decimals count when right-aligned with a price, or under a Pris/Beløb heading
   const rateHeads = await findAll(new RegExp(RATE_WORDS.source, 'gi'));
@@ -775,7 +782,7 @@ function segments(ln) {
 }
 // Words that show a text is about money. Every supplier lays out invoices
 // differently, so this is a broad list in Danish and English.
-const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
+const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?(?!\s?[-.]?\s?(?:nr|nummer|reg))|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
 async function findPriceText(progress) {
   const hits = [];
   const live = S.pages.filter(p => !p.deleted);
@@ -783,6 +790,7 @@ async function findPriceText(progress) {
     for (const ln of await pageLines(pg)) {
       for (const [a, b] of segments(ln)) {
         const seg = ln.str.slice(a, b);
+        if (/gennemsnit|middel|average/i.test(seg)) continue; // "Total / gennemsnit" is an average, not money
         // small linking words between amounts ("25,00 % af 1,00", "2 à 499,00") go too
         const link = /^\s*(?:af|à|a|x|pr\.?|of|at|á)\s*$/i.test(seg) && /\d[.,]\d{2}/.test(ln.str);
         if (!link && !PRICE_TEXT.test(seg)) continue;
@@ -790,7 +798,8 @@ async function findPriceText(progress) {
         // In a sentence, or a cell that also holds a quantity or amount ("1 STK a DKK 18.175,94"),
         // only the money words go (the amount itself is a Price), so "1 STK" stays.
         const amount = /(?<![\d.,])\d{1,3}(?:[.  ]\d{3})*,\d{2}(?![\d.,])/.test(seg);
-        if (link || (seg.trim().length <= 60 && !amount)) { const h = makeHit(pg, i + 1, ln, a, b); if (h) hits.push(h); continue; }
+        const qty = /\b\d+\s?(?:stk|pcs|styk|sæt|par|m²|m2|m|kg|l)\b/i.test(seg);
+        if (link || (seg.trim().length <= 60 && !amount && !qty)) { const h = makeHit(pg, i + 1, ln, a, b); if (h) hits.push(h); continue; }
         const re = new RegExp(PRICE_TEXT.source + '|(?<![A-Za-zæøåÆØÅ])(?:a|à|á|af)(?=\\s+(?:DKK|kr\\.?|EUR|€)?\\s?\\d)', 'gi'); let m;
         while ((m = re.exec(seg))) { const h = makeHit(pg, i + 1, ln, a + m.index, a + m.index + m[0].length); if (h) hits.push(h); }
       }
@@ -817,6 +826,9 @@ async function openFind() {
     <div class="ed-find-status" id="edFindStatus" role="status"></div>
     <div class="ed-find-list" id="edFindList"></div>
     <div class="ed-find-foot" id="edFindFoot" hidden>
+      <div class="ed-find-drag" role="radiogroup" aria-label="${esc(T('find.dragLabel'))}"><span>${esc(T('find.dragLabel'))}</span>
+        <label><input type="radio" name="edFindDrag" value="add" checked> ${esc(T('find.dragAdd'))}</label>
+        <label><input type="radio" name="edFindDrag" value="off"> ${esc(T('find.dragOff'))}</label></div>
       <div class="ed-find-sel"><button type="button" class="linkish" id="edFindAll">${esc(T('find.all'))}</button><button type="button" class="linkish" id="edFindNone">${esc(T('find.noneSel'))}</button></div>
       <fieldset class="ed-find-mode"><legend class="sr-only">${esc(T('find.how'))}</legend>
         <label><input type="radio" name="edFindMode" value="blank" checked> ${esc(T('find.modeBlank'))}</label>
@@ -862,11 +874,19 @@ async function openFind() {
     list.innerHTML = '';
     let lastN = 0;
     for (const h of F.hits) {
-      if (h.n !== lastN) { const hd = document.createElement('div'); hd.className = 'ed-find-page'; hd.textContent = T('ed.page', { n: h.n }); list.appendChild(hd); lastN = h.n; }
+      if (h.n !== lastN) {
+        // the page heading switches every hit on that page at once
+        const onPage = F.hits.filter(o => o.n === h.n && !o.done), sel = onPage.filter(o => o.on).length;
+        const hd = document.createElement('label'); hd.className = 'ed-find-page';
+        hd.innerHTML = `<input type="checkbox" ${sel === onPage.length && sel ? 'checked' : ''}> <span>${esc(T('ed.page', { n: h.n }))}</span><span class="ed-find-pcount">${esc(T('find.pageSel', { n: sel, m: onPage.length }))}</span>`;
+        const cb = hd.querySelector('input'); cb.indeterminate = sel > 0 && sel < onPage.length; cb.disabled = !onPage.length;
+        cb.onchange = () => { onPage.forEach(o => { o.on = cb.checked; }); drawList(); paintHits(); };
+        list.appendChild(hd); lastN = h.n;
+      }
       const row = document.createElement('label');
       row.className = 'ed-find-hit' + (h.done ? ' done' : '');
       row.innerHTML = `<input type="checkbox" ${h.on && !h.done ? 'checked' : ''} ${h.done ? 'disabled' : ''}><span class="ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</span>${h.done ? `<span class="tag">${esc(T('find.already'))}</span>` : ''}`;
-      row.querySelector('input').onchange = e => { h.on = e.target.checked; count(); paintHits(); };
+      row.querySelector('input').onchange = e => { h.on = e.target.checked; drawList(); paintHits(); };
       row.addEventListener('mouseenter', () => peek(h));
       row.addEventListener('focusin', () => peek(h));
       h.row = row;
@@ -880,6 +900,14 @@ async function openFind() {
     const known = F.hits.find(o => sameSpot(o, h));
     if (known) { known.on = true; } else { h.on = true; h.cat = 'custom'; F.custom.push(h); F.active.add('custom'); }
     update();
+  };
+  F.dragMode = () => (panel.querySelector('input[name="edFindDrag"]:checked') || {}).value || 'add';
+  // switch off every hit inside an area of a page
+  F.deselectIn = (pg, r) => {
+    let n = 0;
+    for (const h of F.hits) if (h.pg.id === pg.id && h.on && !h.done && h.x1 < r.x2 && h.x2 > r.x1 && h.y1 < r.y2 && h.y2 > r.y1) { h.on = false; n++; }
+    drawList(); paintHits();
+    status.textContent = T('find.deselected', { n });
   };
   F.toggle = h => { h.on = !h.on; const cb = h.row && h.row.querySelector('input'); if (cb) cb.checked = h.on; count(); };
   // apply: every ticked hit becomes a removal box
@@ -1005,11 +1033,13 @@ function areaSelect(v) {
     if (e.target !== layer && !e.target.classList.contains('ed-seg') && !e.target.classList.contains('ed-hit')) return;
     const r = layer.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
     let ghost = null, ex = sx, ey = sy;
+    // Shift-drag, or the "Deselect" choice, switches off everything in the box instead
+    const off = e.shiftKey || (S.find.dragMode && S.find.dragMode() === 'off');
     v.justDragged = false;
     const move = ev => {
       ex = Math.min(Math.max(0, ev.clientX - r.left), r.width); ey = Math.min(Math.max(0, ev.clientY - r.top), r.height);
       if (!ghost && Math.hypot(ex - sx, ey - sy) < 6) return; // a click, not a drag
-      if (!ghost) { ghost = document.createElement('div'); ghost.className = 'ed-hit on drawing'; layer.appendChild(ghost); }
+      if (!ghost) { ghost = document.createElement('div'); ghost.className = off ? 'ed-hit drawing off' : 'ed-hit on drawing'; layer.appendChild(ghost); }
       Object.assign(ghost.style, { left: Math.min(sx, ex) + 'px', top: Math.min(sy, ey) + 'px', width: Math.abs(ex - sx) + 'px', height: Math.abs(ey - sy) + 'px' });
     };
     const up = () => {
@@ -1018,6 +1048,7 @@ function areaSelect(v) {
       ghost.remove(); v.justDragged = true; setTimeout(() => { v.justDragged = false; }, 0);
       const [ax, ay] = v.vp.convertToPdfPoint(sx, sy), [bx, by] = v.vp.convertToPdfPoint(ex, ey);
       const n = S.pages.filter(p => !p.deleted).indexOf(v.pg) + 1;
+      if (off) { S.find.deselectIn(v.pg, { x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) }); return; }
       S.find.add({ pg: v.pg, n, area: true, text: T('find.area'), before: '', after: '',
         x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) });
     };
