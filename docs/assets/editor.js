@@ -595,13 +595,12 @@ function drawBoxes(pg, vp, layer) {
 // Suggestions: kinds of text people usually want gone before sharing a PDF.
 const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
-  // only as labels or headings (start of a line or column), not inside sentences
-  priceWords: /(?<=^|\t)(?:pris(?:er)?|stykpris|enhedspris|totalpris|beløb|varebeløb|momsbeløb|moms|rabat|total|i alt|subtotal|netto|brutto|rentesats|rente|renter|gebyr|DKK|EUR|kr\.)(?=$|\t|\s?[:\d])/gi,
+  priceText: null, // found by findPriceText: labels, terms and notes about money
   cpr: /\b(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4}\b/g,
   accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
   phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)/g,
-  addresses: /\b[A-ZÆØÅ][a-zæøåé]+(?:vej|gade|allé|alle|vænge|plads|torv|stræde|parken|boulevard|have|toften|bakken|høj|vang|park|sti|gyde)\s\d{1,4}[A-Za-z]?(?:,?\s?\d{1,2}\.?\s?(?:th|tv|mf)\.?)?|\b(?:[1-9]\d{3})\s(?:[A-ZÆØÅ][a-zæøå]+)(?:\s[A-ZÆØÅ][a-zæøå]+)?(?=\s|,|$)/g,
+  addresses: /\b[A-ZÆØÅ][a-zæøåé]+(?:vej|gade|allé|alle|vænge|plads|torv|stræde|parken|boulevard|have|toften|bakken|høj|vang|park|sti|gyde)\s\d{1,4}[A-Za-z]?(?:,?\s?\d{1,2}\.?\s?(?:th|tv|mf)\.?)?|(?<![\d./-])\b(?:[1-9]\d{3})\s(?:[A-ZÆØÅ][a-zæøå]+)(?:\s[A-ZÆØÅ][a-zæøå]+)?(?=\s|,|$)|\b[A-ZÆØÅ]{3,}(?:VEJ|GADE|ALLÉ|ALLE|VÆNGE|PLADS|TORV|STRÆDE|PARKEN|BOULEVARD|HAVE|BAKKEN|VANG|PARK)\s\d{1,4}[A-Z]?(?:,?\s?\d{1,2}\.?\s?(?:TH|TV|MF)\.?)?|(?<![\d./-])\b[1-9]\d{3}\s{1,2}[A-ZÆØÅ]{3,}(?:\s[A-ZÆØÅ]{1,3}\b)?/g,
   dates: /(?<![\d./-])(?:0?[1-9]|[12]\d|3[01])([./-])(?:0?[1-9]|1[0-2])\1(?:\d{4}|\d{2})(?![\d./-]?\d)|\b\d{1,2}\.?\s(?:januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december|january|february|march|may|june|july|october)\s\d{4}\b/gi,
   refs: /(?<=(?:ordre|faktura|kunde|tilbuds?|sags|order|invoice|customer|quote)\s?(?:nr\.?|nummer|no\.?|#)?\s?:?\s?)\d[\d-]{3,}/gi
 };
@@ -755,6 +754,50 @@ async function findPrices(progress) {
   const dates = await findAll(new RegExp(CATS.dates.source, CATS.dates.flags), null, (m, b, a, line) => (PAY_WORDS.test(line) ? 2 : 0));
   return keep.concat(dates.filter(d => !keep.some(k => sameSpot(k, d))));
 }
+// One hit from characters s0..s1 of a line.
+function makeHit(pg, n, ln, s0, s1) {
+  while (s0 < s1 && /\s/.test(ln.str[s0])) s0++;
+  while (s1 > s0 && /\s/.test(ln.str[s1 - 1])) s1--;
+  const xs = ln.pos.slice(s0, s1).filter(Boolean);
+  if (!xs.length) return null;
+  const x1 = Math.min(...xs.map(p => p[0])), x2 = Math.max(...xs.map(p => p[1]));
+  return { pg, n, text: ln.str.slice(s0, s1), before: ln.str.slice(Math.max(0, s0 - 28), s0).replace(/\s+/g, ' '), after: ln.str.slice(s1, s1 + 28).replace(/\s+/g, ' '),
+    x1: x1 - .5, y1: ln.y - ln.size * .25, x2: x2 + .5, y2: ln.y + ln.size * .95 };
+}
+// The pieces of a line between column gaps: a cell, a label, a value.
+function segments(ln) {
+  const out = []; let s0 = 0;
+  const re = /\t\t/g; let m;
+  while ((m = re.exec(ln.str))) { if (m.index > s0) out.push([s0, m.index]); s0 = m.index + 2; }
+  if (s0 < ln.str.length) out.push([s0, ln.str.length]);
+  return out.filter(([a, b]) => ln.str.slice(a, b).trim());
+}
+// Words that show a text is about money. Every supplier lays out invoices
+// differently, so this is a broad list in Danish and English.
+const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
+async function findPriceText(progress) {
+  const hits = [];
+  const live = S.pages.filter(p => !p.deleted);
+  for (const [i, pg] of live.entries()) {
+    for (const ln of await pageLines(pg)) {
+      for (const [a, b] of segments(ln)) {
+        const seg = ln.str.slice(a, b);
+        // small linking words between amounts ("25,00 % af 1,00", "2 à 499,00") go too
+        const link = /^\s*(?:af|à|a|x|pr\.?|of|at|á)\s*$/i.test(seg) && /\d[.,]\d{2}/.test(ln.str);
+        if (!link && !PRICE_TEXT.test(seg)) continue;
+        // A short label or term goes whole ("Betalingsbetingelse: PBS: Lbm + 32 dage netto").
+        // In a sentence, or a cell that also holds a quantity or amount ("1 STK a DKK 18.175,94"),
+        // only the money words go (the amount itself is a Price), so "1 STK" stays.
+        const amount = /(?<![\d.,])\d{1,3}(?:[.  ]\d{3})*,\d{2}(?![\d.,])/.test(seg);
+        if (link || (seg.trim().length <= 60 && !amount)) { const h = makeHit(pg, i + 1, ln, a, b); if (h) hits.push(h); continue; }
+        const re = new RegExp(PRICE_TEXT.source + '|(?<![A-Za-zæøåÆØÅ])(?:a|à|á|af)(?=\\s+(?:DKK|kr\\.?|EUR|€)?\\s?\\d)', 'gi'); let m;
+        while ((m = re.exec(seg))) { const h = makeHit(pg, i + 1, ln, a + m.index, a + m.index + m[0].length); if (h) hits.push(h); }
+      }
+    }
+    if (progress) progress(i + 1, live.length);
+  }
+  return hits;
+}
 const covers = (b, h) => b.pageId === h.pg.id && b.x1 <= h.x1 + 1 && b.x2 >= h.x2 - 1 && b.y1 <= h.y1 + 1 && b.y2 >= h.y2 - 1;
 const sameSpot = (a, b) => a.pg.id === b.pg.id && Math.abs(a.x1 - b.x1) < 1 && Math.abs(a.x2 - b.x2) < 1 && Math.abs(a.y1 - b.y1) < 1;
 
@@ -831,6 +874,12 @@ async function openFind() {
     foot.hidden = !F.hits.length && !S.boxes.length; count();
   };
   const update = () => { collect(); drawCats(); drawList(); paintHits(); };
+  // one click on the page: that text is added (or switched back on if it was a suggestion)
+  F.add = h => {
+    const known = F.hits.find(o => sameSpot(o, h));
+    if (known) { known.on = true; } else { h.on = true; h.cat = 'custom'; F.custom.push(h); F.active.add('custom'); }
+    update();
+  };
   F.toggle = h => { h.on = !h.on; const cb = h.row && h.row.querySelector('input'); if (cb) cb.checked = h.on; count(); };
   // apply: every ticked hit becomes a removal box
   const apply = () => {
@@ -866,7 +915,7 @@ async function openFind() {
   status.textContent = T('find.scanning');
   for (const k of Object.keys(CATS)) {
     if (!S || S.find !== F) return;
-    F.cats[k] = (k === 'prices' ? await findPrices() : await findAll(new RegExp(CATS[k].source, CATS[k].flags))).map(h => ({ ...h, on: true, cat: k }));
+    F.cats[k] = (k === 'prices' ? await findPrices() : k === 'priceText' ? await findPriceText() : await findAll(new RegExp(CATS[k].source, CATS[k].flags))).map(h => ({ ...h, on: true, cat: k }));
     if (!S || S.find !== F) return;
     drawCats();
   }
@@ -889,8 +938,9 @@ function refreshAfterFind() {
 // The suggested spots on the pages: yellow means "will be removed", outlined
 // means "stays". Clicking one switches it.
 function hitMarks(v) {
-  v.layer.querySelectorAll('.ed-hit').forEach(n => n.remove());
+  v.layer.querySelectorAll('.ed-hit, .ed-seg').forEach(n => n.remove());
   if (!S.find) return;
+  if (!S.editing && !S.adding && !S.redacting) segMarks(v);
   for (const h of S.find.hits) {
     if (h.pg.id !== v.pg.id || h.done) continue;
     const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
@@ -902,6 +952,28 @@ function hitMarks(v) {
     el.onclick = e => { e.stopPropagation(); S.find.toggle(h); paintHits(); };
     v.layer.appendChild(el);
   }
+}
+// While the panel is open, any text on the page can be added with one click:
+// each cell or label is a clickable area.
+async function segMarks(v) {
+  const F = S.find, job = v.job, mine = v.segJob = (v.segJob || 0) + 1;
+  const lines = await pageLines(v.pg);
+  if (S.find !== F || job !== v.job || !v.drawn || mine !== v.segJob) return; // a newer call draws them
+  v.layer.querySelectorAll('.ed-seg').forEach(n => n.remove());
+  const n = S.pages.filter(p => !p.deleted).indexOf(v.pg) + 1;
+  const frag = document.createDocumentFragment();
+  for (const ln of lines) for (const [a, b] of segments(ln)) {
+    const h = makeHit(v.pg, n, ln, a, b);
+    if (!h || F.hits.some(o => o.pg.id === h.pg.id && o.x1 < h.x2 && o.x2 > h.x1 && o.y1 < h.y2 && o.y2 > h.y1 && !o.done && o.on)) continue;
+    const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'ed-seg';
+    el.title = el.ariaLabel = T('find.addThis', { text: h.text }); el.setAttribute('aria-label', T('find.addThis', { text: h.text }));
+    Object.assign(el.style, { left: Math.min(x1, x2) - 1 + 'px', top: Math.min(y1, y2) - 1 + 'px', width: Math.abs(x2 - x1) + 2 + 'px', height: Math.abs(y2 - y1) + 2 + 'px' });
+    el.onclick = e => { e.stopPropagation(); F.add(h); };
+    frag.appendChild(el);
+  }
+  v.layer.prepend(frag); // under the yellow marks
 }
 function paintHits() {
   if (S && S.view === 'page' && S.pv) for (const v of S.pv.views.values()) if (v.drawn) hitMarks(v);
@@ -1146,7 +1218,7 @@ async function open(files, opt = {}) {
     await openFind();
     // "Prices" opens with the prices marked; Redact lets the visitor choose.
     // Prices: the amounts and the words about them (Moms, Pris, Beløb …).
-    const want = opt.preset === 'prices' ? ['prices', 'priceWords'] : opt.preset ? [opt.preset] : [];
+    const want = opt.preset === 'prices' ? ['prices', 'priceText'] : opt.preset ? [opt.preset] : [];
     if (S && S.find && !S.find.active.size) for (const k of want) { const c = document.querySelector(`#edFindCats .ed-cat[data-k="${k}"]:not([disabled])`); if (c) c.click(); }
   }
   $('#edSave').focus();

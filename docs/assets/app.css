@@ -386,3 +386,6 @@ html.ed-finding #editor .ed-body { padding-right: min(420px, 0px); }
 .ed-hit.on { border: 1.5px solid #c58a00; background: rgba(255, 214, 0, .45); }
 .ed-hit:hover { box-shadow: 0 0 0 2px rgba(47, 69, 201, .45); }
 @media (max-width: 420px) { .ed-find-cats { grid-template-columns: 1fr; } .ed-find-btns { grid-template-columns: 1fr; } }
+/* any text can be added with a click while removing sensitive text */
+.ed-seg { position: absolute; padding: 0; border: 1.5px solid transparent; border-radius: 3px; background: transparent; cursor: copy; }
+.ed-seg:hover, .ed-seg:focus-visible { border-color: #2f45c9; background: rgba(47, 69, 201, .10); }
