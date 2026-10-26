@@ -604,7 +604,7 @@ const CATS = {
   dates: /(?<![\d./-])(?:0?[1-9]|[12]\d|3[01])([./-])(?:0?[1-9]|1[0-2])\1(?:\d{4}|\d{2})(?![\d./-]?\d)|\b\d{1,2}\.?\s(?:januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december|january|february|march|may|june|july|october)\s\d{4}\b/gi,
   refs: /(?<=(?:ordre|faktura|kunde|tilbuds?|sags|order|invoice|customer|quote)\s?(?:nr\.?|nummer|no\.?|#)?\s?:?\s?)\d[\d-]{3,}/gi
 };
-const textCache = new Map(), libDocs = new Map();
+const textCache = new Map(), libDocs = new Map(), pathCache = new Map();
 // The page's text as lines, with each character's position. The exact letter
 // positions come from reading the page (pdf-text.js), the same way they are
 // removed; pdf.js text (positions estimated) is the fallback.
@@ -625,6 +625,7 @@ async function exactLines(pg) {
   const doc = await libDocs.get(pg.doc);
   const rd = await window.LVPdfText.readPage(doc, doc.getPage(pg.index));
   if (!rd) return null;
+  pathCache.set(pg.doc + ':' + pg.index, rd.paths || []);
   const rows = [];
   for (const g of rd.glyphs) {
     if (!g.upright || !g.ch || !g.size) continue;
@@ -885,7 +886,8 @@ async function openFind() {
   const apply = () => {
     const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
     let n = 0;
-    for (const h of F.hits) if (h.on && !h.done) { S.boxes.push({ id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: true }); n++; }
+    // found text removes only its own letters; a dragged area removes everything in it
+    for (const h of F.hits) if (h.on && !h.done) { S.boxes.push({ id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: !h.area }); n++; }
     if (n) S.dirty = true;
     return n;
   };
@@ -940,7 +942,7 @@ function refreshAfterFind() {
 function hitMarks(v) {
   v.layer.querySelectorAll('.ed-hit, .ed-seg').forEach(n => n.remove());
   if (!S.find) return;
-  if (!S.editing && !S.adding && !S.redacting) segMarks(v);
+  if (!S.editing && !S.adding && !S.redacting) { segMarks(v); areaSelect(v); }
   for (const h of S.find.hits) {
     if (h.pg.id !== v.pg.id || h.done) continue;
     const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
@@ -970,10 +972,57 @@ async function segMarks(v) {
     el.type = 'button'; el.className = 'ed-seg';
     el.title = el.ariaLabel = T('find.addThis', { text: h.text }); el.setAttribute('aria-label', T('find.addThis', { text: h.text }));
     Object.assign(el.style, { left: Math.min(x1, x2) - 1 + 'px', top: Math.min(y1, y2) - 1 + 'px', width: Math.abs(x2 - x1) + 2 + 'px', height: Math.abs(y2 - y1) + 2 + 'px' });
-    el.onclick = e => { e.stopPropagation(); F.add(h); };
+    el.onclick = e => { e.stopPropagation(); if (v.justDragged) return; F.add(h); };
+    frag.appendChild(el);
+  }
+  // Lines and rules (underlines, sum lines, table borders) can be clicked away too.
+  for (const pa of pathCache.get(v.pg.doc + ':' + v.pg.index) || []) {
+    const w = pa.x2 - pa.x1, hgt = pa.y2 - pa.y1;
+    if (Math.min(w, hgt) > 3 || Math.max(w, hgt) < 8) continue; // only thin lines, not boxes or backgrounds
+    const pad = pa.w / 2 + 1.5;
+    const h = { pg: v.pg, n, area: true, line: true, text: T('find.line'), before: '', after: '', x1: pa.x1 - pad, y1: pa.y1 - pad, x2: pa.x2 + pad, y2: pa.y2 + pad };
+    if (F.hits.some(o => o.on && !o.done && sameSpot(o, h)) || S.boxes.some(b => covers(b, h))) continue;
+    const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
+    const el = document.createElement('button');
+    el.type = 'button'; el.className = 'ed-seg ed-seg-line';
+    el.title = T('find.addLine'); el.setAttribute('aria-label', T('find.addLine'));
+    const top = Math.min(y1, y2), height = Math.max(8, Math.abs(y2 - y1)); // at least 8px to hit
+    Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: top - (height - Math.abs(y2 - y1)) / 2 + 'px', width: Math.max(8, Math.abs(x2 - x1)) + 'px', height: height + 'px' });
+    el.onclick = e => { e.stopPropagation(); if (v.justDragged) return; F.add(h); };
     frag.appendChild(el);
   }
   v.layer.prepend(frag); // under the yellow marks
+}
+// Anything else in the PDF (a logo, a stamp, a signature, part of a picture,
+// a few words): drag a box over it. Text, pictures and drawings under the box
+// are removed when saving.
+function areaSelect(v) {
+  const layer = v.layer;
+  if (layer.dataset.area) return;
+  layer.dataset.area = '1';
+  layer.addEventListener('pointerdown', e => {
+    if (!S.find || S.editing || S.adding || S.redacting || e.button) return;
+    if (e.target !== layer && !e.target.classList.contains('ed-seg') && !e.target.classList.contains('ed-hit')) return;
+    const r = layer.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+    let ghost = null, ex = sx, ey = sy;
+    v.justDragged = false;
+    const move = ev => {
+      ex = Math.min(Math.max(0, ev.clientX - r.left), r.width); ey = Math.min(Math.max(0, ev.clientY - r.top), r.height);
+      if (!ghost && Math.hypot(ex - sx, ey - sy) < 6) return; // a click, not a drag
+      if (!ghost) { ghost = document.createElement('div'); ghost.className = 'ed-hit on drawing'; layer.appendChild(ghost); }
+      Object.assign(ghost.style, { left: Math.min(sx, ex) + 'px', top: Math.min(sy, ey) + 'px', width: Math.abs(ex - sx) + 'px', height: Math.abs(ey - sy) + 'px' });
+    };
+    const up = () => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+      if (!ghost) return;
+      ghost.remove(); v.justDragged = true; setTimeout(() => { v.justDragged = false; }, 0);
+      const [ax, ay] = v.vp.convertToPdfPoint(sx, sy), [bx, by] = v.vp.convertToPdfPoint(ex, ey);
+      const n = S.pages.filter(p => !p.deleted).indexOf(v.pg) + 1;
+      S.find.add({ pg: v.pg, n, area: true, text: T('find.area'), before: '', after: '',
+        x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) });
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
 }
 function paintHits() {
   if (S && S.view === 'page' && S.pv) for (const v of S.pv.views.values()) if (v.drawn) hitMarks(v);
@@ -1101,7 +1150,7 @@ async function save(opt) {
       // isn't possible, the old line is covered with its background colour.
       const eds = S.edits.filter(x => x.pageId === pg.id && x.text !== x.orig);
       const boxList = S.boxes.filter(b => b.pageId === pg.id);
-      const boxes = boxList.map(b => [b.x1, b.y1, b.x2, b.y2, !!(b.blank || b.found)]);
+      const boxes = boxList.map(b => [b.x1, b.y1, b.x2, b.y2, !!b.found]);
       let how = eds.map(() => 'failed');
       if (eds.length || boxes.length) {
         try { how = await window.LVPdfText.strip(out, page, eds, boxes); if (how.oldContents) oldRefs.push(how.oldContents); }
@@ -1205,7 +1254,7 @@ async function save(opt) {
 // ---------- open ----------
 async function open(files, opt = {}) {
   S = { docs: [], pages: [], texts: [], edits: [], boxes: [], redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
-  thumbCache.clear(); textCache.clear(); libDocs.clear();
+  thumbCache.clear(); textCache.clear(); libDocs.clear(); pathCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
   try { for (const f of files) await addDoc(f); }

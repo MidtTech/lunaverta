@@ -231,7 +231,14 @@ async function readPage(doc, page) {
   const glyphs = [], draws = [];
   let unknown = false;
   const area = m => { const pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y]) => apply(m, x, y)); const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]; };
-  let gs = { ctm: [1, 0, 0, 1, 0, 0], tr: 0, tc: 0, tw: 0, th: 1, tl: 0, rise: 0, font: null, fs: 0 };
+  const paths = [];
+  let path = null;
+  const addPt = (idx, x, y) => {
+    const [px, py] = apply(gs.ctm, x, y);
+    if (!path) path = { first: idx, x1: px, y1: py, x2: px, y2: py };
+    else { path.x1 = Math.min(path.x1, px); path.y1 = Math.min(path.y1, py); path.x2 = Math.max(path.x2, px); path.y2 = Math.max(path.y2, py); }
+  };
+  let gs = { ctm: [1, 0, 0, 1, 0, 0], lw: 1, tr: 0, tc: 0, tw: 0, th: 1, tl: 0, rise: 0, font: null, fs: 0 };
   const stack = [];
   let tm = [1, 0, 0, 1, 0, 0], tlm = tm;
   const nums = a => a.map(x => (x.t === 'num' ? x.v : 0));
@@ -286,10 +293,20 @@ async function readPage(doc, page) {
       case "'": tm = tlm = mul([1, 0, 0, 1, 0, -gs.tl], tlm); await show(o, idx, [a[0]]); break;
       case '"': { const [aw, ac] = nums(a); gs.tw = aw; gs.tc = ac; tm = tlm = mul([1, 0, 0, 1, 0, -gs.tl], tlm); await show(o, idx, [a[2]]); break; }
       case 'Do': case 'BI': draws.push(area(gs.ctm)); break;
+      // lines and shapes: remember each painted path and where it is
+      case 'm': case 'l': { const n = nums(a); addPt(idx, n[0], n[1]); break; }
+      case 'c': { const n = nums(a); addPt(idx, n[0], n[1]); addPt(idx, n[2], n[3]); addPt(idx, n[4], n[5]); break; }
+      case 'v': case 'y': { const n = nums(a); addPt(idx, n[0], n[1]); addPt(idx, n[2], n[3]); break; }
+      case 're': { const [x, y, w, h] = nums(a); addPt(idx, x, y); addPt(idx, x + w, y + h); addPt(idx, x + w, y); addPt(idx, x, y + h); break; }
+      case 'W': case 'W*': if (path) path.clip = true; break;
+      case 'S': case 's': case 'f': case 'F': case 'f*': case 'B': case 'B*': case 'b': case 'b*': case 'n':
+        if (path) { if (o.op !== 'n' && !path.clip) paths.push({ start: ops[path.first].start, end: o.end, x1: path.x1, y1: path.y1, x2: path.x2, y2: path.y2, w: gs.lw * Math.hypot(gs.ctm[0], gs.ctm[1]) }); path = null; }
+        break;
+      case 'w': gs.lw = nums(a)[0] || 0; break;
       case 'sh': draws.push([-1e9, -1e9, 1e9, 1e9]); break;
     }
   }
-  return { src, ops, glyphs, draws, unknown, oldContents };
+  return { src, ops, glyphs, draws, unknown, oldContents, paths };
 }
 
 async function strip(doc, page, edits, boxes = []) {
@@ -299,7 +316,7 @@ async function strip(doc, page, edits, boxes = []) {
   let rd;
   try { rd = await readPage(doc, page); } catch (e) { console.warn('Could not read page content', e); result.flatten = boxes.length > 0; return result; }
   if (!rd) return result;
-  const { src, ops, glyphs, draws, unknown } = rd;
+  const { src, ops, glyphs, draws, unknown, paths } = rd;
   result.oldContents = rd.oldContents;
 
   // decide, per line, which letters go and how far the rest moves
@@ -336,14 +353,20 @@ async function strip(doc, page, edits, boxes = []) {
     for (const g of glyphs) if ((b[4] ? g.xc > b[0] && g.xc < b[2] : g.xR > b[0] && g.xL < b[2]) && g.yc > b[1] && g.yc < b[3]) plan.set(g, { removed: true, shift: 0 });
     if (unknown || draws.some(d => hits(b, d))) result.flatten = true;
   }
-  if (!plan.size) return result;
+  // lines and shapes lying inside a dragged area (not found text) are removed too
+  const pathCuts = [];
+  for (const b of boxes) if (!b[4]) for (const pa of paths) {
+    const pad = pa.w / 2 + 1;
+    if (pa.x1 - pad >= b[0] - 1 && pa.x2 + pad <= b[2] + 1 && pa.y1 - pad >= b[1] - 1 && pa.y2 + pad <= b[3] + 1 && !pathCuts.includes(pa)) pathCuts.push(pa);
+  }
+  if (!plan.size && !pathCuts.length) return result;
 
   // pass 2: write the instructions again without those letters
   const hex = (code, bytes) => '<' + code.toString(16).padStart(bytes * 2, '0') + '>';
   const fmt = v => (Math.round(v * 1000) / 1000).toString();
   const byOp = new Map();
   for (const g of glyphs) { if (!byOp.has(g.op)) byOp.set(g.op, []); byOp.get(g.op).push(g); }
-  const repl = [];
+  const repl = pathCuts.map(pa => [pa.start, pa.end, '']);
   let carried = 0; // how far the current text position has moved left
   for (let idx = 0; idx < ops.length; idx++) {
     const o = ops[idx];
