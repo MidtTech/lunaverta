@@ -621,7 +621,7 @@ async function pageLines(pg) {
 }
 async function exactLines(pg) {
   await app().lib('pdflib');
-  if (!libDocs.has(pg.doc)) libDocs.set(pg.doc, S.docs[pg.doc].file.arrayBuffer().then(b => PDFLib.PDFDocument.load(new Uint8Array(b), { updateMetadata: false })));
+  if (!libDocs.has(pg.doc)) libDocs.set(pg.doc, S.docs[pg.doc].file.arrayBuffer().then(b => app().loadPdfBytes(new Uint8Array(b), { updateMetadata: false })));
   const doc = await libDocs.get(pg.doc);
   const rd = await window.LVPdfText.readPage(doc, doc.getPage(pg.index));
   if (!rd) return null;
@@ -1043,8 +1043,7 @@ async function save(opt) {
     const { PDFDocument, StandardFonts, degrees, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, PDFOptionList, rgb } = PDFLib;
     const libs = [];
     for (const d of S.docs) {
-      try { libs.push(await PDFDocument.load(new Uint8Array(await d.file.arrayBuffer()))); }
-      catch (e) { throw new Error(T(/encrypt/i.test(e && e.message) ? 'err.pdf.locked' : 'err.pdf.read')); }
+      libs.push(await app().loadPdfBytes(new Uint8Array(await d.file.arrayBuffer())));
     }
     const out = libs[0];
     // 1. form values (first PDF only)
@@ -1197,6 +1196,8 @@ async function save(opt) {
     app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }));
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed'));
+    // The Save as window has already made an empty file: take it away again.
+    if (handle && handle.remove) handle.remove().catch(() => {});
     btn.disabled = false; btn.textContent = T('ed.save');
   }
 }

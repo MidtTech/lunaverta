@@ -917,11 +917,20 @@ async function convertData(file, target) {
 
 // ---------- converters by kind ----------
 // ---------- PDF tools: merge, split, shrink ----------
-async function openPdfLib(file) {
+// Loads a PDF for changing. Many invoices are "protected" only against
+// changes, with no password needed to open them: that protection is removed
+// first (with qpdf). A PDF that needs a password to open stays locked.
+async function loadPdfBytes(bytes, opts = {}) {
   await lib('pdflib');
-  try { return await PDFLib.PDFDocument.load(new Uint8Array(await file.arrayBuffer())); }
-  catch (e) { throw new Error(T(/encrypt/i.test(e && e.message) ? 'err.pdf.locked' : 'err.pdf.read')); }
+  try { return await PDFLib.PDFDocument.load(bytes, opts); }
+  catch (e) {
+    if (!/encrypt/i.test(e && e.message)) throw new Error(T('err.pdf.read'));
+    const r = await qpdf(bytes, ['--password=', '--decrypt', '/in.pdf', '/out.pdf']);
+    if (!r.out) throw new Error(T('err.pdf.locked'));
+    try { return await PDFLib.PDFDocument.load(r.out, opts); } catch (e2) { throw new Error(T('err.pdf.read')); }
+  }
 }
+async function openPdfLib(file) { return loadPdfBytes(new Uint8Array(await file.arrayBuffer())); }
 // PDFs keep their pages as they are (text, links, quality); images become pages.
 async function mergeToPDF(files, o, progress) {
   await lib('pdflib');
@@ -1137,10 +1146,7 @@ async function cleanPDF(file) {
   await lib('pdflib');
   const P = PDFLib, N = k => P.PDFName.of(k);
   const bytes = new Uint8Array(await file.arrayBuffer());
-  let doc;
-  try { doc = await P.PDFDocument.load(bytes, { updateMetadata: false }); }
-  catch (e) { throw new Error(T(/encrypt/i.test(e && e.message) ? 'err.pdf.locked' : 'err.pdf.read')); }
-  if (doc.isEncrypted) throw new Error(T('err.pdf.locked'));
+  const doc = await loadPdfBytes(bytes, { updateMetadata: false });
   const found = new Set();
   const del = (dict, key, what) => { if (dict && dict.has && dict.has(N(key))) { dict.delete(N(key)); found.add(what); } };
   if (doc.context.trailerInfo.Info) { doc.context.trailerInfo.Info = undefined; found.add('info'); }
@@ -1296,7 +1302,23 @@ function afterAdd(added, x, y) {
   const files = added.map(a => a.file), targets = fileTargets(files);
   if (PRESET && PRESET !== 'merge' && targets.includes(PRESET)) { runBatch(files, PRESET); return; }
   if (PRESET === 'merge') return; // merge waits until the files are in order; the MERGE button is first and highlighted
-  openRing({ targets, files, x, y, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true });
+  // A short "getting ready" moment first, so the ring doesn't jump at the visitor.
+  preparing(files).then(() => openRing({ targets, files, x, y, count: added.length, subtitle: T('ring.file', { n: added.length }), modal: true }));
+}
+// A small card with a spinner and a filling bar, shown for about a second and a half.
+function preparing(files) {
+  return new Promise(resolve => {
+    document.getElementById('prep')?.remove();
+    const el = document.createElement('div');
+    el.id = 'prep'; el.className = 'prep'; el.setAttribute('role', 'status');
+    const name = files.length === 1 ? files[0].name : '';
+    el.innerHTML = `<div class="prep-card"><span class="prep-spin" aria-hidden="true"></span>
+      <div class="prep-text"><strong>${esc(T('prep.title', { n: files.length }))}</strong>${name ? `<span class="prep-name">${esc(name)}</span>` : ''}
+      <span class="prep-bar" aria-hidden="true"><span></span></span></div></div>`;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.remove(); resolve(); }, 180); }, 1500);
+  });
 }
 function renderTray() {
   const t = $('tray');
@@ -1570,13 +1592,8 @@ function kindsFromDrag(e) {
 addEventListener('dragenter', e => {
   if (!hasFiles(e)) return;
   e.preventDefault(); dragDepth++;
-  if (dragDepth === 1) {
-    dragKinds = kindsFromDrag(e);
-    $('dock').classList.add('over');
-    const n = dragKinds.length, known = dragKinds.every(Boolean) && n > 0;
-    const targets = known ? unionTargets(dragKinds) : [];
-    if (targets.length) openRing({ targets, files: null, x: e.clientX, y: e.clientY, count: n, subtitle: T('ring.file', { n }) });
-  }
+  // While dragging, the page only shows where to drop; the ring opens after the drop.
+  if (dragDepth === 1) { dragKinds = kindsFromDrag(e); $('dock').classList.add('over'); document.documentElement.dataset.drop = T('drop.here'); document.documentElement.classList.add('dragging-files'); }
 });
 addEventListener('dragover', e => {
   if (!hasFiles(e)) return;
@@ -1589,16 +1606,14 @@ addEventListener('dragover', e => {
 addEventListener('dragleave', e => {
   if (!hasFiles(e)) return;
   dragDepth = Math.max(0, dragDepth - 1);
-  if (!dragDepth) { $('dock').classList.remove('over'); closeRing(); }
+  if (!dragDepth) { $('dock').classList.remove('over'); document.documentElement.classList.remove('dragging-files'); closeRing(); }
 });
 addEventListener('drop', e => {
   if (!hasFiles(e)) return;
-  e.preventDefault(); dragDepth = 0; $('dock').classList.remove('over');
+  e.preventDefault(); dragDepth = 0; $('dock').classList.remove('over'); document.documentElement.classList.remove('dragging-files');
   const files = [...e.dataTransfer.files];
-  const t = sliceAt(e.clientX, e.clientY);
   closeRing();
   if (!files.length) return;
-  if (t) { runBatch(files, t); return; }
   const added = addFiles(files);
   afterAdd(added, e.clientX, e.clientY);
 });
@@ -1661,7 +1676,7 @@ function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add
 
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF, pickTarget, writeTo, download,
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
   addResult(srcName, target, outs, saved) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; j.saved = !!saved; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
