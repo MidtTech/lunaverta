@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Redact PDF · Black out text for real, no upload</title>
 <meta name="description" content="Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="https://lunaverta.com/redact-pdf/">
 <link rel="alternate" hreflang="en" href="https://lunaverta.com/redact-pdf/">
@@ -32,7 +32,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.css?v=3bbea91e21">
+<link rel="stylesheet" href="/assets/app.css?v=c007026991">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · Redact PDF","url":"https://lunaverta.com/redact-pdf/","inLanguage":"en","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"en","mainEntity":[{"@type":"Question","name":"Is the text really gone, or just hidden?","acceptedAnswer":{"@type":"Answer","text":"It is really gone. LunaVerta deletes the letters under each box from the PDF and rewrites the file, so nothing is left to copy or uncover. Form fields and comments under a box are removed too."}},{"@type":"Question","name":"What about pictures and scans?","acceptedAnswer":{"@type":"Answer","text":"If a box covers a picture or a scanned page, that page is saved as an image with the black box burned in, so nothing under the box survives."}},{"@type":"Question","name":"Can I remove all prices at once?","acceptedAnswer":{"@type":"Answer","text":"Yes. Press Find & remove, choose Amounts (or search for any word or number), tick the hits and remove them all in one go, on every page. You choose whether the text is simply deleted or blacked out."}},{"@type":"Question","name":"Is my PDF uploaded?","acceptedAnswer":{"@type":"Answer","text":"No. Everything happens in your browser."}},{"@type":"Question","name":"Are my files uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. LunaVerta has no server that receives files. Every conversion runs in your browser, on your device, and the result is saved straight to your downloads."}},{"@type":"Question","name":"Does it work offline?","acceptedAnswer":{"@type":"Answer","text":"Yes. After your first visit the app is stored on your device. Helpers for PDF, Word, Excel, MP3 and HEIC are saved the first time you use them, then work offline too."}},{"@type":"Question","name":"What does it cost?","acceptedAnswer":{"@type":"Answer","text":"Nothing. There are no accounts, ads, cookies or trackers."}}]},{"@type":"HowTo","name":"Redact a PDF","inLanguage":"en","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Choose a PDF. LunaVerta looks for amounts, CPR numbers, account numbers, e-mails, phone numbers, addresses, dates and reference numbers."},{"@type":"HowToStep","position":2,"text":"Click a suggestion to mark all of it, and click marks on the pages (or in the list) to keep or remove each one. Search for any other word, or drag black boxes by hand."},{"@type":"HowToStep","position":3,"text":"Press Remove and save new version. The text is deleted from the copy; your original is untouched."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://lunaverta.com/"},{"@type":"ListItem","position":2,"name":"Redact PDF","item":"https://lunaverta.com/redact-pdf/"}]}]}
 </script>
@@ -199,7 +199,7 @@
   </section>
 
   <footer>
-    <span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span> · <span data-i18n="foot.madeBy">Made by</span> <a href="https://midttech.com/" rel="noopener">Midt-Tech</a> · CVR 34256276 · <span id="buildVer" title="Built 2026-10-27">v1.0.0+3bbea91</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span> · <span data-i18n="foot.madeBy">Made by</span> <a href="https://midttech.com/" rel="noopener">Midt-Tech</a> · CVR 34256276 · <span id="buildVer" title="Built 2026-10-27">v1.0.0+c007026</span></span>
     <nav aria-label="Site"><a href="/privacy.html" data-i18n="nav.privacy">Privacy</a><a href="/licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav>
   </footer>
 </div>
@@ -208,10 +208,10 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Choose a format"><svg viewBox="0 0 320 320" id="ringSvg"></svg></div>
 <div id="toast" role="status"></div>
 <noscript><p style="padding:16px">LunaVerta converts files with JavaScript inside your browser. Turn JavaScript on to use it.</p></noscript>
-<script src="/assets/strings.js?v=3bbea91e21"></script>
-<script src="/assets/i18n.js?v=3bbea91e21"></script>
-<script src="/assets/app.js?v=3bbea91e21"></script>
-<script src="/assets/editor.js?v=3bbea91e21"></script>
-<script src="/assets/pdf-text.js?v=3bbea91e21"></script>
+<script src="/assets/strings.js?v=c007026991"></script>
+<script src="/assets/i18n.js?v=c007026991"></script>
+<script src="/assets/app.js?v=c007026991"></script>
+<script src="/assets/editor.js?v=c007026991"></script>
+<script src="/assets/pdf-text.js?v=c007026991"></script>
 </body>
 </html>

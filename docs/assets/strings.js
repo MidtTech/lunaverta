@@ -1,3 +1,5 @@
+// Always use the secure address: a visit over plain http:// is sent on to https://.
+if (typeof location !== 'undefined' && location.protocol === 'http:' && /(^|\.)lunaverta\.com$/.test(location.hostname)) location.replace('https://' + location.host + location.pathname + location.search + location.hash);
 // Every LunaVerta text in English and Danish. Used by the browser (i18n.js)
 // and by scripts/build-pages.mjs, which writes the pages in both languages.
 window.LV_STR = {
