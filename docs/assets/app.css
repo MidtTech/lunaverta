@@ -442,3 +442,43 @@ html.ed-placing .ed-layer { cursor: copy; }
 .ed-tpl-form { display: flex; gap: 8px; }
 .ed-tpl-form[hidden] { display: none; }
 .ed-tpl-form input { flex: 1; min-width: 0; font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+/* undo, zoom, search */
+.ed-undo-grp, .ed-zoom { display: inline-flex; align-items: center; gap: 2px; }
+.ed-undo-grp .ed-ico svg { width: 16px; height: 16px; }
+.ed-undo-grp .ed-ico:disabled { opacity: .35; }
+.ed-zoomv { font: 500 12px var(--f-mono); min-width: 52px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
+#edSearchBtn svg { width: 16px; height: 16px; }
+.ed-search { position: fixed; z-index: 76; top: 96px; right: 24px; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+html.ed-finding .ed-search { right: 424px; }
+.ed-search input { font: inherit; width: 220px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.ed-search-n { font: 12px var(--f-mono); color: var(--muted); min-width: 64px; text-align: center; }
+.ed-shit { position: absolute; background: rgba(255, 200, 0, .35); border-radius: 2px; pointer-events: none; }
+.ed-shit.cur { background: rgba(255, 140, 0, .55); outline: 2px solid #ff8c00; }
+/* mark-up */
+.ed-stage.marking .ed-layer { cursor: crosshair; }
+.ed-mark { position: absolute; }
+.ed-mark.hl { opacity: .38; border-radius: 2px; }
+.ed-mark.rect { border: 2px solid; }
+.ed-mark.arrow { pointer-events: none; }
+.ed-mark.arrow .ed-box-x { pointer-events: auto; }
+.ed-mark.note { background: #fff6a8; border: 1px solid #d9b400; box-shadow: 0 2px 6px rgba(0, 0, 0, .15); }
+.ed-mark.note textarea { width: 100%; height: 100%; resize: none; border: 0; background: transparent; font: inherit; color: #222; padding: 4px; box-sizing: border-box; }
+.ed-mtools { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.ed-mcolors { display: inline-flex; gap: 4px; }
+.ed-mcol { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--raised); box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+.ed-mcol.on { box-shadow: 0 0 0 2px var(--accent); }
+.ed-finish .ed-chip.on { border-color: var(--accent); color: var(--accent); }
+/* stamps, watermark, page numbers */
+.st-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.st-col input { position: absolute; opacity: 0; }
+.st-col span:not(.sr-only) { display: inline-block; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--raised); box-shadow: 0 0 0 1px var(--line); cursor: pointer; }
+.st-col input:checked + span { box-shadow: 0 0 0 2px var(--accent); }
+.st-col input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st-prev { max-height: 90px; }
+.ed-wm { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; overflow: hidden; }
+.ed-wm span { transform: rotate(-45deg); font: 800 1em Arial, Helvetica, sans-serif; white-space: nowrap; }
+.ed-pnum { position: absolute; font-family: Helvetica, Arial, sans-serif; color: #4d4d4d; pointer-events: none; }
+.ed-pnum.bc { bottom: 2.2%; left: 50%; transform: translateX(-50%); }
+.ed-pnum.br { bottom: 2.2%; right: 6%; } .ed-pnum.bl { bottom: 2.2%; left: 6%; }
+.ed-pnum.tr { top: 2.6%; right: 6%; } .ed-pnum.tc { top: 2.6%; left: 50%; transform: translateX(-50%); }

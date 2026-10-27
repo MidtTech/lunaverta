@@ -11,6 +11,7 @@ const ICON = {
   rotL: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M4.6 10A8 8 0 1 1 6 17.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   rotR: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v6h-6M19.4 10A8 8 0 1 0 18 17.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   del: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  redo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   undo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
@@ -102,9 +103,10 @@ async function thumb(pg) {
 }
 function renderGrid() {
   S.view = 'grid';
-  $('#edTools').innerHTML = `<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
+  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
   $('#edAdd').onclick = () => $('#edAddInput').click();
   $('#edFind').onclick = openFind;
+  wireUndo();
   const body = $('#edBody');
   body.innerHTML = `<div class="ed-grid" id="edGrid"></div>`;
   const grid = $('#edGrid');
@@ -114,7 +116,7 @@ function renderGrid() {
     const card = document.createElement('div');
     card.className = 'ed-card' + (pg.deleted ? ' deleted' : '');
     card.draggable = !pg.deleted; card.dataset.id = pg.id;
-    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim()) || S.boxes.some(b => b.pageId === pg.id) || S.images.some(im => im.pageId === pg.id);
+    const changed = S.edits.some(x => x.pageId === pg.id && x.text !== x.orig) || S.texts.some(t => t.pageId === pg.id && t.text.trim()) || S.boxes.some(b => b.pageId === pg.id) || S.images.some(im => im.pageId === pg.id) || S.marks.some(m => m.pageId === pg.id);
     const num = pg.deleted ? '' : T('ed.page', { n }) + (changed ? ' · ' + T('ed.changed') : '');
     card.innerHTML = `
       <button class="ed-thumb" type="button" aria-label="${esc(T('ed.openPage', { n: num || '' }))}" ${pg.deleted ? 'disabled' : ''}><img alt="" style="transform:rotate(${pg.rotate}deg)"></button>
@@ -122,13 +124,14 @@ function renderGrid() {
         <span class="ed-num">${esc(num || T('ed.deleted'))}</span>
         <span class="ed-btns">${pg.deleted
           ? `<button type="button" class="ed-ico" data-act="restore" aria-label="${esc(T('ed.restore'))}" title="${esc(T('ed.restore'))}">${ICON.undo}</button>`
-          : `<button type="button" class="ed-ico" data-act="rotL" aria-label="${esc(T('ed.rotL'))}" title="${esc(T('ed.rotL'))}">${ICON.rotL}</button><button type="button" class="ed-ico" data-act="rotR" aria-label="${esc(T('ed.rotR'))}" title="${esc(T('ed.rotR'))}">${ICON.rotR}</button><button type="button" class="ed-ico" data-act="del" aria-label="${esc(T('ed.del'))}" title="${esc(T('ed.del'))}">${ICON.del}</button>`}
+          : `<button type="button" class="ed-ico" data-act="rotL" aria-label="${esc(T('ed.rotL'))}" title="${esc(T('ed.rotL'))}">${ICON.rotL}</button><button type="button" class="ed-ico" data-act="rotR" aria-label="${esc(T('ed.rotR'))}" title="${esc(T('ed.rotR'))}">${ICON.rotR}</button><button type="button" class="ed-ico" data-act="del" aria-label="${esc(T('ed.del'))}" title="${esc(T('ed.del'))}">${ICON.del}</button><button type="button" class="ed-ico" data-act="blank" aria-label="${esc(T('blank.add'))}" title="${esc(T('blank.add'))}">+</button>`}
         </span>
       </div>`;
     thumb(pg).then(src => { const im = card.querySelector('img'); if (im) im.src = src; });
     card.querySelector('.ed-thumb').onclick = () => { if (!pg.deleted) openPage(pg.id); };
     card.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
       const act = b.dataset.act;
+      if (act === 'blank') { insertBlank(pg); return; }
       if (act === 'del' && S.pages.filter(p => !p.deleted).length === 1) { app().toast(T('ed.keepOne')); return; }
       if (act === 'rotL') pg.rotate = (pg.rotate + 270) % 360;
       if (act === 'rotR') pg.rotate = (pg.rotate + 90) % 360;
@@ -158,7 +161,7 @@ function renderGrid() {
 // again when far away, so long PDFs stay light.
 function openPage(id) { S.view = 'page'; S.current = id; S.adding = false; buildPages(id); }
 function showGrid() {
-  S.adding = false; S.editing = false; S.redacting = false; S.justDone = false;
+  S.adding = false; S.editing = false; S.redacting = false; S.marking = false; S.justDone = false;
   const f = $('#edFinish'); if (f) f.remove();
   dropPages(); renderGrid();
 }
@@ -176,13 +179,18 @@ function pageTools() {
   const live = S.pages.filter(p => !p.deleted);
   $('#edTools').innerHTML = `
     <button class="btn sm" type="button" id="edBack">← ${esc(T('ed.allPages'))}</button>
+    ${undoHTML()}
+    <span class="ed-zoom"><button class="ed-ico" type="button" id="edZoomOut" aria-label="${esc(T('zoom.out'))}" title="${esc(T('zoom.out'))}">−</button><button class="ed-zoomv" type="button" id="edZoomReset" title="${esc(T('zoom.reset'))}">${Math.round((S.zoom || 1) * 100)} %</button><button class="ed-ico" type="button" id="edZoomIn" aria-label="${esc(T('zoom.in'))}" title="${esc(T('zoom.in'))}">+</button></span>
+    <button class="ed-ico" type="button" id="edSearchBtn" aria-label="${esc(T('search.open'))}" title="${esc(T('search.open'))} (Ctrl+F)">${ICON.search}</button>
     <span class="ed-pager"><button class="ed-ico" type="button" id="edPrev" aria-label="${esc(T('ed.prev'))}">‹</button>
       <span id="edPagerText"></span>
       <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}">›</button></span>
     <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
     <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}">${esc(T('ed.addText'))}</button>
     <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
+    <button class="btn sm${S.marking ? ' primary' : ''}" type="button" id="edMark" aria-pressed="${!!S.marking}">${esc(T('ed.mark'))}</button>
     <button class="btn sm" type="button" id="edSign">${esc(T('ed.sign'))}</button>
+    <button class="btn sm" type="button" id="edStamp">${esc(T('ed.stamp'))}</button>
     <button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
@@ -190,12 +198,17 @@ function pageTools() {
   const go = d => { const i = live.findIndex(p => p.id === S.current); const t = live[i + d]; if (t) scrollToPage(t.id, true); };
   $('#edPrev').onclick = () => go(-1);
   $('#edNext').onclick = () => go(1);
-  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; S.justDone = false; renderPage(); };
-  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.justDone = false; renderPage(); };
-  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.justDone = false; renderPage(); };
+  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; S.marking = false; S.justDone = false; renderPage(); };
+  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
+  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
   $('#edFind').onclick = openFind;
-  $('#edSign').onclick = () => { S.editing = S.adding = S.redacting = false; openSign(); };
+  $('#edSign').onclick = () => { S.editing = S.adding = S.redacting = S.marking = false; openSign(); };
+  $('#edStamp').onclick = () => { S.editing = S.adding = S.redacting = S.marking = false; openStamps(); };
+  $('#edMark').onclick = () => { S.marking = !S.marking; S.editing = S.adding = S.redacting = false; S.justDone = false; renderPage(); };
+  $('#edZoomOut').onclick = () => stepZoom(-1); $('#edZoomIn').onclick = () => stepZoom(1); $('#edZoomReset').onclick = () => setZoom(1);
+  $('#edSearchBtn').onclick = openSearch;
+  wireUndo();
   updatePager();
 }
 function updatePager() {
@@ -236,7 +249,7 @@ async function buildPages(startId) {
     const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
     if (seq !== renderSeq || !S) return;
     const rot = (page.rotate + pg.rotate) % 360;
-    const scale = Math.max(.4, avail / page.getViewport({ scale: 1, rotation: rot }).width);
+    const scale = Math.max(.3, avail * (S.zoom || 1) / page.getViewport({ scale: 1, rotation: rot }).width);
     const vp = page.getViewport({ scale, rotation: rot });
     const wrap = document.createElement('div');
     wrap.className = 'ed-stage-wrap'; wrap.dataset.id = pg.id;
@@ -246,7 +259,7 @@ async function buildPages(startId) {
     const cv = stage.querySelector('canvas'); cv.width = cv.height = 0; cv.style.width = vp.width + 'px'; cv.style.height = vp.height + 'px';
     list.appendChild(wrap);
     const v = { pg, page, rot, scale, vp, dpr, wrap, stage, canvas: stage.querySelector('canvas'), layer: stage.querySelector('.ed-layer'), drawn: false, near: false, fields: 0, runs: 0, job: 0 };
-    stage.classList.toggle('adding', !!S.adding); stage.classList.toggle('redacting', !!S.redacting);
+    stage.classList.toggle('adding', !!S.adding); stage.classList.toggle('redacting', !!S.redacting); stage.classList.toggle('marking', !!S.marking);
     stage.addEventListener('click', e => addTextAt(v, e));
     views.set(pg.id, v);
   }
@@ -307,6 +320,9 @@ async function fillLayer(v) {
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
   S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
   S.images.filter(im => im.pageId === pg.id).forEach(im => sigBox(v, im));
+  S.marks.filter(m => m.pageId === pg.id).forEach(m => markEl(v, m));
+  if (S.marking) markDraw(v);
+  pageOverlays(v); searchMarks(v);
   if (S.redacting) drawBoxes(pg, vp, layer);
   hitMarks(v);
   setHint();
@@ -315,7 +331,7 @@ async function fillLayer(v) {
 function refreshModes() {
   pageTools();
   for (const v of S.pv.views.values()) {
-    v.stage.classList.toggle('adding', !!S.adding); v.stage.classList.toggle('redacting', !!S.redacting);
+    v.stage.classList.toggle('adding', !!S.adding); v.stage.classList.toggle('redacting', !!S.redacting); v.stage.classList.toggle('marking', !!S.marking);
     if (v.drawn) { v.job++; fillLayer(v); }
   }
   finishBar(); setHint();
@@ -346,15 +362,17 @@ function addTextAt(v, e) {
 // clear how to finish.
 function finishBar() {
   let bar = $('#edFinish');
-  const mode = S.editing ? 'edit' : S.redacting ? 'redact' : S.adding ? 'add' : '';
+  const mode = S.editing ? 'edit' : S.redacting ? 'redact' : S.adding ? 'add' : S.marking ? 'mark' : '';
   if (!mode) { if (bar) bar.remove(); return; }
   if (!bar) {
     bar = document.createElement('div'); bar.id = 'edFinish'; bar.className = 'ed-finish'; bar.setAttribute('role', 'status');
     $('#editor').appendChild(bar);
   }
-  bar.innerHTML = `<span class="ed-finish-text" id="edFinishText"></span>
+  bar.innerHTML = `${mode === 'mark' ? markTools() : ''}<span class="ed-finish-text" id="edFinishText"></span>
     <button class="btn primary ed-done-btn" type="button" id="edDone">${ICON.tick}<span>${esc(T('ed.donePage'))}</span></button>`;
   $('#edDone').onclick = finishPage;
+  bar.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => { S.markTool = b.dataset.tool; finishBar(); });
+  bar.querySelectorAll('[data-col]').forEach(b => b.onclick = () => { S.markColor = b.dataset.col; finishBar(); });
   updateFinish();
 }
 function updateFinish() {
@@ -364,11 +382,12 @@ function updateFinish() {
   const boxes = S.boxes.filter(b => live.has(b.pageId)).length;
   el.textContent = S.editing ? (lines ? T('ed.barEdit', { n: lines }) : T('ed.barEditNone'))
     : S.redacting ? (boxes ? T('ed.barRedact', { n: boxes }) : T('ed.barRedactNone'))
+    : S.marking ? T('mark.hint.' + S.markTool)
     : T('ed.barAdd');
 }
 function finishPage() {
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  S.editing = false; S.adding = false; S.redacting = false; S.justDone = true;
+  S.editing = false; S.adding = false; S.redacting = false; S.marking = false; S.justDone = true;
   renderPage();
   const sv = $('#edSave'); sv.classList.remove('pulse'); void sv.offsetWidth; sv.classList.add('pulse');
 }
@@ -557,6 +576,320 @@ function textBox(t, vp, layer, rot) {
   });
   place(); layer.appendChild(box); grow();
   return box;
+}
+
+// ---------- undo and redo ----------
+// Every change sets S.dirty; a moment later the state is noted down. Undo and
+// redo step through those notes (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y).
+const H = { stack: [], i: -1, timer: 0, quiet: false };
+const snap = () => JSON.stringify({ pages: S.pages, texts: S.texts, edits: S.edits, boxes: S.boxes, images: S.images, marks: S.marks, values: S.values, wm: S.watermark, nums: S.pageNums });
+function trackChanges() {
+  let dirty = false;
+  Object.defineProperty(S, 'dirty', { configurable: true, enumerable: true, get: () => dirty, set: v => { dirty = v; if (v && !H.quiet) { clearTimeout(H.timer); H.timer = setTimeout(noteState, 350); } } });
+  H.stack = [snap()]; H.i = 0;
+}
+function noteState() {
+  if (!S) return;
+  clearTimeout(H.timer); H.timer = 0;
+  const j = snap();
+  if (j === H.stack[H.i]) return;
+  H.stack = H.stack.slice(0, H.i + 1); H.stack.push(j);
+  if (H.stack.length > 100) H.stack.shift();
+  H.i = H.stack.length - 1;
+  undoButtons();
+}
+function undoButtons() {
+  const u = $('#edUndo'), r = $('#edRedo');
+  if (u) u.disabled = H.i <= 0;
+  if (r) r.disabled = H.i >= H.stack.length - 1;
+}
+function stepHistory(d) {
+  if (H.timer) noteState();
+  const to = H.i + d;
+  if (to < 0 || to >= H.stack.length) return;
+  H.i = to;
+  const o = JSON.parse(H.stack[to]);
+  H.quiet = true;
+  Object.assign(S, { pages: o.pages, texts: o.texts, edits: o.edits, boxes: o.boxes, images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
+  S.dirty = true; H.quiet = false;
+  if (S.view === 'page') buildPages(S.current); else renderGrid();
+  app().toast(T(d < 0 ? 'hist.undone' : 'hist.redone'));
+}
+const undoHTML = () => `<span class="ed-undo-grp"><button class="ed-ico" type="button" id="edUndo" aria-label="${esc(T('hist.undo'))}" title="${esc(T('hist.undo'))} (Ctrl+Z)">${ICON.undo}</button><button class="ed-ico" type="button" id="edRedo" aria-label="${esc(T('hist.redo'))}" title="${esc(T('hist.redo'))} (Ctrl+Y)">${ICON.redo}</button></span>`;
+function wireUndo() { $('#edUndo').onclick = () => stepHistory(-1); $('#edRedo').onclick = () => stepHistory(1); undoButtons(); }
+
+// ---------- zoom ----------
+const ZOOMS = [.5, .75, 1, 1.25, 1.5, 2, 3];
+function setZoom(z) {
+  S.zoom = Math.min(3, Math.max(.5, z));
+  if (S.view === 'page') buildPages(S.current);
+}
+const stepZoom = d => { const i = ZOOMS.findIndex(z => z >= (S.zoom || 1) - 1e-6); setZoom(ZOOMS[Math.min(ZOOMS.length - 1, Math.max(0, (i < 0 ? 2 : i) + d))]); };
+
+// ---------- search (Ctrl+F) ----------
+function openSearch() {
+  if (S.view !== 'page') { openPage(S.current || S.pages.find(p => !p.deleted).id); setTimeout(openSearch, 300); return; }
+  let bar = $('#edSearch');
+  if (!bar) {
+    bar = document.createElement('div'); bar.id = 'edSearch'; bar.className = 'ed-search'; bar.setAttribute('role', 'search');
+    bar.innerHTML = `<input type="search" id="edSearchQ" placeholder="${esc(T('search.ph'))}" aria-label="${esc(T('search.ph'))}"><span id="edSearchN" class="ed-search-n"></span>
+      <button class="ed-ico" type="button" id="edSearchPrev" aria-label="${esc(T('search.prev'))}" title="${esc(T('search.prev'))}">↑</button><button class="ed-ico" type="button" id="edSearchNext" aria-label="${esc(T('search.next'))}" title="${esc(T('search.next'))}">↓</button>
+      <button class="ed-ico" type="button" id="edSearchX" aria-label="${esc(T('find.close'))}">${ICON.x}</button>`;
+    $('#editor').appendChild(bar);
+    let t = 0;
+    $('#edSearchQ').addEventListener('input', () => { clearTimeout(t); t = setTimeout(runSearch, 250); });
+    $('#edSearchQ').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); moveSearch(e.shiftKey ? -1 : 1); }
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeSearch(); }
+    });
+    $('#edSearchPrev').onclick = () => moveSearch(-1); $('#edSearchNext').onclick = () => moveSearch(1); $('#edSearchX').onclick = closeSearch;
+  }
+  $('#edSearchQ').focus(); $('#edSearchQ').select();
+}
+function closeSearch() { const b = $('#edSearch'); if (b) b.remove(); S.search = null; paintSearch(); }
+async function runSearch() {
+  const q = ($('#edSearchQ') || {}).value || '';
+  if (!q.trim()) { S.search = null; $('#edSearchN').textContent = ''; paintSearch(); return; }
+  const hits = await findAll(new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+'), 'gi'));
+  S.search = { hits, i: hits.length ? 0 : -1 };
+  if (hits.length) { const cur = hits.findIndex(h => h.pg.id === S.current); S.search.i = cur < 0 ? 0 : cur; }
+  showSearchHit();
+}
+function moveSearch(d) { if (!S.search || !S.search.hits.length) return; S.search.i = (S.search.i + d + S.search.hits.length) % S.search.hits.length; showSearchHit(); }
+function showSearchHit() {
+  const s = S.search, n = $('#edSearchN');
+  if (n) n.textContent = s && s.hits.length ? T('search.count', { i: s.i + 1, n: s.hits.length }) : T('search.none');
+  paintSearch();
+  if (s && s.hits[s.i]) { const h = s.hits[s.i]; if (S.current !== h.pg.id) { S.current = h.pg.id; updatePager(); } peek(h); }
+}
+function searchMarks(v) {
+  v.layer.querySelectorAll('.ed-shit').forEach(n => n.remove());
+  if (!S.search) return;
+  S.search.hits.forEach((h, k) => {
+    if (h.pg.id !== v.pg.id) return;
+    const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
+    const el = document.createElement('div'); el.className = 'ed-shit' + (k === S.search.i ? ' cur' : '');
+    Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
+    v.layer.appendChild(el);
+  });
+}
+function paintSearch() { if (S && S.pv) for (const v of S.pv.views.values()) if (v.drawn) searchMarks(v); }
+
+// ---------- blank pages ----------
+async function insertBlank(after) {
+  await app().lib('pdflib');
+  const page = await S.docs[after.doc].js.getPage(after.index + 1), [x0, y0, x1, y1] = page.view;
+  const doc = await PDFLib.PDFDocument.create(); doc.addPage([x1 - x0, y1 - y0]);
+  const file = new File([await doc.save()], T('blank.name') + '.pdf', { type: 'application/pdf' });
+  await addDoc(file);
+  const blank = S.pages.pop();
+  S.pages.splice(S.pages.indexOf(after) + 1, 0, blank);
+  S.dirty = true;
+  renderGrid();
+}
+
+// ---------- stamps, watermark and page numbers ----------
+const STAMP_COLORS = { red: '#c62828', blue: '#1f4fb8', green: '#1b7a3c', grey: '#555b66' };
+function stampImage(text, color, withDate) {
+  const c = document.createElement('canvas'), ctx = c.getContext('2d'), fs = 64;
+  const lines = [text.toUpperCase()]; if (withDate) lines.push(new Date().toLocaleDateString(window.LV && window.LV.lang === 'da' ? 'da-DK' : 'en-GB'));
+  ctx.font = `800 ${fs}px Arial, Helvetica, sans-serif`;
+  const w = Math.max(...lines.map((l, i) => { ctx.font = `${i ? 600 : 800} ${i ? fs * .45 : fs}px Arial, Helvetica, sans-serif`; return ctx.measureText(l).width; })) + 60;
+  const h = fs + 44 + (withDate ? fs * .55 : 0);
+  c.width = Math.ceil(w); c.height = Math.ceil(h);
+  ctx.strokeStyle = ctx.fillStyle = STAMP_COLORS[color] || color; ctx.lineWidth = 7;
+  const r = 14; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(5, 5, c.width - 10, c.height - 10, r) : ctx.rect(5, 5, c.width - 10, c.height - 10); ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `800 ${fs}px Arial, Helvetica, sans-serif`; ctx.fillText(lines[0], c.width / 2, 22 + fs * .85);
+  if (withDate) { ctx.font = `600 ${fs * .45}px Arial, Helvetica, sans-serif`; ctx.fillText(lines[1], c.width / 2, 22 + fs * .85 + fs * .55); }
+  return c.toDataURL('image/png');
+}
+function openStamps() {
+  const wm = S.watermark || { text: T('stamp.copy'), color: 'red', opacity: .15 }, nums = S.pageNums || { pos: 'bc', fmt: 'n', start: 1 };
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog sig-dialog';
+  const colors = sel => Object.keys(STAMP_COLORS).map(k => `<label class="st-col"><input type="radio" name="${sel}" value="${k}"><span style="background:${STAMP_COLORS[k]}" title="${esc(T('stamp.col.' + k))}"></span><span class="sr-only">${esc(T('stamp.col.' + k))}</span></label>`).join('');
+  d.innerHTML = `<form method="dialog">
+    <h2>${esc(T('stamp.title'))}</h2>
+    <div class="sig-tabs" role="tablist">
+      <button type="button" role="tab" data-tab="stamp" aria-selected="true">${esc(T('stamp.stamp'))}</button>
+      <button type="button" role="tab" data-tab="wm" aria-selected="false">${esc(T('stamp.wm'))}</button>
+      <button type="button" role="tab" data-tab="nums" aria-selected="false">${esc(T('stamp.nums'))}</button>
+    </div>
+    <div class="sig-pane" data-pane="stamp">
+      <div class="st-presets">${['copy', 'draft', 'paid', 'approved', 'confidential'].map(k => `<button type="button" class="ed-chip" data-text="${esc(T('stamp.' + k))}">${esc(T('stamp.' + k))}</button>`).join('')}</div>
+      <label>${esc(T('stamp.text'))}<input type="text" name="stext" maxlength="30" value="${esc(T('stamp.copy'))}"></label>
+      <div class="st-row">${colors('scol')}<label class="pw-show"><input type="checkbox" name="sdate"> ${esc(T('stamp.date'))}</label></div>
+      <img class="sig-preview st-prev" alt="">
+    </div>
+    <div class="sig-pane" data-pane="wm" hidden>
+      <label class="pw-show"><input type="checkbox" name="won" ${S.watermark ? 'checked' : ''}> ${esc(T('stamp.wmOn'))}</label>
+      <label>${esc(T('stamp.text'))}<input type="text" name="wtext" maxlength="30" value="${esc(wm.text)}"></label>
+      <div class="st-row">${colors('wcol')}<label>${esc(T('stamp.opacity'))} <input type="range" name="wop" min="5" max="40" value="${Math.round(wm.opacity * 100)}"></label></div>
+    </div>
+    <div class="sig-pane" data-pane="nums" hidden>
+      <label class="pw-show"><input type="checkbox" name="non" ${S.pageNums ? 'checked' : ''}> ${esc(T('stamp.numsOn'))}</label>
+      <label>${esc(T('stamp.pos'))}<select name="npos">${['bc', 'br', 'bl', 'tr', 'tc'].map(k => `<option value="${k}"${nums.pos === k ? ' selected' : ''}>${esc(T('stamp.pos.' + k))}</option>`).join('')}</select></label>
+      <label>${esc(T('stamp.fmt'))}<select name="nfmt">${['n', 'page', 'pageof', 'slash'].map(k => `<option value="${k}"${nums.fmt === k ? ' selected' : ''}>${esc(numText(k, 1, 5))}</option>`).join('')}</select></label>
+      <label>${esc(T('stamp.start'))}<input type="number" name="nstart" min="0" max="9999" value="${nums.start}"></label>
+    </div>
+    <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary" id="stOk">${esc(T('stamp.place'))}</button></div>
+  </form>`;
+  document.body.appendChild(d);
+  const f = d.querySelector('form'); let tab = 'stamp';
+  f.scol.value = 'red'; f.wcol.value = wm.color;
+  const prev = () => { d.querySelector('.st-prev').src = stampImage(f.stext.value || ' ', f.scol.value, f.sdate.checked); };
+  d.querySelectorAll('.st-presets [data-text]').forEach(b => b.onclick = () => { f.stext.value = b.dataset.text; prev(); });
+  [f.stext, f.sdate, ...f.scol].forEach(i => i.addEventListener('input', prev)); prev();
+  d.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+    tab = b.dataset.tab;
+    d.querySelectorAll('[data-tab]').forEach(o => o.setAttribute('aria-selected', String(o === b)));
+    d.querySelectorAll('[data-pane]').forEach(p => { p.hidden = p.dataset.pane !== tab; });
+    $('#stOk').textContent = T(tab === 'stamp' ? 'stamp.place' : 'stamp.apply');
+  });
+  d.querySelector('[value="cancel"]').onclick = () => d.close();
+  f.onsubmit = e => {
+    e.preventDefault();
+    if (tab === 'stamp') {
+      const src = stampImage(f.stext.value.trim() || T('stamp.copy'), f.scol.value, f.sdate.checked);
+      d.close();
+      const im = new Image(); im.onload = () => { S.placing = { src, ratio: im.height / im.width }; placingMode(true); }; im.src = src;
+      return;
+    }
+    if (tab === 'wm') S.watermark = f.won.checked ? { text: f.wtext.value.trim() || T('stamp.copy'), color: f.wcol.value, opacity: +f.wop.value / 100 } : null;
+    if (tab === 'nums') S.pageNums = f.non.checked ? { pos: f.npos.value, fmt: f.nfmt.value, start: +f.nstart.value || 0 } : null;
+    S.dirty = true; d.close();
+    if (S.view === 'page' && S.pv) for (const v of S.pv.views.values()) if (v.drawn) { v.job++; fillLayer(v); }
+  };
+  d.addEventListener('close', () => d.remove());
+  d.showModal();
+}
+function numText(fmt, n, total) {
+  return fmt === 'page' ? T('stamp.f.page', { n }) : fmt === 'pageof' ? T('stamp.f.pageof', { n, total }) : fmt === 'slash' ? `${n} / ${total}` : String(n);
+}
+// previews on the page: the watermark across it and the page number
+function pageOverlays(v) {
+  v.layer.querySelectorAll('.ed-wm, .ed-pnum').forEach(n => n.remove());
+  const live = S.pages.filter(p => !p.deleted), i = live.indexOf(v.pg);
+  if (S.watermark) {
+    const el = document.createElement('div'); el.className = 'ed-wm';
+    el.innerHTML = `<span style="color:${STAMP_COLORS[S.watermark.color]};opacity:${S.watermark.opacity}">${esc(S.watermark.text)}</span>`;
+    el.firstChild.style.fontSize = Math.min(v.vp.width, v.vp.height) * .16 + 'px';
+    v.layer.appendChild(el);
+  }
+  if (S.pageNums) {
+    const p = S.pageNums, el = document.createElement('div'); el.className = 'ed-pnum ' + p.pos;
+    el.textContent = numText(p.fmt, i + p.start, live.length - 1 + p.start);
+    el.style.fontSize = 10 * v.scale + 'px';
+    v.layer.appendChild(el);
+  }
+}
+
+// ---------- marking up: highlighter, box, arrow, note ----------
+const MARK_COLORS = { yellow: '#ffd400', red: '#e0312b', blue: '#2f6fe4', green: '#22a052' };
+const MARK_TOOLS = ['hl', 'rect', 'arrow', 'note'];
+function markTools() {
+  return `<span class="ed-mtools" role="radiogroup" aria-label="${esc(T('mark.tools'))}">${MARK_TOOLS.map(k => `<button type="button" class="ed-chip${S.markTool === k ? ' on' : ''}" data-tool="${k}" aria-pressed="${S.markTool === k}">${esc(T('mark.' + k))}</button>`).join('')}</span>
+    <span class="ed-mcolors">${Object.keys(MARK_COLORS).map(k => `<button type="button" class="ed-mcol${S.markColor === k ? ' on' : ''}" data-col="${k}" style="background:${MARK_COLORS[k]}" aria-label="${esc(T('stamp.col.' + (k === 'yellow' ? 'yellow' : k)))}" aria-pressed="${S.markColor === k}"></button>`).join('')}</span>`;
+}
+function markEl(v, m) {
+  const r = m.type === 'arrow' ? [Math.min(m.x1, m.x2), Math.min(m.y1, m.y2), Math.max(m.x1, m.x2), Math.max(m.y1, m.y2)] : [m.x1, m.y1, m.x2, m.y2];
+  const [a, b, c, d] = v.vp.convertToViewportRectangle(r);
+  const left = Math.min(a, c), top = Math.min(b, d), w = Math.abs(c - a), h = Math.abs(d - b);
+  const el = document.createElement('div'); el.className = 'ed-mark ' + m.type;
+  const col = MARK_COLORS[m.color] || m.color;
+  if (m.type === 'arrow') {
+    const pad = 12, [sx, sy] = v.vp.convertToViewportPoint(m.x1, m.y1), [ex, ey] = v.vp.convertToViewportPoint(m.x2, m.y2);
+    Object.assign(el.style, { left: left - pad + 'px', top: top - pad + 'px', width: w + pad * 2 + 'px', height: h + pad * 2 + 'px' });
+    const ang = Math.atan2(ey - sy, ex - sx), L = 12 * v.scale / 1.4, x2 = ex - left + pad, y2 = ey - top + pad;
+    const h1 = [x2 - L * Math.cos(ang - .45), y2 - L * Math.sin(ang - .45)], h2 = [x2 - L * Math.cos(ang + .45), y2 - L * Math.sin(ang + .45)];
+    el.innerHTML = `<svg width="100%" height="100%"><g stroke="${col}" stroke-width="${2.2 * v.scale / 1.4}" stroke-linecap="round" fill="none"><line x1="${sx - left + pad}" y1="${sy - top + pad}" x2="${x2}" y2="${y2}"/><polyline points="${h1.join(',')} ${x2},${y2} ${h2.join(',')}"/></g></svg>`;
+  } else {
+    Object.assign(el.style, { left: left + 'px', top: top + 'px', width: w + 'px', height: h + 'px' });
+    if (m.type === 'hl') el.style.background = col;
+    if (m.type === 'rect') el.style.borderColor = col;
+    if (m.type === 'note') {
+      el.style.fontSize = 10 * v.scale + 'px';
+      el.innerHTML = `<textarea aria-label="${esc(T('mark.note'))}" placeholder="${esc(T('mark.notePh'))}"></textarea>`;
+      const ta = el.querySelector('textarea'); ta.value = m.text || ''; ta.readOnly = !S.marking;
+      ta.oninput = () => { m.text = ta.value; S.dirty = true; };
+    }
+  }
+  if (S.marking) {
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'ed-ico ed-box-x'; x.innerHTML = ICON.x;
+    x.title = T('mark.remove'); x.setAttribute('aria-label', T('mark.remove'));
+    x.onclick = e => { e.stopPropagation(); S.marks = S.marks.filter(o => o !== m); S.dirty = true; el.remove(); updateFinish(); };
+    el.appendChild(x);
+  }
+  v.layer.appendChild(el);
+  return el;
+}
+function markDraw(v) {
+  const layer = v.layer;
+  layer.addEventListener('pointerdown', e => {
+    if (!S.marking || e.target !== layer || e.button) return;
+    e.preventDefault();
+    const r = layer.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const [px, py] = v.vp.convertToPdfPoint(sx, sy);
+    if (S.markTool === 'note') {
+      const m = { id: ++uid, pageId: v.pg.id, type: 'note', color: S.markColor, x1: px, y1: py - 60, x2: px + 150, y2: py, text: '' };
+      S.marks.push(m); S.dirty = true; const el = markEl(v, m); el.querySelector('textarea').focus(); updateFinish();
+      return;
+    }
+    let ex = sx, ey = sy;
+    const ghost = document.createElement('div'); ghost.className = 'ed-box drawing'; layer.appendChild(ghost);
+    const move = ev => {
+      ex = Math.min(Math.max(0, ev.clientX - r.left), r.width); ey = Math.min(Math.max(0, ev.clientY - r.top), r.height);
+      Object.assign(ghost.style, { left: Math.min(sx, ex) + 'px', top: Math.min(sy, ey) + 'px', width: Math.abs(ex - sx) + 'px', height: Math.abs(ey - sy) + 'px' });
+    };
+    const up = () => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); ghost.remove();
+      if (Math.hypot(ex - sx, ey - sy) < 5) return;
+      const [qx, qy] = v.vp.convertToPdfPoint(ex, ey);
+      const m = S.markTool === 'arrow'
+        ? { id: ++uid, pageId: v.pg.id, type: 'arrow', color: S.markColor, x1: px, y1: py, x2: qx, y2: qy }
+        : { id: ++uid, pageId: v.pg.id, type: S.markTool, color: S.markColor, x1: Math.min(px, qx), y1: Math.min(py, qy), x2: Math.max(px, qx), y2: Math.max(py, qy) };
+      S.marks.push(m); S.dirty = true; markEl(v, m); updateFinish();
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+}
+// writes the marks, the watermark and the page number into a saved page
+async function drawExtras(out, page, pg, i, total, fonts) {
+  const { rgb, degrees, StandardFonts } = PDFLib;
+  const hex = h => { const n = parseInt(h.slice(1), 16); return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
+  fonts.reg = fonts.reg || await out.embedFont(StandardFonts.Helvetica);
+  fonts.bold = fonts.bold || await out.embedFont(StandardFonts.HelveticaBold);
+  for (const m of S.marks.filter(x => x.pageId === pg.id)) {
+    const col = hex(MARK_COLORS[m.color] || '#ffd400');
+    if (m.type === 'hl') page.drawRectangle({ x: m.x1, y: m.y1, width: m.x2 - m.x1, height: m.y2 - m.y1, color: col, opacity: .38 });
+    if (m.type === 'rect') page.drawRectangle({ x: m.x1, y: m.y1, width: m.x2 - m.x1, height: m.y2 - m.y1, borderColor: col, borderWidth: 2 });
+    if (m.type === 'arrow') {
+      const ang = Math.atan2(m.y2 - m.y1, m.x2 - m.x1), L = 10;
+      page.drawLine({ start: { x: m.x1, y: m.y1 }, end: { x: m.x2, y: m.y2 }, thickness: 2, color: col });
+      for (const s of [-.45, .45]) page.drawLine({ start: { x: m.x2, y: m.y2 }, end: { x: m.x2 - L * Math.cos(ang + s), y: m.y2 - L * Math.sin(ang + s) }, thickness: 2, color: col });
+    }
+    if (m.type === 'note') {
+      page.drawRectangle({ x: m.x1, y: m.y1, width: m.x2 - m.x1, height: m.y2 - m.y1, color: rgb(1, .96, .66), borderColor: hex(MARK_COLORS[m.color] || '#ffd400'), borderWidth: 1 });
+      const words = (m.text || '').replace(app().WIN_ANSI, '?').split(/(\s+)/), lines = [];
+      let cur = '';
+      for (const part of words) { if (part === '\n' || /\n/.test(part)) { lines.push(cur); cur = ''; continue; } const t = cur + part; if (fonts.reg.widthOfTextAtSize(t, 10) > m.x2 - m.x1 - 8 && cur) { lines.push(cur); cur = part.trimStart(); } else cur = t; }
+      lines.push(cur);
+      lines.forEach((l, k) => { const y = m.y2 - 14 - k * 12; if (y > m.y1 + 2) page.drawText(l, { x: m.x1 + 4, y, size: 10, font: fonts.reg, color: rgb(.15, .15, .15) }); });
+    }
+  }
+  const { width: W, height: Hh, x: X0, y: Y0 } = page.getMediaBox();
+  if (S.watermark) {
+    const wm = S.watermark, text = wm.text.replace(app().WIN_ANSI, '?'), size = Math.min(W, Hh) * .16, tw = fonts.bold.widthOfTextAtSize(text, size);
+    const a = Math.PI / 4, cx = X0 + W / 2, cy = Y0 + Hh / 2;
+    page.drawText(text, { x: cx - Math.cos(a) * tw / 2 + Math.sin(a) * size * .35, y: cy - Math.sin(a) * tw / 2 - Math.cos(a) * size * .35, size, font: fonts.bold, color: hex(STAMP_COLORS[wm.color]), opacity: wm.opacity, rotate: degrees(45) });
+  }
+  if (S.pageNums) {
+    const p = S.pageNums, text = numText(p.fmt, i + p.start, total - 1 + p.start).replace(app().WIN_ANSI, '?'), size = 10, tw = fonts.reg.widthOfTextAtSize(text, size);
+    const x = p.pos.endsWith('c') ? X0 + (W - tw) / 2 : p.pos.endsWith('r') ? X0 + W - 36 - tw : X0 + 36;
+    const y = p.pos.startsWith('b') ? Y0 + 22 : Y0 + Hh - 30;
+    page.drawText(text, { x, y, size, font: fonts.reg, color: rgb(.3, .3, .3) });
+  }
 }
 
 // ---------- signatures ----------
@@ -1394,7 +1727,7 @@ async function save(opt) {
     const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
     const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
     let covered = 0;
-    const sigCache = {};
+    const sigCache = {}, extraFonts = {};
     const flatten = [];
     for (const [pi, { pg, page }] of final.entries()) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
@@ -1448,6 +1781,7 @@ async function save(opt) {
         sigCache[im.src] = sigCache[im.src] || await out.embedPng(await (await fetch(im.src)).arrayBuffer());
         page.drawImage(sigCache[im.src], { x: im.x, y: im.y, width: im.w, height: im.h });
       }
+      await drawExtras(out, page, pg, pi, final.length, extraFonts);
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });
       }
@@ -1512,12 +1846,13 @@ async function save(opt) {
 
 // ---------- open ----------
 async function open(files, opt = {}) {
-  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], images: [], placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], images: [], marks: [], watermark: null, pageNums: null, zoom: 1, marking: false, markTool: 'hl', markColor: 'yellow', search: null, placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear(); textCache.clear(); libDocs.clear(); pathCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
   try { for (const f of files) await addDoc(f); }
   catch (e) { close(); app().toast(e.message); return; }
+  trackChanges();
   // The Redact PDF page opens the first page ready to black out.
   if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
   if (opt.find && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
@@ -1533,6 +1868,19 @@ async function open(files, opt = {}) {
   $('#edSave').focus();
 }
 document.addEventListener('lv-lang', () => { if (S) render(); });
+// Editor shortcuts: undo/redo, search, zoom.
+document.addEventListener('keydown', e => {
+  if (!S || !$('#editor') || !(e.ctrlKey || e.metaKey)) return;
+  const typing = e.target.closest && e.target.closest('input, textarea, select, [contenteditable]');
+  const k = e.key.toLowerCase();
+  if (k === 'f') { e.preventDefault(); openSearch(); return; }
+  if (typing) return;
+  if (k === 'z' && !e.shiftKey) { e.preventDefault(); stepHistory(-1); }
+  else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); stepHistory(1); }
+  else if (S.view === 'page' && (k === '+' || k === '=')) { e.preventDefault(); stepZoom(1); }
+  else if (S.view === 'page' && k === '-') { e.preventDefault(); stepZoom(-1); }
+  else if (S.view === 'page' && k === '0') { e.preventDefault(); setZoom(1); }
+});
 // Esc: finishes a line, then the page, then goes back to all pages.
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape' || !S || !$('#editor')) return;
@@ -1541,7 +1889,7 @@ document.addEventListener('keydown', e => {
   if (!e.target.closest || e.target.closest('.ed-edit')) return;
   if (e.target.closest('textarea, input, select')) return;
   e.preventDefault();
-  if (S.view === 'page' && (S.editing || S.adding || S.redacting)) finishPage();
+  if (S.view === 'page' && (S.editing || S.adding || S.redacting || S.marking)) finishPage();
   else S.view === 'page' ? showGrid() : cancel();
 });
 window.LVEditor = { open };

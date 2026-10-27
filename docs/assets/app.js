@@ -1574,8 +1574,21 @@ function updateFoot() {
 const canPick = typeof window.showSaveFilePicker === 'function' && window.self === window.top;
 // Returns a file handle, null if the visitor cancelled, or undefined if the
 // browser can't show the window (then download instead).
+// The visitor can turn the Save as window off and use normal downloads
+// instead (then files show under the browser's download icon).
+const ASK_KEY = 'lunaverta-ask-where';
+const askWhere = () => { try { return localStorage.getItem(ASK_KEY) !== '0'; } catch (e) { return true; } };
+{
+  const box = document.getElementById('optAsk'), wrap = document.getElementById('optAskWrap');
+  if (box) {
+    if (!canPick) wrap.hidden = true; // browsers without the window always download
+    box.checked = askWhere();
+    wrap.title = T('opt.askTip');
+    box.onchange = () => { try { localStorage.setItem(ASK_KEY, box.checked ? '1' : '0'); } catch (e) {} };
+  }
+}
 async function pickTarget(filename, mime) {
-  if (!canPick) return undefined;
+  if (!canPick || !askWhere()) return undefined;
   const e = ext(filename);
   try {
     return await window.showSaveFilePicker({ suggestedName: filename, types: e ? [{ description: e.toUpperCase(), accept: { [mime || 'application/octet-stream']: ['.' + e] } }] : undefined });
