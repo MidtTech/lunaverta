@@ -36,13 +36,15 @@ function fillTexts(html, lang) {
 }
 
 // ---------- sections ----------
+const chip = (lang, x) => TOOL_TARGETS.includes(x) ? `<span class="fmt tool">${esc(t(lang, 'tgt.' + x))}</span>` : `<span class="fmt">${esc(x.toUpperCase())}</span>`;
 const refGrid = lang => Object.entries(KINDS).map(([id, k]) => `<div class="kind" style="--k:var(${k.color})"><h3>${esc(t(lang, 'kind.' + id))}</h3>
-  <p class="from">${esc(t(lang, 'ref.from'))} ${k.exts.map(e => e.toUpperCase()).join(' · ')}</p>
-  <p class="to">${esc(t(lang, 'ref.to'))} <b>${k.targets.map(x => esc(label(lang, x))).join(' · ')}</b></p><p class="note">${esc(t(lang, 'note.' + id))}</p></div>`).join('');
+  <p class="note">${esc(t(lang, 'note.' + id))}</p>
+  <div class="kind-row"><span class="kind-lbl">${esc(t(lang, 'ref.from'))}</span><span class="fmts from">${k.exts.map(e => `<span class="fmt">${esc(e.toUpperCase())}</span>`).join('')}</span></div>
+  <div class="kind-row"><span class="kind-lbl">${esc(t(lang, 'ref.to'))}</span><span class="fmts to">${k.targets.map(x => chip(lang, x)).join('')}</span></div></div>`).join('');
 
-const GENERAL_FAQ = [1, 2, 3, 4, 5, 6, 7, 8];
+const GENERAL_FAQ = [1, 2, 3, 4, 5, 9, 6, 8]; // 7 (no MP4 / .doc) now lives in the format notes
 function faqSection(lang, toolFaq, toolName) {
-  const items = [...(toolFaq || []).map(([q, a]) => ({ q, a })), ...GENERAL_FAQ.filter(i => !toolFaq || [1, 2, 5].includes(i)).map(i => ({ q: t(lang, 'faq.q' + i), a: t(lang, 'faq.a' + i), key: i }))];
+  const items = [...(toolFaq || []).map(([q, a]) => ({ q, a })), ...GENERAL_FAQ.filter(i => !toolFaq || [1, 2, 5, 9].includes(i)).map(i => ({ q: t(lang, 'faq.q' + i), a: t(lang, 'faq.a' + i), key: i }))];
   const html = `  <section class="faq" aria-labelledby="h-faq">
     <h2 id="h-faq">${esc(toolName ? LABELS[lang].faqTool.replace('{name}', toolName) : t(lang, 'faq.h'))}</h2>
     <div class="faq-list">
@@ -51,22 +53,46 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
   </section>`;
   return { html, items };
 }
+// All tools, grouped by what they work on, so the list can be scanned.
+const TOOL_GROUPS = [
+  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
+  ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'images-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location']],
+  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'excel-to-csv', 'csv-to-excel']],
+  ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['video-to-gif', 'video-to-mp3']]
+];
 function toolsSection(lang, currentId) {
   const L = LABELS[lang];
+  const grouped = new Set(TOOL_GROUPS.flatMap(g => g[3]));
+  const rest = TOOLS.filter(tl => !grouped.has(tl.id)).map(tl => tl.id);
+  const group = ([key, col, name, ids]) => `      <section class="tg tg-${key}" style="--k:var(${col})">
+        <h3>${esc(name[lang])} <small>${ids.length}</small></h3>
+        <ul class="tool-grid">
+${ids.map(id => TOOLS.find(x => x.id === id)).filter(Boolean).map(tl => `          <li><a href="${path(lang, tl.slug[lang])}"${tl.id === currentId ? ' aria-current="page"' : ''}>${esc(tl[lang].name)}</a></li>`).join('\n')}
+        </ul>
+      </section>`;
+  const g = TOOL_GROUPS.map(x => x[0] === 'pdf' && rest.length ? [x[0], x[1], x[2], [...x[3], ...rest]] : x);
   return `  <nav class="tools" aria-labelledby="h-tools">
     <h2 id="h-tools">${esc(L.tools)}</h2>
-    <ul class="tool-grid">
-${TOOLS.map(tl => `      <li><a href="${path(lang, tl.slug[lang])}"${tl.id === currentId ? ' aria-current="page"' : ''}>${esc(tl[lang].name)}</a></li>`).join('\n')}
-    </ul>
+    <div class="tool-groups">
+${group(g[0])}
+${group(g[1])}
+      <div class="tg-stack">
+${group(g[2])}
+${group(g[3])}
+      </div>
+    </div>
   </nav>`;
 }
 function aboutSection(lang) {
   const L = LABELS[lang];
+  const last = L.facts.length - 1; // the last fact is who made it, linked to their site
   return `  <section class="about" aria-labelledby="h-about">
-    <h2 id="h-about">${esc(L.about)}</h2>
-    <p>${esc(L.aboutText)}</p>
+    <div class="about-text">
+      <h2 id="h-about">${esc(L.about)}</h2>
+      <p>${esc(L.aboutText)}</p>
+    </div>
     <dl class="facts">
-${L.facts.map(([k, v]) => `      <div><dt>${esc(k)}</dt><dd>${k === L.facts[6][0] ? `<a href="${REPO}" rel="noopener">${esc(v)}</a>` : esc(v)}</dd></div>`).join('\n')}
+${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<a href="${COMPANY.url}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v)}</dd></div>`).join('\n')}
     </dl>
   </section>`;
 }
@@ -91,7 +117,7 @@ const POPULAR = [
 ];
 function popularSection(lang) {
   return `  <nav class="pop" aria-labelledby="h-pop">
-    <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small></h2>
+    <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></h2>
     <ul class="pop-grid">
 ${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang])}</span></a></li>`; }).join('\n')}
     </ul>
@@ -141,11 +167,13 @@ function render(lang, page) {
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [`<link rel="alternate" hreflang="${lang}" href="${page.url}">`, `<link rel="alternate" hreflang="${other}" href="${page.alt}">`, `<link rel="alternate" hreflang="x-default" href="${lang === 'en' ? page.url : page.alt}">`].join('\n'),
+    OG_IMAGE: SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2',
     OG_LOCALE: lang === 'da' ? 'da_DK' : 'en_GB', OG_LOCALE_ALT: lang === 'da' ? 'en_GB' : 'da_DK',
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
     EN_PRESSED: String(lang === 'en'), DA_PRESSED: String(lang === 'da'),
     HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
     POPULAR: page.tool ? '' : popularSection(lang),
+    REFSUM: esc(t(lang, 'ref.sum', { n: new Set(Object.values(KINDS).flatMap(k => k.exts)).size, m: new Set(Object.values(KINDS).flatMap(k => k.targets)).size })),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
     NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };

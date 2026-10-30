@@ -13,12 +13,27 @@
 </head>
 <body>
 <div class="wrap">
-  <header><div class="brand"><a href="/"><img src="/icons/favicon.svg" width="38" height="38" alt=""><span style="font:700 28px/1 var(--f-display)">LunaVerta</span></a></div></header>
+  <header>
+    <a class="brand" href="/" aria-label="LunaVerta">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><mask id="lm"><rect width="64" height="64" fill="#fff"/><circle cx="37" cy="27.5" r="9.5" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="14 4.8" transform="rotate(-80 32 32)"/><circle cx="32" cy="32" r="12" fill="var(--moon)" mask="url(#lm)"/></svg>
+      <span class="brand-name">LunaVerta</span>
+    </a>
+    <a class="maker-head" href="https://midttech.com/" target="_blank" rel="noopener"><span data-i18n="maker.head">by Midt-Tech</span></a>
+    <div class="head-actions">
+      <a class="btn sm" href="/" data-i18n="nav.converter">Converter</a>
+      
+    </div>
+  </header>
   <main class="prose">
     <h1>Page not found</h1>
     <p>This address doesn't lead anywhere. The converter is on the <a href="/">front page</a>.</p>
   </main>
-  <footer><span>LunaVerta · Free, private file conversion · Made by <a href="https://midttech.com/" rel="noopener">Midt-Tech</a> · CVR 34256276</span><nav aria-label="Site"><a href="/">Converter</a><a href="/privacy.html">Privacy</a><a href="/licenses.html">Open-source licenses</a></nav></footer>
+  <footer>
+    <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">A product by</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Denmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
+    <span class="foot-promise" data-i18n="foot.promise">No cookies · no account · no ads</span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span> · CVR 34256276</span>
+    <nav aria-label="Site"><a href="/" data-i18n="nav.converter">Converter</a><a href="/privacy.html" data-i18n="nav.privacy">Privacy</a><a href="/licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav>
+  </footer>
 </div>
 </body>
 </html>

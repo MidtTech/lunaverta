@@ -179,26 +179,56 @@ function endModes() { S.editing = S.adding = S.redacting = S.marking = false; S.
 function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking; }
 function renderPage() { if (S.pv && S.view === 'page') refreshModes(); else buildPages(S.current); }
 
+// A short tour the first time someone opens a page: three steps, shown once.
+const TOUR_KEY = 'lunaverta-tour';
+function maybeTour() {
+  try { if (localStorage.getItem(TOUR_KEY) || $('#edTour') || document.querySelector('dialog[open]')) return; } catch (e) { return; }
+  const steps = [['#edEditText', 'tour.1'], ['#edFind', 'tour.2'], ['#edSave', 'tour.3']];
+  let i = 0;
+  const card = document.createElement('div');
+  card.id = 'edTour'; card.className = 'ed-tour'; card.setAttribute('role', 'dialog'); card.setAttribute('aria-live', 'polite');
+  $('#editor').appendChild(card);
+  const end = () => { try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {} document.querySelectorAll('.ed-tour-hl').forEach(n => n.classList.remove('ed-tour-hl')); card.remove(); };
+  const show = () => {
+    document.querySelectorAll('.ed-tour-hl').forEach(n => n.classList.remove('ed-tour-hl'));
+    const t = document.querySelector(steps[i][0]); if (t) t.classList.add('ed-tour-hl');
+    card.innerHTML = `<span class="ed-tour-n">${i + 1} / ${steps.length}</span><p>${esc(T(steps[i][1]))}</p>
+      <div class="ed-tour-btns"><button type="button" class="linkish" data-t="skip">${esc(T('tour.skip'))}</button><button type="button" class="btn sm primary" data-t="next">${esc(T(i === steps.length - 1 ? 'tour.done' : 'tour.next'))}</button></div>`;
+    card.querySelector('[data-t="skip"]').onclick = end;
+    card.querySelector('[data-t="next"]').onclick = () => { i++; if (i >= steps.length) end(); else show(); };
+    card.querySelector('[data-t="next"]').focus();
+  };
+  show();
+}
 function pageTools() {
   const live = S.pages.filter(p => !p.deleted);
   $('#edTools').innerHTML = `
     <button class="btn sm" type="button" id="edBack">← ${esc(T('ed.allPages'))}</button>
     ${undoHTML()}
-    <span class="ed-zoom"><button class="ed-ico" type="button" id="edZoomOut" aria-label="${esc(T('zoom.out'))}" title="${esc(T('zoom.out'))}">−</button><button class="ed-zoomv" type="button" id="edZoomReset" title="${esc(T('zoom.reset'))}">${Math.round((S.zoom || 1) * 100)} %</button><button class="ed-ico" type="button" id="edZoomIn" aria-label="${esc(T('zoom.in'))}" title="${esc(T('zoom.in'))}">+</button></span>
+    <span class="ed-zoom"><button class="ed-ico" type="button" id="edZoomOut" aria-label="${esc(T('zoom.out'))}" title="${esc(T('zoom.out'))} (Ctrl −)">−</button><button class="ed-zoomv" type="button" id="edZoomReset" title="${esc(T('zoom.reset'))} (Ctrl 0)">${Math.round((S.zoom || 1) * 100)} %</button><button class="ed-ico" type="button" id="edZoomIn" aria-label="${esc(T('zoom.in'))}" title="${esc(T('zoom.in'))} (Ctrl +)">+</button></span>
     <button class="ed-ico" type="button" id="edSearchBtn" aria-label="${esc(T('search.open'))}" title="${esc(T('search.open'))} (Ctrl+F)">${ICON.search}</button>
     <span class="ed-pager"><button class="ed-ico" type="button" id="edPrev" aria-label="${esc(T('ed.prev'))}">‹</button>
       <span id="edPagerText"></span>
       <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}">›</button></span>
-    <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}">${esc(T('ed.editText'))}</button>
-    <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}">${esc(T('ed.addText'))}</button>
-    <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}">${esc(T('ed.redact'))}</button>
-    <button class="btn sm${S.marking ? ' primary' : ''}" type="button" id="edMark" aria-pressed="${!!S.marking}">${esc(T('ed.mark'))}</button>
-    <button class="btn sm" type="button" id="edSign">${esc(T('ed.sign'))}</button>
-    <button class="btn sm" type="button" id="edStamp">${esc(T('ed.stamp'))}</button>
-    <button class="btn sm${findOn() ? ' primary' : ''}" type="button" id="edFind" aria-pressed="${findOn()}">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
-    <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
+    <span class="ed-group" role="group" aria-label="${esc(T('grp.text'))}" data-label="${esc(T('grp.text'))}">
+      <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}" title="${esc(T('tip.edit'))}">${esc(T('ed.editText'))}</button>
+      <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}" title="${esc(T('tip.add'))}">${esc(T('ed.addText'))}</button>
+      <label class="ed-size" title="${esc(T('tip.size'))}"><span class="sr-only">${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
+    </span>
+    <span class="ed-group" role="group" aria-label="${esc(T('grp.mark'))}" data-label="${esc(T('grp.mark'))}">
+      <button class="btn sm${S.marking ? ' primary' : ''}" type="button" id="edMark" aria-pressed="${!!S.marking}" title="${esc(T('tip.mark'))}">${esc(T('ed.mark'))}</button>
+      <button class="btn sm${S.redacting ? ' primary' : ''}" type="button" id="edRedact" aria-pressed="${!!S.redacting}" title="${esc(T('tip.redact'))}">${esc(T('ed.redact'))}</button>
+    </span>
+    <span class="ed-group" role="group" aria-label="${esc(T('grp.insert'))}" data-label="${esc(T('grp.insert'))}">
+      <button class="btn sm" type="button" id="edSign" title="${esc(T('tip.sign'))}">${esc(T('ed.sign'))}</button>
+      <button class="btn sm" type="button" id="edStamp" title="${esc(T('tip.stamp'))}">${esc(T('ed.stamp'))}</button>
+    </span>
+    <span class="ed-group ed-group-find" role="group" aria-label="${esc(T('grp.privacy'))}" data-label="${esc(T('grp.privacy'))}">
+      <button class="btn sm${findOn() ? ' primary' : ''}" type="button" id="edFind" aria-pressed="${findOn()}" title="${esc(T('tip.find'))}">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
+    </span>
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
+  setTimeout(maybeTour, 400);
   const go = d => { const i = live.findIndex(p => p.id === S.current); const t = live[i + d]; if (t) scrollToPage(t.id, true); };
   $('#edPrev').onclick = () => go(-1);
   $('#edNext').onclick = () => go(1);
@@ -708,7 +738,7 @@ function stampImage(text, color, withDate) {
   if (withDate) { ctx.font = `600 ${fs * .45}px Arial, Helvetica, sans-serif`; ctx.fillText(lines[1], c.width / 2, 22 + fs * .85 + fs * .55); }
   return c.toDataURL('image/png');
 }
-function openStamps() {
+function openStamps(startTab) {
   const wm = S.watermark || { text: T('stamp.copy'), color: 'red', opacity: .15 }, nums = S.pageNums || { pos: 'bc', fmt: 'n', start: 1 };
   const d = document.createElement('dialog');
   d.className = 'pw-dialog sig-dialog';
@@ -767,6 +797,7 @@ function openStamps() {
   };
   d.addEventListener('close', () => d.remove());
   d.showModal();
+  if (startTab) { const b = d.querySelector(`[data-tab="${startTab}"]`); if (b) b.click(); }
 }
 function numText(fmt, n, total) {
   return fmt === 'page' ? T('stamp.f.page', { n }) : fmt === 'pageof' ? T('stamp.f.pageof', { n, total }) : fmt === 'slash' ? `${n} / ${total}` : String(n);
@@ -1333,6 +1364,7 @@ async function openFind() {
       <fieldset class="ed-find-mode"><legend class="sr-only">${esc(T('find.how'))}</legend>
         <label><input type="radio" name="edFindMode" value="blank" checked> ${esc(T('find.modeBlank'))}</label>
         <label><input type="radio" name="edFindMode" value="black"> ${esc(T('find.modeBlack'))}</label></fieldset>
+      <p class="ed-find-sum" id="edFindSum" role="status" hidden></p>
       <div class="ed-find-btns"><button type="button" class="btn" id="edFindApply"></button><button type="button" class="btn primary" id="edFindSave"></button></div>
     </div>`;
   $('#editor').appendChild(panel);
@@ -1365,6 +1397,9 @@ async function openFind() {
   };
   const count = () => {
     const sel = F.hits.filter(h => h.on && !h.done).length;
+    // Say plainly what will happen before anything is removed.
+    const selPages = new Set(F.hits.filter(h => h.on && !h.done).map(h => h.n)).size;
+    const sum = $('#edFindSum'); if (sum) { sum.hidden = !sel; sum.textContent = T(selPages === 1 ? 'find.sum1' : 'find.sum', { n: sel, p: selPages }); }
     $('#edFindApply').textContent = T('find.remove', { n: sel }); $('#edFindApply').disabled = !sel;
     $('#edFindSave').textContent = T('find.removeSave', { n: sel }); $('#edFindSave').disabled = !sel && !S.boxes.length;
   };
@@ -1861,7 +1896,11 @@ async function open(files, opt = {}) {
   // The Redact PDF page opens the first page ready to black out.
   if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
   if (opt.find && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
+  // Tool pages that open straight at one job: sign, page numbers, watermark, filling in a form.
+  if (['sign', 'nums', 'wm', 'form'].includes(opt.action) && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
   render();
+  if (opt.action === 'sign') openSign();
+  else if (opt.action === 'nums' || opt.action === 'wm') openStamps(opt.action);
   // Opened to remove sensitive text: the suggestions panel opens, with amounts switched on.
   if (opt.find) {
     await openFind();

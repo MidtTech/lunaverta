@@ -1,6 +1,6 @@
 // LunaVerta service worker: keeps the app working offline.
 // The app shell is stored on install; helper libraries are stored the first time they are used.
-const VERSION = '7fce8a6dfd';
+const VERSION = '0a0621ff6e';
 const CACHE = 'lunaverta-' + VERSION;
 const SHELL = [
   './', 'index.html', 'da/', 'privacy.html', 'licenses.html', 'assets/app.css', 'assets/strings.js', 'assets/i18n.js', 'assets/app.js', 'assets/editor.js', 'assets/pdf-text.js', 'manifest.webmanifest',
@@ -16,16 +16,30 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k.startsWith('lunaverta-') && k !== CACHE).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('lunaverta-') && k !== CACHE && k !== 'lunaverta-share').map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', e => {
   const req = e.request;
+  // "Share to LunaVerta" (Android): the shared files are kept in this device's cache for a moment
+  // and the app picks them up. Nothing leaves the device.
+  if (req.method === 'POST' && new URL(req.url).pathname === '/share-target') {
+    e.respondWith((async () => {
+      const form = await req.formData();
+      const files = form.getAll('files').filter(f => f && f.name);
+      const c = await caches.open('lunaverta-share');
+      for (const k of await c.keys()) await c.delete(k);
+      await Promise.all(files.map((f, i) => c.put(`/shared/${i}`, new Response(f, { headers: { 'content-type': f.type || 'application/octet-stream', 'x-name': encodeURIComponent(f.name) } }))));
+      return Response.redirect('/?shared=' + files.length, 303);
+    })());
+    return;
+  }
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   if (req.mode === 'navigate') {
     // Pages: network first so updates show up, cached copy when offline.
-    e.respondWith(fetch(req).then(res => {
+    // cache: 'no-cache' asks the server every time (a quick "has it changed?"), so a new version shows at once.
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
       return res;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));

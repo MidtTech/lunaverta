@@ -1,6 +1,6 @@
 # LunaVerta
 
-> LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user's own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech, and its code is open source under the MIT License.
+> LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user's own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech.
 
 LunaVerta is available in English (https://lunaverta.com/) and Danish (https://lunaverta.com/da/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
 
@@ -11,7 +11,6 @@ Key facts:
 - Works offline: Yes, after the first visit
 - Languages: English and Danish
 - Made by: Midt-Tech, Aarhus, Denmark (CVR 34256276)
-- Source code: Open source, MIT License
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
 - Not supported: video-to-video re-encoding (e.g. to MP4) and legacy .doc/.ppt files
 
@@ -28,6 +27,12 @@ Key facts:
 - [Redact PDF](https://lunaverta.com/redact-pdf/): Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.
 - [Remove PDF metadata](https://lunaverta.com/remove-pdf-metadata/): Strip author names, software, dates, attachments and scripts from a PDF before you share it. Free and private: your PDF is never uploaded.
 - [Edit PDF](https://lunaverta.com/edit-pdf/): Edit PDFs in your browser: correct text, add text, fill in forms, reorder, rotate and delete pages. Free and private, no upload.
+- [Sign PDF](https://lunaverta.com/sign-pdf/): Draw or upload your signature and place it on a PDF in your browser. Free and private: the PDF and your signature never leave your device.
+- [Delete PDF pages](https://lunaverta.com/delete-pdf-pages/): Remove pages from a PDF in your browser. See every page as a thumbnail, delete the ones you don't need and save. Free and private, no upload.
+- [Rotate PDF](https://lunaverta.com/rotate-pdf/): Turn PDF pages the right way up in your browser. Rotate single pages or all of them and save. Free and private, no upload.
+- [Add page numbers](https://lunaverta.com/add-page-numbers-to-pdf/): Number the pages of a PDF in your browser. Choose the position and style, such as 1, 2, 3 or Page 1 of 10. Free and private, no upload.
+- [Watermark PDF](https://lunaverta.com/watermark-pdf/): Put a text watermark such as Copy, Draft or Confidential across every page of a PDF. Free and private, in your browser, no upload.
+- [Fill in PDF form](https://lunaverta.com/fill-pdf-form/): Fill in PDF forms in your browser: type in the fields, tick the boxes and save. The form stays fillable. Free and private, no upload.
 - [PDF to JPG](https://lunaverta.com/pdf-to-jpg/): Turn every page of a PDF into a JPG image in your browser. Free and private: your PDF is never uploaded.
 - [PDF to PNG](https://lunaverta.com/pdf-to-png/): Turn every page of a PDF into a PNG image in your browser. Lossless and sharp. Free and private, no upload.
 - [JPG to PDF](https://lunaverta.com/jpg-to-pdf/): Turn JPG, PNG and HEIC images into a PDF in your browser, one page per image. Free and private: nothing is uploaded.
@@ -53,6 +58,12 @@ Key facts:
 - [Overstreg PDF](https://lunaverta.com/da/overstreg-pdf/): Overstreg navne, CPR-numre og anden fortrolig tekst i en PDF. Teksten fjernes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Redigér PDF](https://lunaverta.com/da/rediger-pdf/): Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.
+- [Underskriv PDF](https://lunaverta.com/da/underskriv-pdf/): Tegn eller upload din underskrift, og sæt den på en PDF i din browser. Gratis og privat: PDF'en og din underskrift forlader aldrig din enhed.
+- [Slet sider fra PDF](https://lunaverta.com/da/slet-sider-fra-pdf/): Fjern sider fra en PDF i din browser. Se alle sider som miniaturer, slet dem du ikke skal bruge, og gem. Gratis og privat, uden upload.
+- [Drej PDF](https://lunaverta.com/da/drej-pdf/): Vend PDF-sider rigtigt i din browser. Drej enkelte sider eller dem alle, og gem. Gratis og privat, uden upload.
+- [Tilføj sidetal](https://lunaverta.com/da/tilfoej-sidetal-til-pdf/): Nummerér siderne i en PDF i din browser. Vælg placering og stil, fx 1, 2, 3 eller Side 1 af 10. Gratis og privat, uden upload.
+- [Vandmærke PDF](https://lunaverta.com/da/vandmaerke-pdf/): Sæt et tekstvandmærke som Kopi, Kladde eller Fortroligt hen over alle sider i en PDF. Gratis og privat, i din browser, uden upload.
+- [Udfyld PDF-formular](https://lunaverta.com/da/udfyld-pdf-formular/): Udfyld PDF-formularer i din browser: skriv i felterne, sæt flueben, og gem. Formularen kan stadig udfyldes. Gratis og privat, uden upload.
 - [PDF til JPG](https://lunaverta.com/da/pdf-til-jpg/): Lav hver side i en PDF om til et JPG-billede direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 - [PDF til PNG](https://lunaverta.com/da/pdf-til-png/): Lav hver side i en PDF om til et PNG-billede direkte i din browser. Tabsfrit og skarpt. Gratis og privat, uden upload.
 - [JPG til PDF](https://lunaverta.com/da/billeder-til-pdf/): Lav JPG-, PNG- og HEIC-billeder om til en PDF i din browser, én side pr. billede. Gratis og privat: intet bliver uploadet.

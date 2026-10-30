@@ -1501,7 +1501,8 @@ async function runBatch(files, target) {
   }
   if (target === 'edit') { // opens the PDF editor with every selected PDF
     const pdfs = ok.filter(x => x.kind === 'pdf').map(x => x.f);
-    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs, { redact: (document.querySelector('main[data-mode]') || {}).dataset?.mode === 'redact' });
+    const mode = (document.querySelector('main[data-mode]') || {}).dataset?.mode || '';
+    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs, { redact: mode === 'redact', action: mode });
     return;
   }
   if (target === 'merge') {
@@ -1642,7 +1643,7 @@ function drawRing(targets, count, subtitle) {
     const mid = (a0 + a1) / 2, lr = (R.r0 + R.r1) / 2 + 4;
     const lx = R.cx + lr * Math.cos(mid), ly = R.cy + lr * Math.sin(mid);
     const tx = R.cx + (R.r1 - 12) * Math.cos(mid), ty = R.cy + (R.r1 - 12) * Math.sin(mid);
-    s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="${esc(T('ring.convertTo', { t: label(t) }))}" style="--k:${kv(OUT[t].k)}">
+    s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="${esc(T('ring.convertTo', { t: label(t) }) + (T('rd.' + t) !== 'rd.' + t ? '. ' + T('rd.' + t) : ''))}" style="--k:${kv(OUT[t].k)}">
       <path d="${n === 1 ? arc(-Math.PI / 2, Math.PI * 1.5 - 0.0001, R.r0, R.r1) : arc(a0, a1, R.r0, R.r1)}"/>
       <circle class="tick" cx="${tx}" cy="${ty}" r="3"/>
       <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">${esc(label(t))}</text></g>`;
@@ -1664,23 +1665,37 @@ function setHot(t) {
   ringState.hot = t;
   svg.querySelectorAll('.slice').forEach(g => g.classList.toggle('hot', g.dataset.t === t));
   const t2 = $('hubT2'); if (t2) t2.textContent = t ? '→ ' + label(t) : ringState.subtitle;
+  ringTip(t);
+}
+// One line under the ring that says what the option under the pointer does.
+const LAST_T = 'lunaverta-last-target';
+function ringTip(t) {
+  const el = $('ringTip'); if (!el) return;
+  let last = null; try { last = localStorage.getItem(LAST_T); } catch (e) {}
+  const key = t && 'rd.' + t;
+  el.textContent = t ? (T(key) !== key ? T(key) : T('rd.format', { t: label(t) }))
+    : last && ringState && ringState.targets.includes(last) ? T('rd.last', { t: label(last) }) : T('rd.pick');
 }
 function placeRing(x, y) {
   const s = 320, m = 8;
   const left = Math.min(Math.max(m, x - s / 2), innerWidth - s - m), top = Math.min(Math.max(m, y - s / 2), innerHeight - s - m);
   ring.style.left = left + 'px'; ring.style.top = top + 'px';
+  ring.classList.toggle('tip-up', top + s + 54 > innerHeight); // no room below: the tip goes above
   ringState.center = { x: left + s / 2, y: top + s / 2 };
 }
 function openRing({ targets, files, x, y, count, subtitle, modal }) {
   if (!targets.length) return;
+  // The format used last time goes first, at the top of the ring.
+  let last = null; try { last = localStorage.getItem(LAST_T); } catch (e) {}
+  if (last && targets.includes(last)) targets = [last, ...targets.filter(x => x !== last)];
   ringState = { targets, files, hot: null, subtitle };
-  drawRing(targets, count, subtitle);
+  drawRing(targets, count, subtitle); ringTip(null);
   placeRing(x, y);
   ring.classList.add('open');
   if (modal) { scrim.classList.add('open'); setTimeout(() => { const f = svg.querySelector('.slice'); f && f.focus({ preventScroll: true }); }, 30); }
 }
 function closeRing() { ring.classList.remove('open'); scrim.classList.remove('open'); ringState = null; }
-function pick(t) { if (!ringState) return; const files = ringState.files; closeRing(); if (files) runBatch(files, t); }
+function pick(t) { if (!ringState) return; try { localStorage.setItem(LAST_T, t); } catch (e) {} const files = ringState.files; closeRing(); if (files) runBatch(files, t); }
 function sliceAt(x, y) {
   if (!ringState || !ringState.center) return null;
   const dx = x - ringState.center.x, dy = y - ringState.center.y, d = Math.hypot(dx, dy);
@@ -1752,9 +1767,11 @@ addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardDa
 
 // ---------- reference grid ----------
 function renderRef() {
+  const chip = x => OUT[x] && OUT[x].tool ? `<span class="fmt tool">${esc(T('tgt.' + x))}</span>` : `<span class="fmt">${esc(x.toUpperCase())}</span>`;
   $('refGrid').innerHTML = Object.entries(KINDS).map(([id, k]) => `<div class="kind" style="--k:${kv(k.color)}"><h3>${esc(T('kind.' + id))}</h3>
-  <p class="from">${esc(T('ref.from'))} ${k.exts.filter(e => !SAME[e]).map(e => e.toUpperCase()).join(' · ')}</p>
-  <p class="to">${esc(T('ref.to'))} <b>${k.targets.map(label).map(esc).join(' · ')}</b></p><p class="note">${esc(T('note.' + id))}</p></div>`).join('');
+  <p class="note">${esc(T('note.' + id))}</p>
+  <div class="kind-row"><span class="kind-lbl">${esc(T('ref.from'))}</span><span class="fmts from">${k.exts.filter(e => !SAME[e]).map(e => `<span class="fmt">${esc(e.toUpperCase())}</span>`).join('')}</span></div>
+  <div class="kind-row"><span class="kind-lbl">${esc(T('ref.to'))}</span><span class="fmts to">${k.targets.map(chip).join('')}</span></div></div>`).join('');
 }
 renderRef();
 
@@ -1800,7 +1817,11 @@ function toast(msg, ok, blob) {
   t.querySelector('.toast-msg').textContent = msg; t.classList.toggle('ok', !!ok);
   t.querySelector('.toast-open')?.remove();
   if (toastUrl) { const u = toastUrl; setTimeout(() => URL.revokeObjectURL(u), 60000); toastUrl = null; }
-  if (blob && VIEWABLE.test(blob.type)) {
+  if (blob && blob.run) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'toast-open'; b.textContent = blob.label; b.onclick = blob.run;
+    t.appendChild(b);
+  } else if (blob && VIEWABLE.test(blob.type)) {
     toastUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.className = 'toast-open'; a.href = toastUrl; a.target = '_blank'; a.rel = 'noopener'; a.textContent = T('save.open');
@@ -1826,6 +1847,16 @@ document.addEventListener('lv-lang', () => {
   if (!$('saveAll').disabled || $('saveAll').textContent) $('saveAll').textContent = T('out.saveAll');
 });
 
+// ---------- shared from another app (Android "Share to LunaVerta") ----------
+if (new URLSearchParams(location.search).has('shared') && 'caches' in window) {
+  history.replaceState(null, '', location.pathname);
+  caches.open('lunaverta-share').then(async c => {
+    const keys = await c.keys(), files = [];
+    for (const k of keys) { const r = await c.match(k); const b = await r.blob(); files.push(new File([b], decodeURIComponent(r.headers.get('x-name') || 'file'), { type: b.type })); await c.delete(k); }
+    if (files.length) { const added = addFiles(files); afterAdd(added, innerWidth / 2, innerHeight / 2); }
+  }).catch(() => {});
+}
+
 // ---------- installed app: open files from the OS ("Open with LunaVerta") ----------
 let launched = false;
 if ('launchQueue' in window) {
@@ -1842,13 +1873,20 @@ addEventListener('appinstalled', () => { toast(T('toast.installed')); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
+  // updateViaCache 'none': always fetch sw.js fresh, so new versions are found straight away.
+  // Checking for an update is an ordinary request to lunaverta.com; nothing about the visitor is sent.
+  addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(reg => {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => {}));
   let refreshing = false;
   // A first visit also gets a controller once the offline copy is ready; only a real update is news.
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing || !hadController || !navigator.serviceWorker.controller) return;
-    refreshing = true; toast(T('toast.updated'));
+    refreshing = true;
+    // Offer the new version now, unless the visitor is in the middle of something (files in the tray or the editor open).
+    const busy = tray.length || jobs.length || document.documentElement.classList.contains('ed-open');
+    toast(T('toast.updated'), false, busy ? null : { label: T('toast.reload'), run: () => location.reload() });
   });
 }
 const net = $('net');
