@@ -80,6 +80,24 @@ ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
   </section>`;
 }
 
+// The six tools most people come for, as big shortcuts on the front page.
+const POPULAR = [
+  ['edit-pdf', 'PDF', '--c-doc', { en: 'Fix text directly', da: 'Ret tekst direkte' }],
+  ['redact-pdf', '■■', '--ink', { en: 'Remove text for good', da: 'Fjern tekst permanent' }],
+  ['merge-pdf', '+', '--c-doc', { en: 'Join several files', da: 'Saml flere filer' }],
+  ['compress-pdf', '↓', '--c-audio', { en: 'Smaller file for e-mail', da: 'Mindre fil til mail' }],
+  ['heic-to-jpg', 'JPG', '--c-image', { en: 'Photos from iPhone', da: 'Billeder fra iPhone' }],
+  ['pdf-to-jpg', 'IMG', '--c-image', { en: 'Every page as a picture', da: 'Hver side som billede' }]
+];
+function popularSection(lang) {
+  return `  <nav class="pop" aria-labelledby="h-pop">
+    <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small></h2>
+    <ul class="pop-grid">
+${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang])}</span></a></li>`; }).join('\n')}
+    </ul>
+  </nav>`;
+}
+
 // ---------- structured data ----------
 const org = { '@type': 'Organization', '@id': SITE + '/#org', name: COMPANY.name, url: COMPANY.url, email: COMPANY.email, vatID: 'DK' + COMPANY.cvr,
   address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
@@ -118,8 +136,8 @@ function render(lang, page) {
     <p class="lead">${esc(HOME[lang].lead)}</p>
   </section>`;
   const preset = page.tool ? page.tool.preset : '';
-  const dock = !page.tool ? `<p data-i18n-html="dock.hint">${HOME[lang].dock}</p>`
-    : `<p>${preset === 'merge' ? L.dockMerge : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset)))}</p>`;
+  const dock = !page.tool ? ''
+    : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset)))}</p>`;
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [`<link rel="alternate" hreflang="${lang}" href="${page.url}">`, `<link rel="alternate" hreflang="${other}" href="${page.alt}">`, `<link rel="alternate" hreflang="x-default" href="${lang === 'en' ? page.url : page.alt}">`].join('\n'),
@@ -127,6 +145,7 @@ function render(lang, page) {
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
     EN_PRESSED: String(lang === 'en'), DA_PRESSED: String(lang === 'da'),
     HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
+    POPULAR: page.tool ? '' : popularSection(lang),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
     NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };

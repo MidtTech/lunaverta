@@ -1412,7 +1412,9 @@ function preparing(files) {
       <span class="prep-bar" aria-hidden="true"><span></span></span></div></div>`;
     document.body.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
-    setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.remove(); resolve(); }, 180); }, 1500);
+    // the full moment the first time; returning visitors get a short one
+    let seen = false; try { seen = !!localStorage.getItem('lunaverta-prep-seen'); localStorage.setItem('lunaverta-prep-seen', '1'); } catch (e) {}
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.remove(); resolve(); }, 180); }, seen ? 600 : 1500);
   });
 }
 function renderTray() {
@@ -1607,6 +1609,7 @@ async function saveFile(filename, blob, btn) {
   if (handle) { try { await writeTo(handle, blob); } catch (e) { toast(T('save.failed')); return false; } }
   else download(filename, blob);
   if (btn && btn.classList.contains('save')) btn.textContent = T('job.saved');
+  toast(T('save.done', { name: (handle && handle.name) || filename }), true, blob);
   return true;
 }
 $('saveAll').onclick = async () => {
@@ -1728,6 +1731,15 @@ addEventListener('drop', e => {
 
 // ---------- picking files ----------
 $('pick').onclick = () => $('fileInput').click();
+// Settings stay folded away until someone asks for them.
+$('optToggle').onclick = () => { const o = $('options'), open = o.hidden; o.hidden = !open; $('optToggle').setAttribute('aria-expanded', String(open)); };
+// Remember the last tool page used, and mark it among the shortcuts on the front page.
+try {
+  if (PRESET) localStorage.setItem('lunaverta-last', location.pathname);
+  const last = localStorage.getItem('lunaverta-last');
+  const a = last && [...document.querySelectorAll('.pop-grid a')].find(x => x.getAttribute('href') === last);
+  if (a) { a.classList.add('recent'); a.insertAdjacentHTML('afterbegin', `<span class="pop-tag" data-i18n="pop.recent">${esc(T('pop.recent'))}</span>`); }
+} catch (e) {}
 $('fileInput').accept = Object.values(KINDS).flatMap(k => k.exts.map(e => '.' + e)).join(',');
 $('fileInput').onchange = e => {
   const added = addFiles([...e.target.files]); e.target.value = '';
@@ -1780,11 +1792,28 @@ function askPassword(target) {
 }
 
 let toastT;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
+// A short message at the bottom. ok adds a tick; a blob the browser can show adds an "Open" button.
+const VIEWABLE = /^(application\/pdf|image\/|text\/plain|audio\/|video\/)/;
+let toastUrl;
+function toast(msg, ok, blob) {
+  const t = $('toast');
+  t.querySelector('.toast-msg').textContent = msg; t.classList.toggle('ok', !!ok);
+  t.querySelector('.toast-open')?.remove();
+  if (toastUrl) { const u = toastUrl; setTimeout(() => URL.revokeObjectURL(u), 60000); toastUrl = null; }
+  if (blob && VIEWABLE.test(blob.type)) {
+    toastUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.className = 'toast-open'; a.href = toastUrl; a.target = '_blank'; a.rel = 'noopener'; a.textContent = T('save.open');
+    t.appendChild(a);
+  }
+  t.classList.toggle('has-action', !!t.querySelector('.toast-open'));
+  t.classList.add('show'); clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), t.classList.contains('has-action') ? 7000 : 3200);
+}
 
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: m => toast(m), qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: (m, ok, blob) => toast(m, ok, blob), qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
   addResult(srcName, target, outs, saved) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; j.saved = !!saved; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
@@ -1815,8 +1844,10 @@ addEventListener('appinstalled', () => { toast(T('toast.installed')); });
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
   let refreshing = false;
+  // A first visit also gets a controller once the offline copy is ready; only a real update is news.
+  const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing || !navigator.serviceWorker.controller) return;
+    if (refreshing || !hadController || !navigator.serviceWorker.controller) return;
     refreshing = true; toast(T('toast.updated'));
   });
 }

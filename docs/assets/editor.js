@@ -173,6 +173,10 @@ function dropPages() {
 let renderSeq = 0;
 // Redraws the page view: in place when it is already built (mode changes,
 // undo), from scratch otherwise.
+// Only one tool shows as chosen at a time. "Remove sensitive" counts as chosen
+// while its panel is open and no other tool is on, because clicks on the page then go to it.
+function endModes() { S.editing = S.adding = S.redacting = S.marking = false; S.justDone = false; }
+function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking; }
 function renderPage() { if (S.pv && S.view === 'page') refreshModes(); else buildPages(S.current); }
 
 function pageTools() {
@@ -191,7 +195,7 @@ function pageTools() {
     <button class="btn sm${S.marking ? ' primary' : ''}" type="button" id="edMark" aria-pressed="${!!S.marking}">${esc(T('ed.mark'))}</button>
     <button class="btn sm" type="button" id="edSign">${esc(T('ed.sign'))}</button>
     <button class="btn sm" type="button" id="edStamp">${esc(T('ed.stamp'))}</button>
-    <button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
+    <button class="btn sm${findOn() ? ' primary' : ''}" type="button" id="edFind" aria-pressed="${findOn()}">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
     <label class="ed-size"><span>${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     <span class="ed-hint" id="edPageHint"></span>`;
   $('#edBack').onclick = showGrid;
@@ -202,9 +206,9 @@ function pageTools() {
   $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
   $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
   $('#edSize').onchange = e => { S.size = +e.target.value; };
-  $('#edFind').onclick = openFind;
-  $('#edSign').onclick = () => { S.editing = S.adding = S.redacting = S.marking = false; openSign(); };
-  $('#edStamp').onclick = () => { S.editing = S.adding = S.redacting = S.marking = false; openStamps(); };
+  $('#edFind').onclick = () => { endModes(); openFind(); renderPage(); };
+  $('#edSign').onclick = () => { endModes(); renderPage(); openSign(); };
+  $('#edStamp').onclick = () => { endModes(); renderPage(); openStamps(); };
   $('#edMark').onclick = () => { S.marking = !S.marking; S.editing = S.adding = S.redacting = false; S.justDone = false; renderPage(); };
   $('#edZoomOut').onclick = () => stepZoom(-1); $('#edZoomIn').onclick = () => stepZoom(1); $('#edZoomReset').onclick = () => setZoom(1);
   $('#edSearchBtn').onclick = openSearch;
@@ -1489,7 +1493,7 @@ async function openFind() {
   };
   $('#edFindAll').onclick = () => { F.hits.forEach(h => { if (!h.done) h.on = true; }); drawList(); paintHits(); };
   $('#edFindNone').onclick = () => { F.hits.forEach(h => { h.on = false; }); drawList(); paintHits(); };
-  $('#edFindClose').onclick = closeFind;
+  $('#edFindClose').onclick = () => closeFind();
   relayout();
   drawCats(); drawList();
   // Look for every kind of suggestion straight away.
@@ -1513,6 +1517,7 @@ function closeFind(leaving) {
   S.find = null;
   if (leaving) return;
   paintHits(); relayout();
+  if (S.view === 'page' && S.pv) pageTools();
 }
 // On wide screens the panel sits beside the pages, so the pages are laid out again to fit.
 function relayout() { if (S && S.view === 'page' && S.pv && innerWidth >= 900) buildPages(S.current); }
@@ -1835,7 +1840,7 @@ async function save(opt) {
     if (handle) await app().writeTo(handle, blob); else app().download(name, blob);
     app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name: where, blob }], true);
     S.dirty = false; close();
-    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }));
+    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }), true, blob);
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed'));
     // The Save as window has already made an empty file: take it away again.

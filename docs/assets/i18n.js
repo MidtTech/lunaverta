@@ -73,6 +73,6 @@ function notice() {
   document.body.appendChild(el);
 }
 window.LV = { t, apply, setLang, get lang() { return lang; } };
-function start() { notice(); apply(); }
+function start() { apply(); } // no cookie note: the footer says it, and there is nothing to consent to
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

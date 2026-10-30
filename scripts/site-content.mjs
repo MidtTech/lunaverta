@@ -13,15 +13,15 @@ export const HOME = {
   en: {
     title: 'LunaVerta · Free private file converter, no upload',
     desc: 'Convert images, PDFs, Word, Excel, audio and video in your browser. Edit, merge and shrink PDFs. Free, no upload, no account, no cookies.',
-    h1: 'Convert files privately, right in your browser',
-    lead: 'Images, PDFs, Word, Excel, audio and video. Free, with no upload, no account and no cookies.',
+    h1: 'Convert and edit files without uploading them',
+    lead: 'PDFs, images, Word, Excel, audio and video. Free, with no account.',
     dock: '<strong>Drag files anywhere on the page.</strong> When you drop them, a ring of formats opens: pick one to convert, or click in the middle to keep the files here. You can also paste files.'
   },
   da: {
     title: 'LunaVerta · Gratis privat filkonvertering uden upload',
     desc: 'Konvertér billeder, PDF, Word, Excel, lyd og video i din browser. Redigér, saml og komprimér PDF. Gratis, uden upload, konto eller cookies.',
-    h1: 'Konvertér filer privat, direkte i din browser',
-    lead: 'Billeder, PDF, Word, Excel, lyd og video. Gratis, uden upload, uden konto og uden cookies.',
+    h1: 'Konvertér og redigér filer uden at uploade dem',
+    lead: 'PDF, billeder, Word, Excel, lyd og video. Gratis og uden konto.',
     dock: '<strong>Træk filer hen hvor som helst på siden.</strong> Når du slipper dem, åbner en ring med formater: vælg et for at konvertere, eller klik i midten for at lægge filerne her. Du kan også indsætte filer.'
   }
 };
