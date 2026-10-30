@@ -31,7 +31,7 @@ window.LV_STR = {
     'rd.last': 'Last used: {t} (at the top)',
     'rd.format': 'Make it a {t} file',
     'rd.edit': 'Edit: fix text, add text, sign, and move or delete pages',
-    'rd.redact': 'Anonymise: find names, prices and numbers and remove them for good',
+    'rd.redact': 'Redact: find names, prices and numbers and remove them for good',
     'rd.ocr': 'OCR: make scanned text searchable and copyable',
     'rd.merge': 'Merge: join the files into one PDF',
     'rd.split': 'Split: one PDF per page',
