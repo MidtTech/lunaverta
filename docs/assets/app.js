@@ -1847,6 +1847,31 @@ document.addEventListener('lv-lang', () => {
   if (!$('saveAll').disabled || $('saveAll').textContent) $('saveAll').textContent = T('out.saveAll');
 });
 
+// ---------- "Buy us a coffee": the company's MobilePay number, shown in a small window ----------
+// A plain number, no payment script or tracking is loaded. Change it here.
+const MOBILEPAY = '549075', MOBILEPAY_URL = 'https://qr.mobilepay.dk/vp/ZrUTxp1tM';
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-coffee]')) return;
+  e.preventDefault();
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog coffee-dialog';
+  d.innerHTML = `<form method="dialog">
+    <div class="coffee-cup" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg></div>
+    <h2>${esc(T('coffee.title'))}</h2>
+    <p>${esc(T('coffee.text'))}</p>
+    <a class="btn primary coffee-open" href="${MOBILEPAY_URL}" target="_blank" rel="noopener">${esc(T('coffee.open'))}</a>
+    <div class="coffee-qr"><img src="/icons/mobilepay-qr.png" width="180" height="180" alt="${esc(T('coffee.qrAlt'))}"><span>${esc(T('coffee.scan'))}</span></div>
+    <div class="coffee-no"><span>${esc(T('coffee.number'))}</span><b>${esc(MOBILEPAY)}</b><button type="button" class="btn sm ghost" data-copy>${esc(T('coffee.copy'))}</button></div>
+    <p class="coffee-note">${esc(T('coffee.note'))}</p>
+    <div class="coffee-btns"><button type="submit" class="btn ghost">${esc(T('coffee.close'))}</button></div>
+  </form>`;
+  d.querySelector('[data-copy]').onclick = async ev => {
+    try { await navigator.clipboard.writeText(MOBILEPAY); ev.target.textContent = T('coffee.copied'); } catch (err) {}
+  };
+  d.addEventListener('close', () => d.remove());
+  document.body.appendChild(d); d.showModal();
+});
+
 // ---------- shared from another app (Android "Share to LunaVerta") ----------
 if (new URLSearchParams(location.search).has('shared') && 'caches' in window) {
   history.replaceState(null, '', location.pathname);
