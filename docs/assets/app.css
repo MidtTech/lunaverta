@@ -682,3 +682,4 @@ details.ref .kind { background: var(--raised); }
 /* on a phone the button does the job; on a computer the QR code comes first */
 @media (hover: none) { .coffee-qr { display: none; } }
 @media (hover: hover) { .coffee-dialog form { display: flex; flex-direction: column; } .coffee-qr { order: 3; } .coffee-open { order: 4; } .coffee-no { order: 5; } .coffee-note { order: 6; } .coffee-btns { order: 7; } }
+.wrap > footer:not(:has(.coffee)) .foot-promise { grid-row: 2; }

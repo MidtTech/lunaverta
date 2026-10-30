@@ -106,7 +106,7 @@ window.LV_STR = {
     'faq.q5': 'What does it cost?',
     'faq.a5': 'Nothing. There are no accounts, ads, cookies or trackers.',
     'faq.q9': 'Why is it free?',
-    'faq.a9': 'Because everything runs on your own device, LunaVerta has almost no running costs: there are no servers that receive, store or process files. That is why it can be free without ads, without accounts and without selling data. LunaVerta is made by Midt-Tech in Aarhus as a useful tool and a showcase of what we build. If it saves you time, you are welcome to <button type="button" class="linkish" data-coffee>buy us a coffee</button>.',
+    'faq.a9': 'Because everything runs on your own device, LunaVerta has almost no running costs: there are no servers that receive, store or process files. That is why it can be free without ads, without accounts and without selling data. LunaVerta is made by Midt-Tech in Aarhus as a useful tool and a showcase of what we build.',
     'faq.q6': 'Can it remove the location from my photos?',
     'faq.a6': 'Yes. Choose <b>Clean</b> for a photo, and LunaVerta removes the GPS location, camera details and other hidden data without re-saving the image, so the quality stays the same.',
     'faq.q7': 'Why can\'t it convert video to MP4 or open DOC files?',
