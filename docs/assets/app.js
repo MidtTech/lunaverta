@@ -1988,21 +1988,25 @@ document.addEventListener('click', e => {
 });
 
 // ---------- "See how it works": the convert video in a small window ----------
-function playVideo(key, title, L) {
-  const other = L === 'da' ? 'en' : 'da';
+// Subtitles in every language; the video itself is the Danish or the English one.
+const SUB_NAMES = { da: 'Dansk', en: 'English', sv: 'Svenska', no: 'Norsk', de: 'Deutsch' };
+function subTracks(key, page) {
+  const order = [page, 'en', 'da', 'sv', 'no', 'de'].filter((l, i, a) => SUB_NAMES[l] && a.indexOf(l) === i);
+  return order.map((l, i) => `<track kind="subtitles" srclang="${l}" label="${SUB_NAMES[l]}" src="/videos/${key}.${l}.vtt"${i === 0 ? ' default' : ''}>`).join('');
+}
+function playVideo(key, title, page) {
+  const L = page === 'da' ? 'da' : 'en';
   const d = document.createElement('dialog');
   d.className = 'pw-dialog howto-dialog';
   d.innerHTML = `<form method="dialog"><div class="howto-head"><h2>${esc(title)}</h2><button type="submit" class="ed-ico" aria-label="${esc(T('coffee.close'))}">×</button></div>
-    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/${key}-${L}.jpg"><source src="/videos/${key}-${L}.mp4" type="video/mp4">
-      <track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt" default>
-      <track kind="subtitles" srclang="${other}" label="${other === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${other}.vtt"></video>
+    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/${key}-${L}.jpg"><source src="/videos/${key}-${L}.mp4" type="video/mp4">${subTracks(key, page)}</video>
     <p class="howto-cap">${esc(T('howto.caption'))}</p></form>`;
   d.addEventListener('close', () => { const v = d.querySelector('video'); if (v) v.pause(); d.remove(); });
   document.body.appendChild(d); d.showModal();
 }
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-howto]'); if (!btn) return;
-  playVideo('convert', T('howto.title'), btn.dataset.howto === 'da' ? 'da' : 'en');
+  playVideo('convert', T('howto.title'), btn.dataset.howto);
 });
 // First visit: a small, polite offer of a 40-second welcome video. Shown once; never again after a choice.
 (() => {
@@ -2015,7 +2019,7 @@ document.addEventListener('click', e => {
   card.innerHTML = `<img src="/videos/welcome-${L}.jpg" alt="" width="96" height="54"><div><b>${esc(T('welcome.ask'))}</b><button type="button" class="linkish" data-w="play">▶ ${esc(T('welcome.watch'))}</button></div><button type="button" class="ed-ico" data-w="close" aria-label="${esc(T('welcome.close'))}" title="${esc(T('welcome.close'))}">×</button>`;
   const done = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} card.remove(); };
   card.querySelector('[data-w="close"]').onclick = done;
-  card.querySelector('[data-w="play"]').onclick = () => { done(); playVideo('welcome', T('welcome.title'), L); };
+  card.querySelector('[data-w="play"]').onclick = () => { done(); playVideo('welcome', T('welcome.title'), document.documentElement.lang); };
   card.querySelector('img').onclick = card.querySelector('[data-w="play"]').onclick;
   setTimeout(() => { document.body.appendChild(card); requestAnimationFrame(() => card.classList.add('show')); }, 2500);
 })();

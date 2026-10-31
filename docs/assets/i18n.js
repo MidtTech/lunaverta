@@ -49,6 +49,8 @@ function apply(root = document) {
   root.querySelectorAll('[data-i18n-html]').forEach(el => { const s = tx(el.dataset.i18nHtml); if (s !== null) el.innerHTML = s; });
   root.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => { const [a, k] = pair.split(':'); const s = a && k && tx(k.trim()); if (s) el.setAttribute(a.trim(), s); }));
   root.querySelectorAll('[data-lang]').forEach(el => { el.hidden = el.dataset.lang !== lang; });
+  // pages without a fixed language (privacy, licences): links to the front page go to this language's front page
+  if (!pageLang) root.querySelectorAll('a[href="/"], a[data-home]').forEach(a => { a.dataset.home = '1'; a.setAttribute('href', lang === 'en' ? '/' : `/${lang}/`); });
   root.querySelectorAll('button[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
   const title = document.querySelector('[data-i18n-title]');
   if (title) document.title = title.dataset.i18nTitle === 'title' ? t('title') : t(title.dataset.i18nTitle) + ' · LunaVerta';

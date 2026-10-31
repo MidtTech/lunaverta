@@ -38,7 +38,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.css?v=ec32bdeca8">
+<link rel="stylesheet" href="/assets/app.css?v=9e5d3fd284">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · OCR: PDF durchsuchbar machen","url":"https://lunaverta.com/de/pdf-durchsuchbar-machen/","inLanguage":"de","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"de","mainEntity":[{"@type":"Question","name":"Wird mein Dokument für die OCR hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. Die Texterkennung läuft in deinem Browser, auf deinem eigenen Gerät."}},{"@type":"Question","name":"Welche Sprachen werden erkannt?","acceptedAnswer":{"@type":"Answer","text":"Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch. Auf der deutschen Seite werden Deutsch und Englisch gelesen; eine andere Sprache wählst du unter Einstellungen, OCR-Sprache. Die Sprachdaten (etwa 2 MB) werden beim ersten Mal geladen und dann auf deinem Gerät gespeichert, sodass es auch offline funktioniert."}},{"@type":"Question","name":"Was passiert mit Seiten, die schon Text haben?","acceptedAnswer":{"@type":"Answer","text":"Sie bleiben, wie sie sind; nur Seiten ohne Text werden gelesen."}},{"@type":"Question","name":"Werden meine Dateien irgendwo hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. LunaVerta hat keinen Server, der Dateien empfängt. Jede Umwandlung läuft in deinem Browser, auf deinem Gerät, und das Ergebnis wird direkt auf deinem Gerät gespeichert."}},{"@type":"Question","name":"Funktioniert es offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Nach deinem ersten Besuch wird die App auf deinem Gerät gespeichert. Hilfsprogramme für PDF, Word, Excel, MP3 und HEIC werden beim ersten Gebrauch gespeichert und funktionieren danach ebenfalls offline."}},{"@type":"Question","name":"Was kostet es?","acceptedAnswer":{"@type":"Answer","text":"Nichts. Es gibt keine Konten, keine Werbung, keine Cookies und keine Tracker."}},{"@type":"Question","name":"Warum ist es kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Weil alles auf deinem eigenen Gerät läuft, hat LunaVerta fast keine laufenden Kosten: Es gibt keine Server, die Dateien empfangen, speichern oder verarbeiten. Deshalb kann es ohne Werbung, ohne Konten und ohne Datenverkauf kostenlos sein. LunaVerta wird von Midt-Tech in Aarhus als nützliches Werkzeug und als Beispiel dafür gebaut, was wir entwickeln. Wenn es dir Zeit spart, kannst du uns gern einen Kaffee spendieren (MobilePay, vorerst nur in Dänemark)."}},{"@type":"Question","name":"Bleibt LunaVerta kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja, das ist der Plan. Der Betrieb von LunaVerta kostet sehr wenig, daher gibt es heute keinen Grund, Geld dafür zu verlangen. Wenn du es nützlich findest und die Arbeit unterstützen möchtest, kannst du uns gern einen Kaffee spendieren. Wenn die Plattform wächst, könnten manche Funktionen später als Teil eines freiwilligen Abos angeboten werden, aber dafür gibt es derzeit keine Pläne."}}]},{"@type":"HowTo","name":"Ein gescanntes PDF durchsuchbar machen","inLanguage":"de","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Wähle ein gescanntes PDF oder ein Foto eines Dokuments aus."},{"@type":"HowToStep","position":2,"text":"LunaVerta liest den Text auf jeder Seite. Beim ersten Mal werden Sprachdaten (etwa 5 MB) geladen."},{"@type":"HowToStep","position":3,"text":"Speichere das durchsuchbare PDF. Es sieht genauso aus wie vorher."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Startseite","item":"https://lunaverta.com/de/"},{"@type":"ListItem","position":2,"name":"OCR: PDF durchsuchbar machen","item":"https://lunaverta.com/de/pdf-durchsuchbar-machen/"}]}]}
 </script>
@@ -77,7 +77,7 @@
           <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></span>
           <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Dateien wählen</button>
           <p class="dock-or"><span data-i18n="drop.or">oder hierher ziehen</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">zum Einfügen</span></p>
-          <p class="dock-sub"><strong>Wähle Dateien aus oder lege sie irgendwo auf der Seite ab.</strong> Sie werden sofort zu OCR, auf deinem eigenen Gerät. Wähle gern viele auf einmal und speichere sie zusammen als eine .zip. Nichts wird hochgeladen.</p>
+          <p class="dock-sub"><strong>Wähle Dateien aus oder lege sie irgendwo auf der Seite ab.</strong> Sie werden auf deinem eigenen Gerät durchsuchbar gemacht. Wähle gern viele auf einmal und speichere sie zusammen als eine .zip. Nichts wird hochgeladen.</p>
           <span class="privacy-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="privacy.pill">Deine Dateien verlassen nie dein Gerät</span></span>
           <input type="file" id="fileInput" multiple hidden>
         </div>
@@ -255,7 +255,7 @@
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">Ein Produkt von</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Dänemark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Spendier uns einen Kaffee</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Keine Cookies · kein Konto · keine Werbung</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+ec32bde · 2026-10-31">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+9e5d3fd · 2026-10-31">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Problem melden</a><a href="/privacy.html" data-i18n="nav.privacy">Datenschutz</a><a href="/licenses.html" data-i18n="nav.licenses">Open-Source-Lizenzen</a></nav>
   </footer>
 </div>
@@ -264,11 +264,11 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Format wählen"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta wandelt Dateien mit JavaScript in deinem Browser um. Aktiviere JavaScript, um es zu nutzen.</p></noscript>
-<script src="/assets/strings.js?v=ec32bdeca8"></script>
-<script src="/assets/strings-de.js?v=ec32bdeca8"></script>
-<script src="/assets/i18n.js?v=ec32bdeca8"></script>
-<script src="/assets/app.js?v=ec32bdeca8"></script>
-<script src="/assets/editor.js?v=ec32bdeca8"></script>
-<script src="/assets/pdf-text.js?v=ec32bdeca8"></script>
+<script src="/assets/strings.js?v=9e5d3fd284"></script>
+<script src="/assets/strings-de.js?v=9e5d3fd284"></script>
+<script src="/assets/i18n.js?v=9e5d3fd284"></script>
+<script src="/assets/app.js?v=9e5d3fd284"></script>
+<script src="/assets/editor.js?v=9e5d3fd284"></script>
+<script src="/assets/pdf-text.js?v=9e5d3fd284"></script>
 </body>
 </html>

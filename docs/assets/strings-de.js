@@ -36,7 +36,7 @@ window.LV_STR.de = {
   'welcome.title': 'Willkommen bei LunaVerta',
   'welcome.close': 'Nein danke',
   'howto.watch': 'So funktioniert es',
-  'howto.caption': 'Englischer Ton. Untertitel auf Englisch und Dänisch lassen sich im Player ein- und ausschalten.',
+  'howto.caption': 'Englischer Ton mit deutschen Untertiteln, die sich im Player ein- und ausschalten lassen.',
   'howto.title': 'So funktioniert LunaVerta',
   'find.fold': 'Bereich ein- oder ausklappen',
   'coffee.btn': 'Spendier uns einen Kaffee',

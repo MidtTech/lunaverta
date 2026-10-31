@@ -115,12 +115,13 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
     </dl>
   </section>`;
 }
-// Short how-to videos (English voice, subtitles in Danish and English), shown on their tool pages.
+// Short how-to videos (English voice, subtitles in every language), shown on their tool pages.
 const VIDEO_FOR = { 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
 function videoFigure(lang, key, caption) {
   const vl = lang === 'da' ? 'da' : 'en'; // the videos exist in Danish and English; other languages get the English one
-  const tracks = ['da', 'en'].sort((a, b) => (a === vl ? -1 : b === vl ? 1 : 0))
-    .map(L => `<track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt"${L === vl ? ' default' : ''}>`).join('');
+  // subtitles in every language, the page's own first and on by default
+  const tracks = [lang, ...LANGS.filter(L => L !== lang)]
+    .map((L, i) => `<track kind="subtitles" srclang="${L}" label="${META[L].name}" src="/videos/${key}.${L}.vtt"${i === 0 ? ' default' : ''}>`).join('');
   return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${vl}.jpg"><source src="/videos/${key}-${vl}.mp4" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
 }
 function howtoSection(lang, tool) {
@@ -195,7 +196,7 @@ function render(lang, page) {
   </section>`;
   const preset = page.tool ? page.tool.preset : '';
   const dock = !page.tool ? ''
-    : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : preset === 'compare' ? L.dockCompare : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset === 'docx' ? 'Word' : preset)))}</p>`;
+    : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : preset === 'compare' ? L.dockCompare : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dockDo[preset] ? L.dockAct.replace('{d}', esc(L.dockDo[preset])) : L.dock.replace('{t}', esc(label(lang, preset === 'docx' ? 'Word' : preset)))}</p>`;
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [...LANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${page.alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${page.alts.en}">`].join('\n'),

@@ -31,6 +31,8 @@ export const LABELS = {
   en: {
     howto: 'How to {name}', tools: 'All tools', about: 'About LunaVerta', home: 'Home', faqTool: 'Questions about {name}',
     dock: '<strong>Choose files or drop them anywhere on the page.</strong> They become {t} straight away, on your own device. Choose as many as you like; you can save them all as one .zip. Nothing is uploaded.',
+    dockAct: '<strong>Choose files or drop them anywhere on the page.</strong> They are {d} on your own device. Choose as many as you like; you can save them all as one .zip. Nothing is uploaded.',
+    dockDo: { shrink: 'made smaller', protect: 'locked with a password', unlock: 'unlocked with your password', split: 'split into single pages', ocr: 'made searchable', clean: 'cleaned of hidden data' },
     dockMerge: '<strong>Choose two or more files, or drop them on the page.</strong> Drag them into the order you want, then press MERGE. Nothing is uploaded.',
     dockEdit: '<strong>Choose a PDF, or drop it on the page.</strong> The editor opens straight away, on your own device. Nothing is uploaded.',
     dockCompare: '<strong>Choose two PDFs: first the old version, then the new one.</strong> The changes are shown side by side, on your own device. Nothing is uploaded.',
@@ -42,6 +44,8 @@ export const LABELS = {
   da: {
     howto: 'Sådan gør du: {name}', tools: 'Alle værktøjer', about: 'Om LunaVerta', home: 'Forside', faqTool: 'Spørgsmål om {name}',
     dock: '<strong>Vælg filer, eller slip dem hvor som helst på siden.</strong> De bliver til {t} med det samme, på din egen enhed. Vælg gerne mange på én gang, og gem dem samlet som én .zip. Intet bliver uploadet.',
+    dockAct: '<strong>Vælg filer, eller slip dem hvor som helst på siden.</strong> De bliver {d} på din egen enhed. Vælg gerne mange på én gang, og gem dem samlet som én .zip. Intet bliver uploadet.',
+    dockDo: { shrink: 'gjort mindre', protect: 'låst med en adgangskode', unlock: 'låst op med din adgangskode', split: 'delt op i enkeltsider', ocr: 'gjort søgbare', clean: 'renset for skjulte data' },
     dockMerge: '<strong>Vælg to eller flere filer, eller slip dem på siden.</strong> Træk dem i den rækkefølge, du vil have, og tryk SAML. Intet bliver uploadet.',
     dockEdit: '<strong>Vælg en PDF, eller slip den på siden.</strong> Editoren åbner med det samme, på din egen enhed. Intet bliver uploadet.',
     dockCompare: '<strong>Vælg to PDF\'er: først den gamle version, så den nye.</strong> Ændringerne vises side om side, på din egen enhed. Intet bliver uploadet.',

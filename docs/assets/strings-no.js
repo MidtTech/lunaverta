@@ -36,7 +36,7 @@ window.LV_STR.no = {
   'welcome.title': 'Velkommen til LunaVerta',
   'welcome.close': 'Nei takk',
   'howto.watch': 'Se hvordan det fungerer',
-  'howto.caption': 'Engelsk tale. Undertekster på engelsk og dansk kan slås av og på i avspilleren.',
+  'howto.caption': 'Engelsk tale med norske undertekster, som kan slås av og på i avspilleren.',
   'howto.title': 'Slik fungerer LunaVerta',
   'find.fold': 'Fell panelet ned eller opp',
   'coffee.btn': 'Spander en kaffe',

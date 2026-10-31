@@ -36,7 +36,7 @@ window.LV_STR.sv = {
   'welcome.title': 'Välkommen till LunaVerta',
   'welcome.close': 'Nej tack',
   'howto.watch': 'Se hur det fungerar',
-  'howto.caption': 'Engelskt tal. Undertexter på engelska och danska kan slås på och av i spelaren.',
+  'howto.caption': 'Engelskt tal med svenska undertexter, som kan slås på och av i spelaren.',
   'howto.title': 'Så fungerar LunaVerta',
   'find.fold': 'Fäll ner eller upp panelen',
   'coffee.btn': 'Bjud oss på en kaffe',

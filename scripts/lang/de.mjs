@@ -11,6 +11,8 @@ export default {
   labels: {
     howto: 'So geht es: {name}', tools: 'Alle Werkzeuge', about: 'Über LunaVerta', home: 'Startseite', faqTool: 'Fragen zu {name}',
     dock: '<strong>Wähle Dateien aus oder lege sie irgendwo auf der Seite ab.</strong> Sie werden sofort zu {t}, auf deinem eigenen Gerät. Wähle gern viele auf einmal und speichere sie zusammen als eine .zip. Nichts wird hochgeladen.',
+    dockAct: '<strong>Wähle Dateien aus oder lege sie irgendwo auf der Seite ab.</strong> Sie werden auf deinem eigenen Gerät {d}. Wähle gern viele auf einmal und speichere sie zusammen als eine .zip. Nichts wird hochgeladen.',
+    dockDo: { shrink: 'verkleinert', protect: 'mit einem Passwort geschützt', unlock: 'mit deinem Passwort entsperrt', split: 'in einzelne Seiten geteilt', ocr: 'durchsuchbar gemacht', clean: 'von versteckten Daten bereinigt' },
     dockMerge: '<strong>Wähle zwei oder mehr Dateien aus oder lege sie auf der Seite ab.</strong> Ziehe sie in die gewünschte Reihenfolge und klicke auf ZUSAMMENFÜGEN. Nichts wird hochgeladen.',
     dockEdit: '<strong>Wähle ein PDF aus oder lege es auf der Seite ab.</strong> Der Editor öffnet sich sofort, auf deinem eigenen Gerät. Nichts wird hochgeladen.',
     dockCompare: '<strong>Wähle zwei PDFs: zuerst die alte Version, dann die neue.</strong> Die Änderungen werden nebeneinander gezeigt, auf deinem eigenen Gerät. Nichts wird hochgeladen.',

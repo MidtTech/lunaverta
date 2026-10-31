@@ -11,6 +11,8 @@ export default {
   labels: {
     howto: 'Så här gör du: {name}', tools: 'Alla verktyg', about: 'Om LunaVerta', home: 'Start', faqTool: 'Frågor om {name}',
     dock: '<strong>Välj filer eller släpp dem var som helst på sidan.</strong> De blir {t} direkt, på din egen enhet. Välj gärna många på en gång och spara dem tillsammans som en .zip. Inget laddas upp.',
+    dockAct: '<strong>Välj filer eller släpp dem var som helst på sidan.</strong> De {d} på din egen enhet. Välj gärna många på en gång och spara dem tillsammans som en .zip. Inget laddas upp.',
+    dockDo: { shrink: 'görs mindre', protect: 'låses med ett lösenord', unlock: 'låses upp med ditt lösenord', split: 'delas upp i enskilda sidor', ocr: 'görs sökbara', clean: 'rensas från dolda uppgifter' },
     dockMerge: '<strong>Välj två eller fler filer, eller släpp dem på sidan.</strong> Dra dem i den ordning du vill ha och tryck på SLÅ IHOP. Inget laddas upp.',
     dockEdit: '<strong>Välj en PDF eller släpp den på sidan.</strong> Redigeraren öppnas direkt, på din egen enhet. Inget laddas upp.',
     dockCompare: '<strong>Välj två PDF-filer: först den gamla versionen, sedan den nya.</strong> Ändringarna visas sida vid sida, på din egen enhet. Inget laddas upp.',
