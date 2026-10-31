@@ -187,6 +187,107 @@ for (const [L, path, text, words] of SCANS) {
   });
 }
 
+// a "photo" made in the browser: a gradient with a circle, as a JPEG
+async function photo(w = 1600, h = 1200) {
+  const g = await browser.newPage({ viewport: { width: w, height: h } });
+  await g.setContent(`<body style="margin:0"><div style="width:${w}px;height:${h}px;background:linear-gradient(135deg,#f6d365,#fda085 40%,#5ee7df 70%,#2b5876)"></div></body>`);
+  const b = await g.screenshot({ type: 'jpeg', quality: 92 }); await g.close(); return b;
+}
+const jpg = (name, buffer) => ({ name, mimeType: 'image/jpeg', buffer });
+async function imageSize(p, buf, type = 'image/png') {
+  return p.evaluate(async ([b64, t]) => { const i = new Image(); i.src = `data:${t};base64,${b64}`; await i.decode(); return [i.naturalWidth, i.naturalHeight]; }, [buf.toString('base64'), type]);
+}
+async function saveFirst(p) {
+  const s = p.locator('.row.done .save').first(); await s.waitFor({ timeout: 120000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), s.click()]);
+  return { name: dl.suggestedFilename(), buf: await readFile(await dl.path()) };
+}
+
+await test('the scripts have no two functions with the same name', async () => {
+  for (const f of ['assets/app.js', 'assets/editor.js', 'assets/i18n.js']) {
+    const src = await readFile(join(ROOT, f), 'utf8'), seen = new Set();
+    for (const m of src.matchAll(/^(?:async )?function ([\w$]+)|^(?:const|let|var) ([\w$]+)/gm)) { const n = m[1] || m[2]; assert(!seen.has(n), `${f}: ${n} is defined twice`); seen.add(n); }
+  }
+});
+
+await test('a picture converts (PNG to JPG) at its full size', async () => {
+  const p = await page('/png-to-jpg/');
+  const pg = await browser.newPage({ viewport: { width: 640, height: 480 } }); await pg.setContent('<body style="margin:0;background:#3a7"></body>'); const png = await pg.screenshot(); await pg.close();
+  await p.setInputFiles('#fileInput', { name: 'green.png', mimeType: 'image/png', buffer: png });
+  const { name, buf } = await saveFirst(p);
+  assert(name === 'green.jpg', 'name ' + name);
+  const [w, h] = await imageSize(p, buf, 'image/jpeg'); assert(w === 640 && h === 480, `size ${w}x${h}`);
+  await done(p);
+});
+
+await test('Extract pages keeps only the pages asked for, in that order', async () => {
+  const p = await page('/extract-pdf-pages/');
+  const four = await makePdf([['Page one'], ['Page two'], ['Page three'], ['Page four']]);
+  await p.setInputFiles('#fileInput', file('four.pdf', four));
+  await p.fill('dialog input[name="pages"]', '4, 1-2'); await p.click('dialog [value="ok"]');
+  const { buf } = await saveFirst(p);
+  const text = await pdfText(buf);
+  assert(/Page four[\s\S]*Page one[\s\S]*Page two/.test(text) && !text.includes('Page three'), 'wrong pages: ' + text.replace(/\s+/g, ' '));
+  await done(p);
+});
+
+await test('Resize image halves a picture and keeps its shape', async () => {
+  const p = await page('/resize-image/');
+  await p.setInputFiles('#fileInput', jpg('photo.jpg', await photo()));
+  await p.waitForSelector('.img-dialog'); await p.click('.img-dialog [value="ok"]');
+  const { name, buf } = await saveFirst(p);
+  assert(name === 'photo-resized.jpg', 'name ' + name);
+  const [w, h] = await imageSize(p, buf, 'image/jpeg'); assert(w === 800 && h === 600, `size ${w}x${h}`);
+  await done(p);
+});
+
+await test('Crop image makes a square', async () => {
+  const p = await page('/crop-image/');
+  await p.setInputFiles('#fileInput', jpg('photo.jpg', await photo()));
+  await p.waitForSelector('.img-dialog'); await p.click('.img-dialog [data-a="1"]'); await p.click('.img-dialog [value="ok"]');
+  const { buf } = await saveFirst(p);
+  const [w, h] = await imageSize(p, buf, 'image/jpeg'); assert(w === h && w === 1200, `size ${w}x${h}`);
+  await done(p);
+});
+
+await test('Compare marks the changes on the pages', async () => {
+  const p = await page('/compare-pdf/');
+  await p.setInputFiles('#fileInput', [file('old.pdf', OLD), file('new.pdf', NEW)]);
+  await p.waitForSelector('.cmp [data-v="pages"]'); await p.waitForFunction(() => /\d/.test(document.querySelector('.cmp-sum').textContent));
+  await p.click('.cmp [data-v="pages"]');
+  await p.waitForFunction(() => document.querySelectorAll('.cmp-page canvas').length >= 2 && document.querySelectorAll('.cmp-mark.del').length && document.querySelectorAll('.cmp-mark.add').length, null, { timeout: 30000 });
+  await done(p);
+});
+
+await test('Scan to PDF straightens a photo of paper and reads its text', async () => {
+  const g = await browser.newPage({ viewport: { width: 1000, height: 1300 } });
+  await g.setContent(`<body style="margin:0;background:#4a3526;width:1000px;height:1300px;overflow:hidden;perspective:1200px"><div style="position:absolute;left:170px;top:190px;width:660px;height:930px;background:#fff;transform:rotateX(12deg) rotateZ(-5deg);padding:60px;box-sizing:border-box;font:34px Georgia"><h1 style="margin:0 0 24px">Receipt</h1><p>Bakery in Aarhus</p><p>Total 68.00</p></div></body>`);
+  const shot = await g.screenshot({ type: 'jpeg', quality: 90 }); await g.close();
+  const p = await page('/scan-to-pdf/');
+  await p.setInputFiles('#fileInput', jpg('receipt.jpg', shot));
+  await p.waitForSelector('.scan .sc-res', { timeout: 20000 });
+  await p.check('.sc-ocr input'); await p.click('.sc-make');
+  const { name, buf } = await saveFirst(p);
+  assert(name === 'scan.pdf', 'name ' + name);
+  const doc = await PDFDocument.load(buf), { width, height } = doc.getPage(0).getSize();
+  assert(height > width * 1.2, `page is not upright paper: ${width}x${height}`);
+  const text = await pdfText(buf); assert(/Receipt/.test(text) && /Aarhus/.test(text), 'OCR text: ' + text.trim().slice(0, 120));
+  await done(p);
+});
+
+await test('Remove background makes a transparent PNG', async () => {
+  const p = await page('/remove-background/');
+  const g = await browser.newPage({ viewport: { width: 600, height: 450 } });
+  await g.setContent('<body style="margin:0;background:#cfe8ff;display:grid;place-items:center;height:450px"><div style="width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb347,#c0392b)"></div></body>');
+  const pic = await g.screenshot({ type: 'jpeg', quality: 92 }); await g.close();
+  await p.setInputFiles('#fileInput', jpg('ball.jpg', pic));
+  const { name, buf } = await saveFirst(p);
+  assert(name === 'ball-no-background.png', 'name ' + name);
+  const share = await p.evaluate(async b64 => { const i = new Image(); i.src = 'data:image/png;base64,' + b64; await i.decode(); const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let t = 0; for (let k = 3; k < d.length; k += 4) if (d[k] < 30) t++; return t / (d.length / 4); }, buf.toString('base64'));
+  assert(share > 0.3 && share < 0.95, 'transparent share ' + share.toFixed(2));
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

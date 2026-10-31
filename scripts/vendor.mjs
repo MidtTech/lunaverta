@@ -1,6 +1,6 @@
 // Copies the browser builds of every helper library and font into docs/,
 // so the live site never loads anything from a third-party server.
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const nm = (...p) => join('node_modules', ...p);
@@ -31,7 +31,11 @@ const VENDOR = {
   'tesseract/lang/eng.traineddata.gz': nm('@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz'),
   'tesseract/lang/swe.traineddata.gz': nm('@tesseract.js-data/swe/4.0.0_best_int/swe.traineddata.gz'),
   'tesseract/lang/nor.traineddata.gz': nm('@tesseract.js-data/nor/4.0.0_best_int/nor.traineddata.gz'),
-  'tesseract/lang/deu.traineddata.gz': nm('@tesseract.js-data/deu/4.0.0_best_int/deu.traineddata.gz')
+  'tesseract/lang/deu.traineddata.gz': nm('@tesseract.js-data/deu/4.0.0_best_int/deu.traineddata.gz'),
+  // Remove background: ONNX Runtime Web (WebAssembly) and the U²-Net "silueta" model
+  'ort/ort.wasm.min.js': nm('onnxruntime-web/dist/ort.wasm.min.js'),
+  'ort/ort-wasm-simd-threaded.mjs': nm('onnxruntime-web/dist/ort-wasm-simd-threaded.mjs'),
+  'ort/ort-wasm-simd-threaded.wasm': nm('onnxruntime-web/dist/ort-wasm-simd-threaded.wasm')
 };
 const FONTS = [
   ['bricolage-grotesque', [500, 700]],
@@ -40,6 +44,7 @@ const FONTS = [
 ];
 
 mkdirSync('docs/vendor/tesseract/lang', { recursive: true });
+mkdirSync('docs/vendor/ort', { recursive: true });
 mkdirSync('docs/fonts', { recursive: true });
 for (const [out, src] of Object.entries(VENDOR)) copyFileSync(src, join('docs/vendor', out));
 for (const [fam, weights] of FONTS)
@@ -48,4 +53,6 @@ for (const [fam, weights] of FONTS)
       const f = `${fam}-${sub}-${w}-normal.woff2`;
       copyFileSync(nm('@fontsource', fam, 'files', f), join('docs/fonts', f));
     }
+// the model ships in five parts on npm; the site serves it as one file
+writeFileSync('docs/vendor/ort/silueta.onnx', Buffer.concat([1, 2, 3, 4, 5].map(i => readFileSync(nm('@rmbg/model-silueta', `silueta-${i}.onnx`)))));
 console.log('Copied', Object.keys(VENDOR).length, 'libraries and fonts into docs/');

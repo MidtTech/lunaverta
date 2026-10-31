@@ -792,3 +792,67 @@ html.ed-open .welcome-card { display: none; }
 .cmp-pg { float: right; margin-left: 10px; font: 500 11px var(--f-mono); color: var(--muted); }
 .cmp.only .cmp-row.same { display: none; }
 @media (max-width: 640px) { .cmp-row { font-size: 13px; } .cmp-row > div, .cmp-head > div { padding-inline: 8px; } .cmp-only { margin-left: 0; } }
+
+/* ---------- Compress, resize or crop pictures ---------- */
+.img-dialog { width: min(620px, calc(100vw - 24px)); }
+.im-stage { position: relative; justify-self: center; line-height: 0; background: repeating-conic-gradient(var(--line) 0 25%, transparent 0 50%) 0 0 / 16px 16px; border-radius: 6px; overflow: hidden; touch-action: none; }
+.im-pic { display: block; max-width: 100%; }
+.im-box { position: absolute; box-shadow: 0 0 0 9999px rgba(10, 14, 30, .5); outline: 2px solid #fff; cursor: move; touch-action: none; }
+.im-box[hidden] { display: none; }
+.im-box i { position: absolute; width: 18px; height: 18px; background: #fff; border: 2px solid var(--accent); border-radius: 50%; }
+/* the corner handles sit just inside the frame, so they stay visible (and grabbable) when the frame reaches the edge */
+.im-box i[data-c="nw"] { left: -2px; top: -2px; cursor: nwse-resize; } .im-box i[data-c="se"] { right: -2px; bottom: -2px; cursor: nwse-resize; }
+.im-box i[data-c="ne"] { right: -2px; top: -2px; cursor: nesw-resize; } .im-box i[data-c="sw"] { left: -2px; bottom: -2px; cursor: nesw-resize; }
+@media (pointer: coarse) { .im-box i { width: 26px; height: 26px; } }
+.im-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.im-lbl { font-size: 14px; font-weight: 500; margin-right: 4px; }
+.im-row button { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+.im-row button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.im-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 14px; }
+.im-grid label[hidden] { display: none; }
+.im-grid select, .im-grid input[type="number"] { font: inherit; font-weight: 400; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.im-q output { font-weight: 400; color: var(--muted); font-size: 13px; }
+.im-est { margin: 0; font-size: 13px; color: var(--muted); min-height: 1.3em; }
+
+/* Compare: the pages view */
+.cmp-view { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.cmp-view button { border: 0; background: var(--raised); color: var(--muted); padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.cmp-view button + button { border-left: 1px solid var(--line); }
+.cmp-view button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.cmp-only[hidden] { display: none; }
+.cmp-pages { flex: 1; overflow: auto; padding: 12px 12px 40px; }
+.cmp-pages[hidden], .cmp-body[hidden] { display: none; }
+.cmp-prow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+.cmp-page { margin: 0; min-width: 0; }
+.cmp-page figcaption { font: 500 12px var(--f-mono); color: var(--muted); margin-bottom: 4px; }
+.cmp-page figcaption b { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #f5d90a; color: #1a1a1a; text-align: center; }
+.cmp-sheet { position: relative; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .18); max-width: 100%; min-height: 120px; }
+.cmp-sheet canvas { display: block; }
+.cmp-sheet.none { display: grid; place-items: center; color: var(--muted); font-size: 13px; background: var(--surface); box-shadow: none; border: 1px dashed var(--line); width: auto !important; height: 160px !important; }
+.cmp-mark { position: absolute; border-radius: 2px; mix-blend-mode: multiply; pointer-events: none; }
+.cmp-mark.del { background: rgba(229, 72, 77, .35); }
+.cmp-mark.add { background: rgba(48, 164, 108, .38); }
+@media (max-width: 640px) { .cmp-prow { gap: 6px; } .cmp-pages { padding-inline: 6px; } }
+
+/* ---------- Scan to PDF ---------- */
+.sc-main { flex: 1; overflow: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; padding: 14px 16px 30px; }
+.sc-work { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sc-hint { margin: 0; color: var(--muted); font-size: 14px; text-align: center; }
+.sc-stage { position: relative; touch-action: none; user-select: none; }
+.sc-stage canvas { display: block; border-radius: 6px; }
+.sc-quad { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.sc-quad polygon { fill: rgba(47, 69, 201, .14); stroke: var(--accent); stroke-width: 2.5; }
+.sc-stage i { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 2px 6px rgba(0, 0, 0, .3); cursor: grab; touch-action: none; }
+.sc-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; font-size: 14px; }
+.sc-tools select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--ink); }
+.sc-side { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.sc-result { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: grid; place-items: center; min-height: 120px; }
+.sc-res { max-width: 100%; max-height: 300px; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+.sc-thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sc-thumbs button { padding: 2px; border: 2px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; line-height: 0; }
+.sc-thumbs button[aria-current] { border-color: var(--accent); }
+.sc-thumbs canvas { width: 48px; height: auto; }
+.sc-addbtn { text-align: center; cursor: pointer; }
+.sc-ocr { display: flex; gap: 6px; align-items: center; }
+.sc-make { width: 100%; }
+@media (max-width: 760px) { .sc-main { grid-template-columns: 1fr; padding-inline: 10px; } .sc-res { max-height: 200px; } }

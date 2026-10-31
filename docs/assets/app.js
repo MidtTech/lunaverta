@@ -18,7 +18,8 @@ const LIBS = {
   docx: 'docx-preview.min.js',
   h2c: 'html2canvas.min.js',
   qpdf: 'qpdf.js',
-  tesseract: 'tesseract/tesseract.min.js'
+  tesseract: 'tesseract/tesseract.min.js',
+  ort: 'ort/ort.wasm.min.js'
 };
 const loaded = {};
 function lib(name) {
@@ -34,7 +35,7 @@ function lib(name) {
 
 // ---------- formats ----------
 const KINDS = {
-  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','clean'] },
+  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','imgedit','nobg','clean'] },
   pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','docx','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
@@ -42,15 +43,15 @@ const KINDS = {
   video: { color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'] }
 };
 const OUT = {
-  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
-  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
+  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true }, imgedit: { k: '--c-image', tool: true }, nobg: { k: '--c-image', tool: true }, scan: { k: '--c-doc', tool: true },
+  pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, extract: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' }, docx: { k: '--c-doc' }, compare: { k: '--c-doc', tool: true },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['edit','redact','ocr','merge','split','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','clean'];
+const ORDER = ['edit','redact','ocr','merge','split','extract','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','nobg','scan','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -62,7 +63,7 @@ function kindOf(file) { return kindOfExt(ext(file.name)) || kindOfMime(file.type
 function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) if (re.test(t)) return k; return null; }
 // Tools kept out of the ring for a kind, but still used by their own pages
 // (Compress PDF, Remove PDF metadata, PDF to text, Remove prices).
-const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare'] };
+const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare', 'extract'], image: ['scan'] };
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
@@ -977,6 +978,54 @@ function keepUsedImages(page) {
     page.node.set(PDFName.of('Resources'), newRes);
   } catch (e) { /* keep the page as it is */ }
 }
+// "1-3, 5, 8-" → [[1,3],[5,5],[8,Infinity]]; null if it can't be read
+function parsePages(text) {
+  const parts = String(text).replace(/[–—]/g, '-').split(/[,;\s]+/).filter(Boolean), out = [];
+  for (const p of parts) {
+    const m = /^(\d+)?-(\d+)?$/.exec(p) || /^(\d+)$/.exec(p);
+    if (!m) return null;
+    if (m.length === 2) { out.push([+m[1], +m[1]]); continue; }
+    if (!m[1] && !m[2]) return null;
+    out.push([m[1] ? +m[1] : 1, m[2] ? +m[2] : Infinity]);
+  }
+  return out.length ? out : null;
+}
+function askPages() {
+  return new Promise(resolve => {
+    const d = document.createElement('dialog');
+    d.className = 'pw-dialog';
+    d.innerHTML = `<form method="dialog">
+      <h2>${esc(T('ex.title'))}</h2>
+      <p class="pw-note">${esc(T('ex.note'))}</p>
+      <label>${esc(T('ex.label'))}<input name="pages" inputmode="numeric" autocomplete="off" placeholder="1-3, 5" required></label>
+      <p class="pw-err" role="alert" hidden></p>
+      <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary" value="ok">${esc(T('ex.ok'))}</button></div>
+    </form>`;
+    document.body.appendChild(d);
+    const f = d.querySelector('form'), err = d.querySelector('.pw-err');
+    let answer = null;
+    d.querySelector('[value="cancel"]').onclick = () => d.close();
+    f.onsubmit = e => {
+      e.preventDefault();
+      const r = parsePages(f.pages.value);
+      if (!r) { err.textContent = T('ex.bad'); err.hidden = false; f.pages.focus(); return; }
+      answer = r; d.close();
+    };
+    d.addEventListener('close', () => { d.remove(); resolve(answer); });
+    d.showModal(); f.pages.focus();
+  });
+}
+// A new PDF with only the chosen pages, in the order they were typed.
+async function extractPages(file, ranges, progress) {
+  const src = await openPdfLib(file), n = src.getPageCount(), idx = [];
+  for (const [a, b] of ranges) for (let i = a; i <= Math.min(b, n); i++) if (i >= 1) idx.push(i - 1);
+  if (!idx.length) throw new Error(T('ex.none', { n }));
+  src.getPages().forEach(keepUsedImages);
+  const out = await PDFLib.PDFDocument.create();
+  (await out.copyPages(src, idx)).forEach(p => out.addPage(p));
+  progress(1);
+  return [{ name: `${base(file.name)}-${T('ex.name')}.pdf`, blob: new Blob([await out.save()], { type: 'application/pdf' }), noteKey: 'ex.kept', noteVars: { n: idx.length, total: n } }];
+}
 async function splitPDF(file, progress) {
   const src = await openPdfLib(file), n = src.getPageCount(), pad = String(n).length, b = base(file.name), outs = [];
   src.getPages().forEach(keepUsedImages);
@@ -1293,6 +1342,8 @@ async function ocrImage(file, progress) {
 const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 async function convertImage(file, target, o, progress) {
   if (target === 'clean') return cleanImage(file, o);
+  if (target === 'imgedit') return editImage(file, o.img);
+  if (target === 'nobg') return removeBackground(file, progress);
   if (target === 'ocr') return ocrImage(file, progress);
   const { img, w, h } = await decodeImage(file);
   const flat = target === 'jpg' || target === 'bmp' || target === 'pdf';
@@ -1304,8 +1355,347 @@ async function convertImage(file, target, o, progress) {
   if (target === 'bmp') return [{ name: b + '.bmp', blob: toBMP(c) }];
   if (target === 'pdf') return [{ name: b + '.pdf', blob: await imagesToPDF([c], o.quality) }];
 }
+// ---------- Compress, resize or crop pictures ----------
+const IMG_OUT = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+const sameFormat = file => { const e = SAME[ext(file.name)] || ext(file.name); return IMG_OUT[e] ? e : 'jpg'; };
+// The size a picture comes out at: s.size is 'orig', a fraction (0.75) or 'w' with s.width pixels; never larger than it is.
+function outSize(w, h, s) {
+  let k = 1;
+  if (s.size === 'w' && s.width) k = Math.min(1, s.width / w);
+  else if (s.size !== 'orig') k = +s.size;
+  return [Math.max(1, Math.round(w * k)), Math.max(1, Math.round(h * k))];
+}
+async function renderEdited(img, w, h, s, crop, fmt) {
+  const r = crop || { x: 0, y: 0, w, h };
+  const [ow, oh] = outSize(r.w, r.h, s);
+  const c = document.createElement('canvas'); c.width = ow; c.height = oh;
+  const x = c.getContext('2d');
+  if (fmt === 'jpg') { x.fillStyle = '#fff'; x.fillRect(0, 0, ow, oh); }
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, ow, oh);
+  return { blob: await canvasToBlob(c, IMG_OUT[fmt], fmt === 'png' ? undefined : s.quality), w: ow, h: oh };
+}
+async function editImage(file, s) {
+  const { img, w, h } = await decodeImage(file);
+  const crop = s.crop && s.cropFile === file ? s.crop : null, fmt = s.format === 'same' ? sameFormat(file) : s.format;
+  const out = await renderEdited(img, w, h, s, crop, fmt);
+  const b = base(file.name), resized = s.size !== 'orig';
+  // nothing cropped or resized, same format, and it didn't get smaller: keep the original
+  if (!crop && !resized && fmt === (SAME[ext(file.name)] || ext(file.name)) && out.blob.size >= file.size) return [{ name: file.name, blob: file, noteKey: 'im.kept' }];
+  const name = `${b}-${crop ? 'cropped' : resized ? 'resized' : 'small'}.${fmt}`;
+  return [{ name, blob: out.blob, noteKey: out.blob.size < file.size ? 'im.smaller' : undefined, noteVars: { p: Math.round((1 - out.blob.size / file.size) * 100) } }];
+}
+function askImage(files) {
+  return new Promise(async resolve => {
+    if (!files.length) return resolve(null);
+    const mode = (document.querySelector('main[data-mode]') || {}).dataset?.mode || '';
+    const one = files.length === 1, first = files[0];
+    let pic;
+    try { pic = await decodeImage(first); } catch (e) { toast(e.message); return resolve(null); }
+    const { img, w, h } = pic;
+    const s = { size: mode === 'resize' ? '0.5' : 'orig', width: Math.round(w / 2), format: 'same', quality: mode === 'compress' ? 0.7 : 0.82 };
+    let crop = { x: 0, y: 0, w, h }, aspect = null;
+    const d = document.createElement('dialog');
+    d.className = 'pw-dialog img-dialog';
+    const opt = (v, t, sel) => `<option value="${v}"${sel ? ' selected' : ''}>${esc(t)}</option>`;
+    d.innerHTML = `<form method="dialog">
+      <h2>${esc(T('im.title'))}</h2>
+      <div class="im-stage"><canvas class="im-pic"></canvas>${one ? '<div class="im-box"><i data-c="nw"></i><i data-c="ne"></i><i data-c="sw"></i><i data-c="se"></i></div>' : ''}</div>
+      ${one ? `<div class="im-row im-crop"><span class="im-lbl">${esc(T('im.crop'))}</span>
+        <button type="button" data-a="0" aria-pressed="true">${esc(T('im.whole'))}</button><button type="button" data-a="free" aria-pressed="false">${esc(T('im.free'))}</button><button type="button" data-a="1" aria-pressed="false">${esc(T('im.square'))}</button><button type="button" data-a="1.3333" aria-pressed="false">4:3</button><button type="button" data-a="1.7778" aria-pressed="false">16:9</button></div>
+        <p class="pw-note im-hint" hidden>${esc(T('im.cropHint'))}</p>` : `<p class="pw-note">${esc(T('im.cropOne', { n: files.length }))}</p>`}
+      <div class="im-grid">
+        <label>${esc(T('im.size'))}<select name="size">${opt('orig', T('im.orig'), s.size === 'orig')}${opt('0.75', '75 %')}${opt('0.5', '50 %', s.size === '0.5')}${opt('0.25', '25 %')}${opt('w', T('im.custom'))}</select></label>
+        <label class="im-w" hidden>${esc(T('im.width'))}<input name="width" type="number" min="16" max="20000" inputmode="numeric" value="${s.width}"></label>
+        <label>${esc(T('im.format'))}<select name="format">${opt('same', T('im.same'), true)}${opt('jpg', 'JPG')}${opt('png', 'PNG')}${opt('webp', 'WebP')}</select></label>
+        <label class="im-q">${esc(T('im.quality'))} <output>${Math.round(s.quality * 100)} %</output><input name="quality" type="range" min="10" max="100" step="5" value="${Math.round(s.quality * 100)}"></label>
+      </div>
+      <p class="im-est" aria-live="polite"></p>
+      <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary" value="ok">${esc(T('im.ok'))}</button></div>
+    </form>`;
+    document.body.appendChild(d);
+    const f = d.querySelector('form'), cv = d.querySelector('.im-pic'), box = d.querySelector('.im-box'), est = d.querySelector('.im-est');
+    // the preview: the picture scaled to fit the dialog
+    // (sized once the dialog is open, from the room it really has, so the frame lines up with the picture)
+    let k = 1;
+    const sizePreview = () => {
+      const room = f.clientWidth - parseFloat(getComputedStyle(f).paddingLeft) - parseFloat(getComputedStyle(f).paddingRight);
+      k = Math.min(room / w, Math.min(340, window.innerHeight * 0.38) / h, 1);
+      cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    };
+    const drawBox = () => {
+      if (!box) return;
+      box.hidden = aspect === null;
+      Object.assign(box.style, { left: crop.x * k + 'px', top: crop.y * k + 'px', width: crop.w * k + 'px', height: crop.h * k + 'px' });
+    };
+    const setAspect = a => {
+      aspect = a === '0' ? null : a === 'free' ? 'free' : +a;
+      d.querySelectorAll('[data-a]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.a === a)));
+      d.querySelector('.im-hint').hidden = aspect === null;
+      if (aspect === null) crop = { x: 0, y: 0, w, h };
+      else if (aspect !== 'free') { // the biggest frame of that shape, centred
+        let cw = w, ch = Math.round(w / aspect); if (ch > h) { ch = h; cw = Math.round(h * aspect); }
+        crop = { x: Math.round((w - cw) / 2), y: Math.round((h - ch) / 2), w: cw, h: ch };
+      } else crop = { x: Math.round(w * .1), y: Math.round(h * .1), w: Math.round(w * .8), h: Math.round(h * .8) };
+      drawBox(); later();
+    };
+    d.querySelectorAll('[data-a]').forEach(b => b.onclick = () => setAspect(b.dataset.a));
+    // drag the frame, or a corner to resize it (keeping the shape when one is chosen)
+    if (box) {
+      let drag = null;
+      box.addEventListener('pointerdown', e => {
+        e.preventDefault(); box.setPointerCapture(e.pointerId);
+        drag = { c: e.target.dataset.c || 'move', x: e.clientX, y: e.clientY, r: { ...crop } };
+      });
+      box.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const dx = (e.clientX - drag.x) / k, dy = (e.clientY - drag.y) / k, r = drag.r, min = Math.max(16, Math.min(w, h) * 0.05);
+        let { x, y, w: cw, h: ch } = r;
+        if (drag.c === 'move') { x = Math.min(Math.max(0, r.x + dx), w - cw); y = Math.min(Math.max(0, r.y + dy), h - ch); }
+        else {
+          const left = drag.c.includes('w'), top = drag.c.includes('n');
+          cw = Math.max(min, r.w + (left ? -dx : dx)); ch = Math.max(min, r.h + (top ? -dy : dy));
+          if (typeof aspect === 'number') { if (Math.abs(dx) > Math.abs(dy)) ch = cw / aspect; else cw = ch * aspect; }
+          const maxW2 = left ? r.x + r.w : w - r.x, maxH2 = top ? r.y + r.h : h - r.y;
+          if (cw > maxW2) { cw = maxW2; if (typeof aspect === 'number') ch = cw / aspect; }
+          if (ch > maxH2) { ch = maxH2; if (typeof aspect === 'number') cw = ch * aspect; }
+          x = left ? r.x + r.w - cw : r.x; y = top ? r.y + r.h - ch : r.y;
+        }
+        crop = { x: Math.round(x), y: Math.round(y), w: Math.round(cw), h: Math.round(ch) }; drawBox();
+      });
+      const up = () => { if (drag) { drag = null; later(); } };
+      box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+    }
+    // the size estimate, worked out on the first picture
+    let timer = 0, seq = 0;
+    const read = () => { s.size = f.size.value; s.width = +f.width.value || s.width; s.format = f.format.value; s.quality = +f.quality.value / 100;
+      d.querySelector('.im-w').hidden = s.size !== 'w';
+      const fmt = s.format === 'same' ? sameFormat(first) : s.format;
+      d.querySelector('.im-q').hidden = fmt === 'png'; d.querySelector('.im-q output').textContent = Math.round(s.quality * 100) + ' %'; };
+    const later = () => { read(); clearTimeout(timer); timer = setTimeout(async () => {
+      const my = ++seq, fmt = s.format === 'same' ? sameFormat(first) : s.format;
+      try { const r = await renderEdited(img, w, h, s, aspect === null ? null : crop, fmt); if (my === seq) est.textContent = T('im.est', { size: fmtSize(r.blob.size), was: fmtSize(first.size), w: r.w, h: r.h }); } catch (e) { est.textContent = ''; }
+    }, 250); };
+    f.addEventListener('input', later); f.addEventListener('change', later);
+    d.querySelector('[value="cancel"]').onclick = () => d.close();
+    let answer = null;
+    f.onsubmit = e => { e.preventDefault(); read(); answer = { ...s, crop: one && aspect !== null ? crop : null, cropFile: first }; d.close(); };
+    d.addEventListener('close', () => { d.remove(); resolve(answer); });
+    d.showModal(); sizePreview(); drawBox(); later();
+    if (mode === 'crop' && one) setAspect('free');
+  });
+}
+// ---------- Remove background: the U²-Net "silueta" model, run on this device with ONNX Runtime ----------
+// The model (44 MB) and the runtime (11 MB) are fetched the first time and then kept for offline use.
+let bgModel = null, bgNoted = false, bgQueue = Promise.resolve();
+function bgSession(progress) {
+  if (!bgModel) bgModel = (async () => {
+    await lib('ort');
+    ort.env.wasm.numThreads = 1; ort.env.wasm.wasmPaths = new URL(VENDOR + 'ort/', location.href).href;
+    const res = await fetch(VENDOR + 'ort/silueta.onnx');
+    if (!res.ok) throw new Error(T(navigator.onLine === false ? 'err.lib.offline' : 'err.lib.online'));
+    const total = +res.headers.get('content-length') || 44173029, reader = res.body.getReader(), parts = []; let got = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; if (progress) progress(Math.min(.6, got / total * .6)); }
+    const buf = new Uint8Array(got); let o = 0; for (const p of parts) { buf.set(p, o); o += p.length; }
+    return ort.InferenceSession.create(buf, { executionProviders: ['wasm'] });
+  })().catch(e => { bgModel = null; throw e; });
+  return bgModel;
+}
+async function removeBackground(file, progress) {
+  if (!bgNoted && !bgModel) { bgNoted = true; toast(T('nobg.first')); }
+  const sess = await bgSession(progress);
+  const { img, w, h } = await decodeImage(file);
+  // the model looks at a 320 × 320 copy, normalised as it was trained
+  const S = 320, c = document.createElement('canvas'); c.width = S; c.height = S;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, S, S);
+  const d = x.getImageData(0, 0, S, S).data, f = new Float32Array(3 * S * S), mean = [.485, .456, .406], sd = [.229, .224, .225];
+  let mx = 1; for (let i = 0; i < d.length; i++) if ((i & 3) !== 3 && d[i] > mx) mx = d[i];
+  for (let i = 0; i < S * S; i++) for (let ch = 0; ch < 3; ch++) f[ch * S * S + i] = (d[i * 4 + ch] / mx - mean[ch]) / sd[ch];
+  progress(.7);
+  // one picture at a time through the model
+  const run = bgQueue.then(() => sess.run({ [sess.inputNames[0]]: new ort.Tensor('float32', f, [1, 3, S, S]) }));
+  bgQueue = run.catch(() => {});
+  const out = await run;
+  const m = out[sess.outputNames[0]].data; let lo = Infinity, hi = -Infinity;
+  for (const v of m) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  progress(.9);
+  // the mask, scaled up smoothly to the photo's size, becomes its transparency
+  const mc = document.createElement('canvas'); mc.width = S; mc.height = S;
+  const mx2 = mc.getContext('2d'), md = mx2.createImageData(S, S);
+  for (let i = 0; i < S * S; i++) { const a = (m[i] - lo) / ((hi - lo) || 1); md.data[i * 4 + 3] = Math.max(0, Math.min(255, (a - .08) / .84 * 255)); }
+  mx2.putImageData(md, 0, 0);
+  const [ow, oh] = fit(w, h, 4096), r = document.createElement('canvas'); r.width = ow; r.height = oh;
+  const rx = r.getContext('2d'); rx.imageSmoothingQuality = 'high';
+  rx.drawImage(mc, 0, 0, ow, oh); rx.globalCompositeOperation = 'source-in'; rx.drawImage(img, 0, 0, ow, oh);
+  return [{ name: `${base(file.name)}-no-background.png`, blob: await canvasToBlob(r, 'image/png'), noteKey: 'nobg.done' }];
+}
+// ---------- Scan to PDF: photos of paper, straightened and cleaned up ----------
+// Finding the paper: the biggest bright area in a small copy of the photo; its corners are the points
+// furthest along each diagonal. Good enough for a sheet on a darker table; the corners can be moved by hand.
+function findPaper(img, w, h) {
+  const k = Math.min(1, 360 / Math.max(w, h)), sw = Math.max(8, Math.round(w * k)), sh = Math.max(8, Math.round(h * k));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  const x = c.getContext('2d', { willReadFrequently: true }); x.filter = 'blur(2px)'; x.drawImage(img, 0, 0, sw, sh);
+  const d = x.getImageData(0, 0, sw, sh).data, n = sw * sh, g = new Uint8Array(n), hist = new Uint32Array(256);
+  for (let i = 0; i < n; i++) { const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8; g[i] = v; hist[v]++; }
+  // Otsu's threshold between paper and background
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sB = 0, wB = 0, best = 0, th = 128;
+  for (let t = 0; t < 256; t++) { wB += hist[t]; if (!wB) continue; const wF = n - wB; if (!wF) break; sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) ** 2; if (v > best) { best = v; th = t; } }
+  // the largest bright region
+  const lab = new Int32Array(n).fill(-1); let bestId = -1, bestSize = 0, id = 0; const stack = [];
+  for (let i = 0; i < n; i++) {
+    if (g[i] <= th || lab[i] !== -1) continue;
+    let size = 0; stack.push(i); lab[i] = id;
+    while (stack.length) { const p = stack.pop(); size++; const px = p % sw, py = (p / sw) | 0;
+      for (const q of [px > 0 ? p - 1 : -1, px < sw - 1 ? p + 1 : -1, py > 0 ? p - sw : -1, py < sh - 1 ? p + sw : -1]) if (q >= 0 && lab[q] === -1 && g[q] > th) { lab[q] = id; stack.push(q); } }
+    if (size > bestSize) { bestSize = size; bestId = id; } id++;
+  }
+  const margin = [[.04, .04], [.96, .04], [.96, .96], [.04, .96]].map(([a, b]) => [a * w, b * h]);
+  if (bestId < 0 || bestSize < n * 0.15 || bestSize > n * 0.97) return margin;
+  let tl = [0, 0, 1e9], tr = [0, 0, -1e9], br = [0, 0, -1e9], bl = [0, 0, 1e9];
+  for (let i = 0; i < n; i++) { if (lab[i] !== bestId) continue; const px = i % sw, py = (i / sw) | 0, s1 = px + py, s2 = px - py;
+    if (s1 < tl[2]) tl = [px, py, s1]; if (s1 > br[2]) br = [px, py, s1]; if (s2 > tr[2]) tr = [px, py, s2]; if (s2 < bl[2]) bl = [px, py, s2]; }
+  return [tl, tr, br, bl].map(([px, py]) => [(px + .5) / k, (py + .5) / k]);
+}
+// The homography that maps the output rectangle onto the four corners in the photo.
+function homography(q, W, H) {
+  const src = [[0, 0], [W, 0], [W, H], [0, H]], A = [], b = [];
+  for (let i = 0; i < 4; i++) { const [x, y] = src[i], [u, v] = q[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u); A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v); }
+  for (let i = 0; i < 8; i++) { // Gaussian elimination
+    let m = i; for (let r = i + 1; r < 8; r++) if (Math.abs(A[r][i]) > Math.abs(A[m][i])) m = r;
+    [A[i], A[m]] = [A[m], A[i]]; [b[i], b[m]] = [b[m], b[i]];
+    for (let r = 0; r < 8; r++) if (r !== i) { const f = A[r][i] / A[i][i]; for (let c = i; c < 8; c++) A[r][c] -= f * A[i][c]; b[r] -= f * b[i]; }
+  }
+  return b.map((v, i) => v / A[i][i]);
+}
+// Straighten the paper and give it the chosen look (colour, grey, or black and white with shadows evened out).
+function flattenPage(pg, maxSide = 2000) {
+  const { img, w, h, q, look, rot } = pg;
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  let W = Math.max(dist(q[0], q[1]), dist(q[3], q[2])), H = Math.max(dist(q[0], q[3]), dist(q[1], q[2]));
+  const k = Math.min(1, maxSide / Math.max(W, H)); W = Math.max(8, Math.round(W * k)); H = Math.max(8, Math.round(H * k));
+  const sk = Math.min(1, 3000 / Math.max(w, h)), sw = Math.round(w * sk), sh = Math.round(h * sk);
+  const sc = document.createElement('canvas'); sc.width = sw; sc.height = sh;
+  const sx = sc.getContext('2d', { willReadFrequently: true }); sx.drawImage(img, 0, 0, sw, sh);
+  const S = sx.getImageData(0, 0, sw, sh).data;
+  const Hm = homography(q.map(([u, v]) => [u * sk, v * sk]), W, H);
+  const out = document.createElement('canvas'); out.width = W; out.height = H;
+  const ox = out.getContext('2d'), O = ox.createImageData(W, H), D = O.data;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const z = Hm[6] * x + Hm[7] * y + 1, u = (Hm[0] * x + Hm[1] * y + Hm[2]) / z, v = (Hm[3] * x + Hm[4] * y + Hm[5]) / z;
+    const iu = Math.min(sw - 2, Math.max(0, u | 0)), iv = Math.min(sh - 2, Math.max(0, v | 0)), fu = Math.min(1, Math.max(0, u - iu)), fv = Math.min(1, Math.max(0, v - iv));
+    const o = (y * W + x) * 4, a = (iv * sw + iu) * 4, b2 = a + 4, c = a + sw * 4, d = c + 4;
+    for (let ch = 0; ch < 3; ch++) D[o + ch] = (S[a + ch] * (1 - fu) + S[b2 + ch] * fu) * (1 - fv) + (S[c + ch] * (1 - fu) + S[d + ch] * fu) * fv;
+    D[o + 3] = 255;
+  }
+  if (look !== 'color') {
+    // the paper's brightness, blurred, so shadows and uneven light can be divided out
+    const bw = Math.max(4, Math.round(W / 24)), bh = Math.max(4, Math.round(H / 24)), bc = document.createElement('canvas'); bc.width = bw; bc.height = bh;
+    ox.putImageData(O, 0, 0);
+    const bx = bc.getContext('2d', { willReadFrequently: true }); bx.filter = 'blur(2px)'; bx.drawImage(out, 0, 0, bw, bh);
+    const big = document.createElement('canvas'); big.width = W; big.height = H; const gx = big.getContext('2d', { willReadFrequently: true }); gx.imageSmoothingQuality = 'high'; gx.drawImage(bc, 0, 0, W, H);
+    const B = gx.getImageData(0, 0, W, H).data;
+    for (let i = 0; i < D.length; i += 4) {
+      const l = D[i] * .299 + D[i + 1] * .587 + D[i + 2] * .114, bg = Math.max(30, B[i] * .299 + B[i + 1] * .587 + B[i + 2] * .114);
+      let v = Math.min(255, l / bg * 245);
+      if (look === 'bw') v = v > 175 ? 255 : v < 115 ? 0 : (v - 115) / 60 * 255;
+      D[i] = D[i + 1] = D[i + 2] = v;
+    }
+  }
+  ox.putImageData(O, 0, 0);
+  if (!rot) return out;
+  const r = document.createElement('canvas'), odd = rot % 180 !== 0; r.width = odd ? H : W; r.height = odd ? W : H;
+  const rx = r.getContext('2d'); rx.translate(r.width / 2, r.height / 2); rx.rotate(rot * Math.PI / 180); rx.drawImage(out, -W / 2, -H / 2);
+  return r;
+}
+async function scanPagesToPDF(canvases, quality) {
+  let doc;
+  for (const c of canvases) {
+    const w = 595, h = 595 * c.height / c.width, o = w > h ? 'l' : 'p';
+    if (!doc) doc = await newPDF([w, h], o); else doc.addPage([w, h], o);
+    doc.addImage(c.toDataURL('image/jpeg', quality), 'JPEG', 0, 0, w, h);
+  }
+  return doc.output('blob');
+}
+async function openScanner(files) {
+  const pages = [];
+  const add = async list => {
+    for (const f of list) { try { const { img, w, h } = await decodeImage(f); pages.push({ img, w, h, q: findPaper(img, w, h), look: 'gray', rot: 0, name: f.name }); } catch (e) { toast(e.message); } }
+  };
+  await add(files);
+  if (!pages.length) return;
+  let cur = 0;
+  const d = document.createElement('div'); d.className = 'cmp scan'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
+  d.innerHTML = `<div class="cmp-bar"><h2>${esc(T('sc.title'))}</h2><span class="cmp-sum sc-count"></span><button type="button" class="btn sm" data-x>${esc(T('sc.close'))}</button></div>
+    <div class="sc-main">
+      <div class="sc-work"><p class="sc-hint">${esc(T('sc.hint'))}</p><div class="sc-stage"><canvas></canvas><svg class="sc-quad"><polygon/></svg>${[0, 1, 2, 3].map(i => `<i data-k="${i}"></i>`).join('')}</div>
+        <div class="sc-tools"><label>${esc(T('sc.look'))} <select class="sc-look"><option value="color">${esc(T('sc.color'))}</option><option value="gray">${esc(T('sc.gray'))}</option><option value="bw">${esc(T('sc.bw'))}</option></select></label>
+          <button type="button" class="btn sm" data-a="rot">↻ ${esc(T('sc.rotate'))}</button><button type="button" class="btn sm" data-a="whole">${esc(T('sc.whole'))}</button><button type="button" class="btn sm ghost" data-a="del">${esc(T('sc.remove'))}</button></div></div>
+      <div class="sc-side"><b>${esc(T('sc.preview'))}</b><div class="sc-result"></div><div class="sc-thumbs"></div>
+        <label class="btn sm sc-addbtn">＋ ${esc(T('sc.add'))}<input type="file" accept="image/*" capture="environment" multiple hidden></label>
+        <label class="sc-ocr"><input type="checkbox"> ${esc(T('sc.ocr'))}</label>
+        <button type="button" class="btn primary sc-make">${esc(T('sc.make'))}</button></div>
+    </div>`;
+  document.body.appendChild(d); document.documentElement.classList.add('ed-open');
+  const close = () => { d.remove(); document.documentElement.classList.remove('ed-open'); };
+  d.querySelector('[data-x]').onclick = close;
+  d.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  const stage = d.querySelector('.sc-stage'), cv = stage.querySelector('canvas'), poly = stage.querySelector('polygon'), dots = [...stage.querySelectorAll('i')];
+  let k = 1, previewTimer = 0;
+  const showQuad = () => { const pg = pages[cur]; poly.setAttribute('points', pg.q.map(([x, y]) => `${x * k},${y * k}`).join(' ')); dots.forEach((dt, i) => { dt.style.left = pg.q[i][0] * k + 'px'; dt.style.top = pg.q[i][1] * k + 'px'; }); };
+  const preview = () => { clearTimeout(previewTimer); previewTimer = setTimeout(() => {
+    const pg = pages[cur], c = flattenPage(pg, 700), box = d.querySelector('.sc-result'); box.innerHTML = ''; c.className = 'sc-res'; box.appendChild(c);
+    const th = d.querySelectorAll('.sc-thumbs button')[cur]; if (th) { th.innerHTML = ''; const t = flattenPage(pg, 160); th.appendChild(t); }
+  }, 120); };
+  const thumbs = () => {
+    d.querySelector('.sc-thumbs').innerHTML = pages.map((p, i) => `<button type="button" data-i="${i}" aria-label="${esc(T('sc.page', { n: i + 1 }))}"${i === cur ? ' aria-current="true"' : ''}></button>`).join('');
+    d.querySelectorAll('.sc-thumbs button').forEach((b, i) => { b.appendChild(flattenPage(pages[i], 160)); b.onclick = () => { cur = i; show(); }; });
+    d.querySelector('.sc-count').textContent = T('sc.page', { n: `${cur + 1} / ${pages.length}` });
+  };
+  const show = () => {
+    const pg = pages[cur], room = stage.parentElement.clientWidth - 8, maxH = Math.max(240, window.innerHeight - 330);
+    k = Math.min(room / pg.w, maxH / pg.h, 1);
+    cv.width = Math.round(pg.w * k); cv.height = Math.round(pg.h * k); cv.getContext('2d').drawImage(pg.img, 0, 0, cv.width, cv.height);
+    stage.style.width = cv.width + 'px'; stage.style.height = cv.height + 'px';
+    const svg = stage.querySelector('svg'); svg.setAttribute('width', cv.width); svg.setAttribute('height', cv.height);
+    d.querySelector('.sc-look').value = pg.look;
+    showQuad(); thumbs(); preview();
+  };
+  // drag a corner
+  let drag = -1;
+  dots.forEach((dt, i) => dt.addEventListener('pointerdown', e => { e.preventDefault(); drag = i; dt.setPointerCapture(e.pointerId); }));
+  stage.addEventListener('pointermove', e => {
+    if (drag < 0) return; const r = cv.getBoundingClientRect(), pg = pages[cur];
+    pg.q[drag] = [Math.min(pg.w, Math.max(0, (e.clientX - r.left) / k)), Math.min(pg.h, Math.max(0, (e.clientY - r.top) / k))]; showQuad();
+  });
+  const up = () => { if (drag >= 0) { drag = -1; preview(); } };
+  stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+  d.querySelector('.sc-look').onchange = e => { pages[cur].look = e.target.value; preview(); };
+  d.querySelector('[data-a="rot"]').onclick = () => { pages[cur].rot = (pages[cur].rot + 90) % 360; preview(); };
+  d.querySelector('[data-a="whole"]').onclick = () => { const p = pages[cur]; p.q = [[0, 0], [p.w, 0], [p.w, p.h], [0, p.h]]; showQuad(); preview(); };
+  d.querySelector('[data-a="del"]').onclick = () => { pages.splice(cur, 1); if (!pages.length) return close(); cur = Math.min(cur, pages.length - 1); show(); };
+  d.querySelector('.sc-addbtn input').onchange = async e => { const n0 = pages.length; await add([...e.target.files]); e.target.value = ''; if (pages.length > n0) { cur = n0; show(); } };
+  d.querySelector('.sc-make').onclick = () => {
+    const list = pages.slice(), ocr = d.querySelector('.sc-ocr input').checked, name = `${T('sc.name')}.pdf`;
+    close();
+    const j = newJob(`${list.length} ${T('job.files')}`, 'scan'); j.label = name; j.srcLabel = 'JPG';
+    schedule(async () => {
+      const cs = [];
+      for (let i = 0; i < list.length; i++) { cs.push(flattenPage(list[i])); setProgress(j, (i + 1) / list.length * (ocr ? .3 : .9)); await new Promise(r => setTimeout(r)); }
+      let outs = [{ name, blob: await scanPagesToPDF(cs, list.some(p => p.look === 'color') ? 0.82 : 0.7) }];
+      if (ocr) outs = (await convertPDF(new File([outs[0].blob], name, { type: 'application/pdf' }), 'ocr', opts(), p => setProgress(j, .3 + p * .7))).map(o => ({ ...o, name }));
+      await finishJob(j, outs);
+    }).catch(e => failJob(j, e));
+  };
+  window.addEventListener('resize', () => { if (d.isConnected) show(); });
+  show();
+}
 async function convertPDF(file, target, o, progress) {
   if (target === 'split') return splitPDF(file, progress);
+  if (target === 'extract') return extractPages(file, o.pages, progress);
   if (target === 'protect') return protectPDF(file, o.password);
   if (target === 'unlock') return unlockPDF(file, o.password);
   if (target === 'clean') return cleanPDF(file);
@@ -1350,6 +1740,26 @@ function lcsDiff(a, b, eq) {
   return out;
 }
 const norm = s => s.replace(/\s+/g, ' ').trim();
+// Where the words differ, as character ranges in each line (for the marks on the pages)
+function changedSpans(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/), d = lcsDiff(A, B, (x, y) => x === y), ra = [], rb = [];
+  let i = 0, j = 0;
+  for (const [op, x, y] of d) {
+    if (op === '=') { i += x.length; j += y.length; }
+    else if (op === '-') { if (x.trim()) ra.push([i, i + x.length]); i += x.length; }
+    else { if (y.trim()) rb.push([j, j + y.length]); j += y.length; }
+  }
+  // words next to each other become one mark
+  const join = (r, t) => r.reduce((o, x) => { const l = o[o.length - 1]; if (l && !t.slice(l[1], x[0]).trim()) l[1] = x[1]; else o.push([...x]); return o; }, []);
+  return [join(ra, a), join(rb, b)];
+}
+// How far into a line a character is, by the width of the text before it (close enough to place a mark)
+let measureCtx = null;
+function textShare(t, i) {
+  if (!measureCtx) { measureCtx = document.createElement('canvas').getContext('2d'); measureCtx.font = '100px Helvetica, Arial, sans-serif'; }
+  const all = measureCtx.measureText(t).width;
+  return all ? measureCtx.measureText(t.slice(0, i)).width / all : i / t.length;
+}
 function wordDiff(a, b) {
   const A = a.split(/(\s+)/), B = b.split(/(\s+)/), d = lcsDiff(A, B, (x, y) => x === y);
   let L = '', R = '';
@@ -1358,17 +1768,18 @@ function wordDiff(a, b) {
 }
 async function openCompare(fa, fb) {
   const d = document.createElement('div'); d.id = 'compare'; d.className = 'cmp'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
-  d.innerHTML = `<div class="cmp-bar"><h2>${esc(T('cmp.title'))}</h2><span class="cmp-sum">${esc(T('cmp.reading'))}</span><label class="cmp-only"><input type="checkbox" checked> ${esc(T('cmp.onlyChanges'))}</label><button type="button" class="btn sm" data-x>${esc(T('cmp.close'))}</button></div>
-    <div class="cmp-head"><div><b>${esc(T('cmp.old'))}</b> <span>${esc(fa.name)}</span></div><div><b>${esc(T('cmp.new'))}</b> <span>${esc(fb.name)}</span></div></div><div class="cmp-body"></div>`;
+  d.innerHTML = `<div class="cmp-bar"><h2>${esc(T('cmp.title'))}</h2><span class="cmp-sum">${esc(T('cmp.reading'))}</span><div class="cmp-view" role="group" aria-label="${esc(T('cmp.view'))}"><button type="button" data-v="text" aria-pressed="true">${esc(T('cmp.text'))}</button><button type="button" data-v="pages" aria-pressed="false">${esc(T('cmp.pages'))}</button></div><label class="cmp-only"><input type="checkbox" checked> ${esc(T('cmp.onlyChanges'))}</label><button type="button" class="btn sm" data-x>${esc(T('cmp.close'))}</button></div>
+    <div class="cmp-head"><div><b>${esc(T('cmp.old'))}</b> <span>${esc(fa.name)}</span></div><div><b>${esc(T('cmp.new'))}</b> <span>${esc(fb.name)}</span></div></div><div class="cmp-body"></div><div class="cmp-pages" hidden></div>`;
   document.body.appendChild(d); document.documentElement.classList.add('ed-open');
   const close = () => { d.remove(); document.documentElement.classList.remove('ed-open'); };
   d.querySelector('[data-x]').onclick = close;
   d.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   d.querySelector('[data-x]').focus();
   await lib('pdfjs'); pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR + 'pdf.worker.min.js';
-  const read = async f => { const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise; return (await pdfLines(pdf)).flatMap((ls, pi) => ls.map(l => ({ t: norm(l.t.replace(/\t/g, ' ')), p: pi + 1 }))).filter(l => l.t); };
+  const docs = [];
+  const read = async (f, side) => { const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise; docs[side] = pdf; return (await pdfLines(pdf)).flatMap((ls, pi) => ls.map(l => ({ t: norm(l.t.replace(/\t/g, ' ')), p: pi + 1, x: l.x, y: l.y, end: l.end, h: l.h }))).filter(l => l.t); };
   let A, B;
-  try { [A, B] = await Promise.all([read(fa), read(fb)]); } catch (e) { d.querySelector('.cmp-sum').textContent = T('err.pdf.read'); return; }
+  try { [A, B] = await Promise.all([read(fa, 0), read(fb, 1)]); } catch (e) { d.querySelector('.cmp-sum').textContent = T('err.pdf.read'); return; }
   // pair a removed line with an added one next to it: that is a changed line, shown word by word
   const raw = lcsDiff(A, B, (x, y) => x.t === y.t), rows = [];
   for (let k = 0; k < raw.length; k++) {
@@ -1385,6 +1796,49 @@ async function openCompare(fa, fb) {
     return `<div class="cmp-row ${op === '=' ? 'same' : op === '+' ? 'add' : 'del'}"><div>${a ? pg(a) + esc(a.t) : ''}</div><div>${b ? pg(b) + esc(b.t) : ''}</div></div>`;
   }).join('');
   const only = d.querySelector('.cmp-only input'); const apply = () => d.classList.toggle('only', only.checked && total > 0); only.onchange = apply; apply();
+  // The pages view: both versions side by side, page by page, with the changes marked where they are
+  const marks = [new Map(), new Map()]; // side → page → [{ l, kind, spans }]
+  const put = (side, l, kind, spans) => { if (!l) return; const m = marks[side]; if (!m.has(l.p)) m.set(l.p, []); m.get(l.p).push({ l, kind, spans }); };
+  for (const [op, a, b] of rows) {
+    if (op === '-') put(0, a, 'del'); else if (op === '+') put(1, b, 'add');
+    else if (op === '~') { const [sa, sb] = changedSpans(a.t, b.t); put(0, a, 'chg', sa); put(1, b, 'chg', sb); }
+  }
+  const pagesBox = d.querySelector('.cmp-pages'), body = d.querySelector('.cmp-body');
+  let built = false;
+  const buildPages = () => {
+    built = true;
+    const n = Math.max(docs[0].numPages, docs[1].numPages);
+    pagesBox.innerHTML = Array.from({ length: n }, (_, i) => `<div class="cmp-prow" data-p="${i + 1}">${[0, 1].map(s => `<figure class="cmp-page" data-s="${s}"><figcaption>${esc(T('cmp.pageN', { n: i + 1 }))}${marks[s].has(i + 1) ? ` <b>${marks[s].get(i + 1).length}</b>` : ''}</figcaption><div class="cmp-sheet"></div></figure>`).join('')}</div>`).join('');
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); drawRow(e.target); } }), { root: pagesBox, rootMargin: '600px 0px' });
+    pagesBox.querySelectorAll('.cmp-prow').forEach(r => io.observe(r));
+  };
+  const drawRow = row => row.querySelectorAll('.cmp-page').forEach(async fig => {
+    const side = +fig.dataset.s, p = +row.dataset.p, sheet = fig.querySelector('.cmp-sheet');
+    if (p > docs[side].numPages) { sheet.classList.add('none'); sheet.textContent = T('cmp.noPage', { n: p }); return; }
+    const page = await docs[side].getPage(p), base1 = page.getViewport({ scale: 1 });
+    const scale = Math.min(2, (fig.clientWidth || 400) / base1.width), vp = page.getViewport({ scale }), dpr = Math.min(2, window.devicePixelRatio || 1);
+    const c = document.createElement('canvas'); c.width = Math.round(vp.width * dpr); c.height = Math.round(vp.height * dpr);
+    c.style.width = vp.width + 'px'; c.style.height = vp.height + 'px';
+    sheet.style.width = vp.width + 'px'; sheet.style.height = vp.height + 'px'; sheet.appendChild(c);
+    await page.render({ canvasContext: c.getContext('2d'), viewport: page.getViewport({ scale: scale * dpr }) }).promise;
+    for (const { l, kind, spans } of marks[side].get(p) || []) {
+      // a whole line, or for a changed line only the words that changed (placed by their share of the line)
+      const parts = spans && spans.length ? spans.map(([s0, s1]) => [l.x + (l.end - l.x) * textShare(l.t, s0), l.x + (l.end - l.x) * textShare(l.t, s1)]) : [[l.x, l.end]];
+      for (const [x0, x1] of parts) {
+        const [a, b, cc, dd] = vp.convertToViewportRectangle([x0 - 1, l.y - l.h * 0.28, x1 + 1, l.y + l.h * 0.92]);
+        const m = document.createElement('i'); m.className = 'cmp-mark ' + (kind === 'chg' ? (side ? 'add' : 'del') : kind);
+        Object.assign(m.style, { left: Math.min(a, cc) + 'px', top: Math.min(b, dd) + 'px', width: Math.abs(cc - a) + 'px', height: Math.abs(dd - b) + 'px' });
+        sheet.appendChild(m);
+      }
+    }
+  });
+  d.querySelectorAll('[data-v]').forEach(btn => btn.onclick = () => {
+    const pages = btn.dataset.v === 'pages';
+    d.querySelectorAll('[data-v]').forEach(o => o.setAttribute('aria-pressed', String(o === btn)));
+    body.hidden = pages; pagesBox.hidden = !pages; d.querySelector('.cmp-only').hidden = pages;
+    if (pages && !built) buildPages();
+    if (pages) { const first = [...marks[0].keys(), ...marks[1].keys()].sort((x, y) => x - y)[0]; if (first > 1) pagesBox.querySelector(`[data-p="${first}"]`)?.scrollIntoView({ block: 'start' }); }
+  });
 }
 
 // ---------- PDF to Word: the text and paragraphs as an editable .docx ----------
@@ -1604,6 +2058,15 @@ async function runBatch(files, target) {
     o.password = await askPassword(target);
     if (o.password === null) return;
   }
+  if (target === 'extract') {
+    o.pages = await askPages();
+    if (o.pages === null) return;
+  }
+  if (target === 'scan') { openScanner(files.filter(f => kindOf(f) === 'image')); return; }
+  if (target === 'imgedit') {
+    o.img = await askImage(files.filter(f => kindOf(f) === 'image'));
+    if (o.img === null) return;
+  }
   const items = files.map(f => ({ f, kind: kindOf(f) })).filter(x => x.kind);
   const ok = items.filter(x => targetsFor(x.f).includes(target));
   const skipped = items.length - ok.length;
@@ -1749,7 +2212,7 @@ function arc(a0, a1, r0, r1) {
   return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
 }
 // Long labels (BEARBEITEN, ANONYMISÉR …) get a smaller font so they stay inside their slice.
-function fit(text, room) { const w = text.length * 8.4; return w > room ? ` style="font-size:${Math.max(9, Math.floor(13 * room / w))}px"` : ''; }
+function fitLabel(text, room) { const w = text.length * 8.4; return w > room ? ` style="font-size:${Math.max(9, Math.floor(13 * room / w))}px"` : ''; }
 function drawRing(targets, count, subtitle) {
   const n = targets.length, gap = n > 1 ? 0.03 : 0;
   let s = '';
@@ -1761,7 +2224,7 @@ function drawRing(targets, count, subtitle) {
     s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="${esc(T('ring.convertTo', { t: label(t) }) + (T('rd.' + t) !== 'rd.' + t ? '. ' + T('rd.' + t) : ''))}" style="--k:${kv(OUT[t].k)}">
       <path d="${n === 1 ? arc(-Math.PI / 2, Math.PI * 1.5 - 0.0001, R.r0, R.r1) : arc(a0, a1, R.r0, R.r1)}"/>
       <circle class="tick" cx="${tx}" cy="${ty}" r="3"/>
-      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"${fit(label(t), n === 1 ? 999 : 2 * lr * Math.sin((a1 - a0) / 2) - 14)}>${esc(label(t))}</text></g>`;
+      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"${fitLabel(label(t), n === 1 ? 999 : 2 * lr * Math.sin((a1 - a0) / 2) - 14)}>${esc(label(t))}</text></g>`;
   });
   s += `<g class="hub"><circle cx="${R.cx}" cy="${R.cy}" r="${R.r0 - 6}"/>
     <text class="t1" id="hubT1" x="${R.cx}" y="${R.cy - 6}" text-anchor="middle">${count}</text>

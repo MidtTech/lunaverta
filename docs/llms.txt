@@ -45,6 +45,12 @@ Key facts:
 - [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
 - [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn the text in a PDF into a Word document you can edit, with headings and paragraphs. Free and private: your PDF is never uploaded.
 - [Compare two PDFs](https://lunaverta.com/compare-pdf/): Compare two versions of a PDF and see every added, removed and changed line, word by word. Free and private: nothing is uploaded.
+- [Extract PDF pages](https://lunaverta.com/extract-pdf-pages/): Pick the pages you need from a PDF, such as 2-5 and 9, and save them as a new PDF. Free and private: your PDF is never uploaded.
+- [Compress image](https://lunaverta.com/compress-image/): Make photos and pictures smaller for e-mail and the web. See the new size before you save. Free and private: your images are never uploaded.
+- [Resize image](https://lunaverta.com/resize-image/): Resize photos and pictures to 75%, 50%, 25% or an exact width in pixels, many at once. Free and private: your images are never uploaded.
+- [Crop image](https://lunaverta.com/crop-image/): Crop a photo or picture in your browser: square for a profile picture, 4:3, 16:9 or any shape. Free and private: your image is never uploaded.
+- [Scan to PDF](https://lunaverta.com/scan-to-pdf/): Take photos of paper with your phone and get a clean, straight PDF, with the text searchable if you like. Free and private: the photos never leave your device.
+- [Remove background](https://lunaverta.com/remove-background/): Cut out a person, product or pet and make the background transparent, right in your browser. Free and private: your photos are never uploaded.
 - [PDF to text](https://lunaverta.com/pdf-to-text/): Extract all text from a PDF into a plain text file in your browser. Free and private: your PDF is never uploaded.
 
 ## Værktøjer (dansk)
@@ -78,6 +84,12 @@ Key facts:
 - [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
 - [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav teksten i en PDF om til et Word-dokument, du kan redigere, med overskrifter og afsnit. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Sammenlign to PDF'er](https://lunaverta.com/da/sammenlign-pdf/): Sammenlign to versioner af en PDF, og se hver tilføjet, fjernet og ændret linje, ord for ord. Gratis og privat: intet bliver uploadet.
+- [Udtræk sider fra PDF](https://lunaverta.com/da/udtraek-sider-fra-pdf/): Vælg de sider, du skal bruge fra en PDF, fx 2-5 og 9, og gem dem som en ny PDF. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Komprimér billede](https://lunaverta.com/da/komprimer-billede/): Gør fotos og billeder mindre til mail og web. Se den nye størrelse, før du gemmer. Gratis og privat: dine billeder bliver aldrig uploadet.
+- [Skalér billede](https://lunaverta.com/da/skaler-billede/): Skalér fotos og billeder til 75 %, 50 %, 25 % eller en præcis bredde i pixels, mange på én gang. Gratis og privat: dine billeder bliver aldrig uploadet.
+- [Beskær billede](https://lunaverta.com/da/beskaer-billede/): Beskær et foto eller billede i din browser: kvadratisk til et profilbillede, 4:3, 16:9 eller en hvilken som helst form. Gratis og privat: dit billede bliver aldrig uploadet.
+- [Scan til PDF](https://lunaverta.com/da/scan-til-pdf/): Tag billeder af papir med telefonen, og få en pæn, lige PDF, gerne med søgbar tekst. Gratis og privat: billederne forlader aldrig din enhed.
+- [Fjern baggrund](https://lunaverta.com/da/fjern-baggrund/): Klip en person, et produkt eller et kæledyr fri, og gør baggrunden gennemsigtig, direkte i din browser. Gratis og privat: dine billeder bliver aldrig uploadet.
 - [PDF til tekst](https://lunaverta.com/da/pdf-til-tekst/): Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 
 ## Werkzeuge (Deutsch)
@@ -111,6 +123,12 @@ Key facts:
 - [Video in MP3](https://lunaverta.com/de/video-in-mp3/): Den Ton aus einem Video holen oder WAV, M4A und andere Audiodateien im Browser in MP3 umwandeln. Kostenlos und privat, ohne Upload.
 - [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Den Text eines PDFs in ein bearbeitbares Word-Dokument mit Überschriften und Absätzen umwandeln. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [Zwei PDFs vergleichen](https://lunaverta.com/de/pdf-vergleichen/): Zwei Versionen eines PDFs vergleichen und jede hinzugefügte, entfernte und geänderte Zeile sehen, Wort für Wort. Kostenlos und privat: Nichts wird hochgeladen.
+- [PDF-Seiten extrahieren](https://lunaverta.com/de/pdf-seiten-extrahieren/): Wähle die Seiten, die du aus einem PDF brauchst, etwa 2-5 und 9, und speichere sie als neues PDF. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [Bild komprimieren](https://lunaverta.com/de/bild-komprimieren/): Fotos und Bilder für E-Mail und Web verkleinern. Die neue Größe siehst du vor dem Speichern. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
+- [Bildgröße ändern](https://lunaverta.com/de/bildgroesse-aendern/): Fotos und Bilder auf 75 %, 50 %, 25 % oder eine genaue Breite in Pixeln verkleinern, viele auf einmal. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
+- [Bild zuschneiden](https://lunaverta.com/de/bild-zuschneiden/): Ein Foto oder Bild im Browser zuschneiden: quadratisch fürs Profilbild, 4:3, 16:9 oder in beliebiger Form. Kostenlos und privat: Dein Bild wird nie hochgeladen.
+- [Dokument scannen](https://lunaverta.com/de/dokument-scannen/): Fotografiere Papier mit dem Handy und erhalte ein sauberes, gerades PDF, auf Wunsch mit durchsuchbarem Text. Kostenlos und privat: Die Fotos verlassen nie dein Gerät.
+- [Hintergrund entfernen](https://lunaverta.com/de/hintergrund-entfernen/): Stell eine Person, ein Produkt oder ein Haustier frei und mach den Hintergrund transparent, direkt im Browser. Kostenlos und privat: Deine Fotos werden nie hochgeladen.
 - [PDF in Text](https://lunaverta.com/de/pdf-in-text/): Den gesamten Text eines PDFs im Browser in eine einfache Textdatei extrahieren. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 
 ## Verktøy (norsk)
@@ -144,6 +162,12 @@ Key facts:
 - [Video til MP3](https://lunaverta.com/no/video-til-mp3/): Hent ut lyden fra en video, eller konverter WAV, M4A og annen lyd til MP3 i nettleseren. Gratis og privat, uten opplasting.
 - [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.
 - [Sammenlign to PDF-er](https://lunaverta.com/no/sammenlign-pdf/): Sammenlign to versjoner av en PDF og se hver linje som er lagt til, fjernet og endret, ord for ord. Gratis og privat: ingenting lastes opp.
+- [Hent ut PDF-sider](https://lunaverta.com/no/hent-ut-sider-fra-pdf/): Velg sidene du trenger fra en PDF, for eksempel 2-5 og 9, og lagre dem som en ny PDF. Gratis og privat: PDF-en din lastes aldri opp.
+- [Komprimer bilde](https://lunaverta.com/no/komprimer-bilde/): Gjør bilder mindre til e-post og nettet. Se den nye størrelsen før du lagrer. Gratis og privat: bildene dine lastes aldri opp.
+- [Endre størrelse på bilde](https://lunaverta.com/no/endre-storrelse-pa-bilde/): Endre størrelse på bilder til 75 %, 50 %, 25 % eller en nøyaktig bredde i piksler, mange på én gang. Gratis og privat: bildene dine lastes aldri opp.
+- [Beskjær bilde](https://lunaverta.com/no/beskjaer-bilde/): Beskjær et bilde i nettleseren: kvadratisk til et profilbilde, 4:3, 16:9 eller hvilken som helst form. Gratis og privat: bildet ditt lastes aldri opp.
+- [Skann til PDF](https://lunaverta.com/no/skann-til-pdf/): Ta bilder av papir med mobilen og få en pen, rett PDF, gjerne med søkbar tekst. Gratis og privat: bildene forlater aldri enheten din.
+- [Fjern bakgrunn](https://lunaverta.com/no/fjern-bakgrunn/): Frilegg en person, et produkt eller et kjæledyr og gjør bakgrunnen gjennomsiktig, rett i nettleseren. Gratis og privat: bildene dine lastes aldri opp.
 - [PDF til tekst](https://lunaverta.com/no/pdf-til-tekst/): Hent ut all tekst fra en PDF til en vanlig tekstfil i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
 
 ## Verktyg (svenska)
@@ -177,6 +201,12 @@ Key facts:
 - [Video till MP3](https://lunaverta.com/sv/video-till-mp3/): Ta ut ljudet ur en video, eller konvertera WAV, M4A och annat ljud till MP3 i webbläsaren. Gratis och privat, utan uppladdning.
 - [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om texten i en PDF till ett Word-dokument som du kan redigera, med rubriker och stycken. Gratis och privat: din PDF laddas aldrig upp.
 - [Jämför två PDF-filer](https://lunaverta.com/sv/jamfor-pdf/): Jämför två versioner av en PDF och se varje tillagd, borttagen och ändrad rad, ord för ord. Gratis och privat: inget laddas upp.
+- [Extrahera PDF-sidor](https://lunaverta.com/sv/extrahera-sidor-ur-pdf/): Välj de sidor du behöver ur en PDF, till exempel 2-5 och 9, och spara dem som en ny PDF. Gratis och privat: din PDF laddas aldrig upp.
+- [Komprimera bild](https://lunaverta.com/sv/komprimera-bild/): Gör foton och bilder mindre för e-post och webben. Se den nya storleken innan du sparar. Gratis och privat: dina bilder laddas aldrig upp.
+- [Ändra storlek på bild](https://lunaverta.com/sv/andra-storlek-pa-bild/): Ändra storlek på foton och bilder till 75 %, 50 %, 25 % eller en exakt bredd i pixlar, många på en gång. Gratis och privat: dina bilder laddas aldrig upp.
+- [Beskär bild](https://lunaverta.com/sv/beskar-bild/): Beskär ett foto eller en bild i webbläsaren: kvadratisk för en profilbild, 4:3, 16:9 eller valfri form. Gratis och privat: din bild laddas aldrig upp.
+- [Skanna till PDF](https://lunaverta.com/sv/skanna-till-pdf/): Fota papper med mobilen och få en snygg, rak PDF, gärna med sökbar text. Gratis och privat: fotona lämnar aldrig din enhet.
+- [Ta bort bakgrund](https://lunaverta.com/sv/ta-bort-bakgrund/): Frilägg en person, en produkt eller ett husdjur och gör bakgrunden genomskinlig, direkt i webbläsaren. Gratis och privat: dina foton laddas aldrig upp.
 - [PDF till text](https://lunaverta.com/sv/pdf-till-text/): Ta ut all text ur en PDF till en vanlig textfil i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
 
 ## About

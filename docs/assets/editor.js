@@ -975,6 +975,7 @@ function openSign() {
     <div class="sig-pane" data-pane="saved" hidden><div class="sig-saved"></div></div>
     <label class="pw-show"><input type="checkbox" name="remember"> ${esc(T('sign.remember'))}</label>
     <label class="pw-show"><input type="checkbox" name="all"> ${esc(T('sign.all'))}</label>
+    <label class="pw-show"><input type="checkbox" name="date"> ${esc(T('sign.date'))}</label>
     <p class="pw-err" role="alert" hidden></p>
     <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary">${esc(T('sign.place'))}</button></div>
   </form>`;
@@ -1027,13 +1028,30 @@ function openSign() {
     if (!src) { err.textContent = T('sign.empty'); err.hidden = false; return; }
     if (f.remember.checked && tab !== 'saved') storeSigs([src, ...savedSigs().filter(s => s !== src)]);
     d.close();
-    const im = new Image();
     const all = f.all.checked;
-    im.onload = () => { S.placing = { src, ratio: im.height / im.width, all }; placingMode(true); };
-    im.src = src;
+    const place = s2 => { const im = new Image(); im.onload = () => { S.placing = { src: s2, ratio: im.height / im.width, all }; placingMode(true); }; im.src = s2; };
+    if (f.date.checked) withDate(src).then(place); else place(src);
   };
   d.addEventListener('close', () => d.remove());
   d.showModal();
+}
+// The signature with today's date written under it, in the page's language (the saved signature stays without it).
+function withDate(src) {
+  return new Promise(resolve => {
+    const im = new Image();
+    im.onload = () => {
+      const day = new Date().toLocaleDateString({ da: 'da-DK', sv: 'sv-SE', no: 'nb-NO', de: 'de-DE' }[window.LV && window.LV.lang] || 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      const fs = Math.max(18, Math.round(im.height * 0.24)), c = document.createElement('canvas'), x = c.getContext('2d');
+      x.font = `${fs}px "IBM Plex Sans", Helvetica, Arial, sans-serif`;
+      const tw = Math.ceil(x.measureText(day).width);
+      c.width = Math.max(im.width, tw + 8); c.height = im.height + Math.round(fs * 1.5);
+      x.drawImage(im, 0, 0);
+      x.font = `${fs}px "IBM Plex Sans", Helvetica, Arial, sans-serif`; x.fillStyle = '#0b1a5c'; x.textBaseline = 'alphabetic';
+      x.fillText(day, 4, im.height + Math.round(fs * 1.1));
+      resolve(c.toDataURL('image/png'));
+    };
+    im.src = src;
+  });
 }
 function placingMode(on) {
   document.documentElement.classList.toggle('ed-placing', on);

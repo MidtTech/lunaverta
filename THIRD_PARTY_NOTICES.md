@@ -2847,3 +2847,15 @@ Source: https://github.com/naptha/tesseract.js and https://github.com/naptha/tes
 built from Tesseract OCR (https://github.com/tesseract-ocr/tesseract, Apache License 2.0).
 Language data: Danish, English, Swedish, Norwegian and German "best_int" models from tessdata (Apache License 2.0), via @tesseract.js-data/dan, eng, swe, nor and deu.
 Files: docs/vendor/tesseract/, served unmodified.
+
+## ONNX Runtime Web 1.20.1
+
+Source: https://github.com/microsoft/onnxruntime (MIT License), via the onnxruntime-web npm package.
+Files: docs/vendor/ort/ort.wasm.min.js, ort-wasm-simd-threaded.mjs, ort-wasm-simd-threaded.wasm, served unmodified.
+
+## U²-Net "silueta" background-removal model
+
+Model: U²-Net (Xuebin Qin, Zichen Zhang, Chenyang Huang, Masood Dehghan, Osmar R. Zaiane, Martin Jagersand), https://github.com/xuebinqin/U-2-Net, Apache License 2.0.
+Compact "silueta" weights from rembg (Daniel Gatis), https://github.com/danielgatis/rembg, MIT License; obtained via the @rmbg/model-silueta npm package and joined into one file.
+File: docs/vendor/ort/silueta.onnx.
+
