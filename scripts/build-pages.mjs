@@ -42,9 +42,9 @@ const refGrid = lang => Object.entries(KINDS).map(([id, k]) => `<div class="kind
   <div class="kind-row"><span class="kind-lbl">${esc(t(lang, 'ref.from'))}</span><span class="fmts from">${k.exts.map(e => `<span class="fmt">${esc(e.toUpperCase())}</span>`).join('')}</span></div>
   <div class="kind-row"><span class="kind-lbl">${esc(t(lang, 'ref.to'))}</span><span class="fmts to">${k.targets.map(x => chip(lang, x)).join('')}</span></div></div>`).join('');
 
-const GENERAL_FAQ = [1, 2, 3, 4, 5, 9, 6, 8]; // 7 (no MP4 / .doc) now lives in the format notes
+const GENERAL_FAQ = [1, 2, 3, 4, 5, 9, 10, 6, 8]; // 7 (no MP4 / .doc) now lives in the format notes
 function faqSection(lang, toolFaq, toolName) {
-  const items = [...(toolFaq || []).map(([q, a]) => ({ q, a })), ...GENERAL_FAQ.filter(i => !toolFaq || [1, 2, 5, 9].includes(i)).map(i => ({ q: t(lang, 'faq.q' + i), a: t(lang, 'faq.a' + i), key: i }))];
+  const items = [...(toolFaq || []).map(([q, a]) => ({ q, a })), ...GENERAL_FAQ.filter(i => !toolFaq || [1, 2, 5, 9, 10].includes(i)).map(i => ({ q: t(lang, 'faq.q' + i), a: t(lang, 'faq.a' + i), key: i }))];
   const html = `  <section class="faq" aria-labelledby="h-faq">
     <h2 id="h-faq">${esc(toolName ? LABELS[lang].faqTool.replace('{name}', toolName) : t(lang, 'faq.h'))}</h2>
     <div class="faq-list">
