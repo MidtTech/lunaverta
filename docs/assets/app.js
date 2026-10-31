@@ -1873,19 +1873,37 @@ document.addEventListener('click', e => {
 });
 
 // ---------- "See how it works": the convert video in a small window ----------
-document.addEventListener('click', e => {
-  const btn = e.target.closest('[data-howto]'); if (!btn) return;
-  const L = btn.dataset.howto === 'da' ? 'da' : 'en', other = L === 'da' ? 'en' : 'da';
+function playVideo(key, title, L) {
+  const other = L === 'da' ? 'en' : 'da';
   const d = document.createElement('dialog');
   d.className = 'pw-dialog howto-dialog';
-  d.innerHTML = `<form method="dialog"><div class="howto-head"><h2>${esc(T('howto.title'))}</h2><button type="submit" class="ed-ico" aria-label="${esc(T('coffee.close'))}">×</button></div>
-    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/convert-${L}.jpg"><source src="/videos/convert-${L}.mp4" type="video/mp4">
-      <track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/convert.${L}.vtt" default>
-      <track kind="subtitles" srclang="${other}" label="${other === 'da' ? 'Dansk' : 'English'}" src="/videos/convert.${other}.vtt"></video>
+  d.innerHTML = `<form method="dialog"><div class="howto-head"><h2>${esc(title)}</h2><button type="submit" class="ed-ico" aria-label="${esc(T('coffee.close'))}">×</button></div>
+    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/${key}-${L}.jpg"><source src="/videos/${key}-${L}.mp4" type="video/mp4">
+      <track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt" default>
+      <track kind="subtitles" srclang="${other}" label="${other === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${other}.vtt"></video>
     <p class="howto-cap">${esc(T('howto.caption'))}</p></form>`;
   d.addEventListener('close', () => { const v = d.querySelector('video'); if (v) v.pause(); d.remove(); });
   document.body.appendChild(d); d.showModal();
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-howto]'); if (!btn) return;
+  playVideo('convert', T('howto.title'), btn.dataset.howto === 'da' ? 'da' : 'en');
 });
+// First visit: a small, polite offer of a 40-second welcome video. Shown once; never again after a choice.
+(() => {
+  const KEY = 'lunaverta-welcome';
+  // only on the front page, and only until the visitor has made a choice
+  try { if (localStorage.getItem(KEY) || PRESET) return; } catch (e) { return; }
+  const L = document.documentElement.lang === 'da' ? 'da' : 'en';
+  const card = document.createElement('div');
+  card.className = 'welcome-card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', T('welcome.title'));
+  card.innerHTML = `<img src="/videos/welcome-${L}.jpg" alt="" width="96" height="54"><div><b>${esc(T('welcome.ask'))}</b><button type="button" class="linkish" data-w="play">▶ ${esc(T('welcome.watch'))}</button></div><button type="button" class="ed-ico" data-w="close" aria-label="${esc(T('welcome.close'))}" title="${esc(T('welcome.close'))}">×</button>`;
+  const done = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} card.remove(); };
+  card.querySelector('[data-w="close"]').onclick = done;
+  card.querySelector('[data-w="play"]').onclick = () => { done(); playVideo('welcome', T('welcome.title'), L); };
+  card.querySelector('img').onclick = card.querySelector('[data-w="play"]').onclick;
+  setTimeout(() => { document.body.appendChild(card); requestAnimationFrame(() => card.classList.add('show')); }, 2500);
+})();
 
 // ---------- iPhone/iPad: stop Safari zooming in when a small text field is tapped ----------
 // iOS ignores maximum-scale for pinch zoom, so people can still zoom by hand.
