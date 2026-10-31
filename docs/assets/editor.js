@@ -1033,11 +1033,18 @@ function placingMode(on) {
   if (!on) S.placing = null;
 }
 // a placed signature: drag to move, corner to resize, × to remove
+// A signature (or other picture) must stay on the page: anything outside it would be cut off in the saved PDF.
+function keepOnPage(im, box) {
+  const [x0, y0, x1, y1] = box;
+  im.w = Math.min(im.w, x1 - x0); im.h = Math.min(im.h, y1 - y0);
+  im.x = Math.min(Math.max(im.x, x0), x1 - im.w); im.y = Math.min(Math.max(im.y, y0), y1 - im.h);
+}
 function sigBox(v, im) {
   const el = document.createElement('div');
   el.className = 'ed-img';
   el.innerHTML = `<img src="${im.src}" alt="" draggable="false"><span class="ed-img-size" title="${esc(T('sign.resize'))}" aria-hidden="true"></span><button type="button" class="ed-ico ed-box-x" aria-label="${esc(T('sign.remove'))}" title="${esc(T('sign.remove'))}">${ICON.x}</button>`;
   const place = () => {
+    keepOnPage(im, v.vp.viewBox);
     const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([im.x, im.y, im.x + im.w, im.y + im.h]);
     Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
   };
@@ -1050,7 +1057,7 @@ function sigBox(v, im) {
     const start = { x: e.clientX, y: e.clientY, im: { ...im } }, k = 1 / v.scale;
     const move = ev => {
       const dx = (ev.clientX - start.x) * k, dy = (ev.clientY - start.y) * k;
-      if (resize) { const w = Math.max(20, start.im.w + dx), h = w * (start.im.h / start.im.w); im.w = w; im.h = h; im.y = start.im.y + start.im.h - h; }
+      if (resize) { const vb = v.vp.viewBox, ratio = start.im.h / start.im.w; let w = Math.max(20, start.im.w + dx); w = Math.min(w, vb[2] - start.im.x, (start.im.y + start.im.h - vb[1]) / ratio); const h = w * ratio; im.w = w; im.h = h; im.y = start.im.y + start.im.h - h; }
       else { im.x = start.im.x + dx; im.y = start.im.y - dy; }
       S.dirty = true; place();
     };
@@ -1823,7 +1830,8 @@ async function save(opt) {
       // signatures and other pictures
       for (const im of S.images.filter(x => x.pageId === pg.id)) {
         sigCache[im.src] = sigCache[im.src] || await out.embedPng(await (await fetch(im.src)).arrayBuffer());
-        page.drawImage(sigCache[im.src], { x: im.x, y: im.y, width: im.w, height: im.h });
+        const cb = page.getCropBox(), at = { ...im }; keepOnPage(at, [cb.x, cb.y, cb.x + cb.width, cb.y + cb.height]);
+        page.drawImage(sigCache[im.src], { x: at.x, y: at.y, width: at.w, height: at.h });
       }
       await drawExtras(out, page, pg, pi, final.length, extraFonts);
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
