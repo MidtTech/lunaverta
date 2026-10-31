@@ -93,7 +93,7 @@ const opts = () => ({
   quality: +$('optQuality').value / 100, maxDim: +$('optSize').value, kbps: +$('optKbps').value,
   gifSeconds: +$('optGif').value, merge: $('optMerge').checked, pdfQ: $('optPdfQ').value
 });
-const OPT_IDS = ['optQuality', 'optSize', 'optKbps', 'optGif', 'optMerge', 'optPdfQ'];
+const OPT_IDS = ['optQuality', 'optSize', 'optKbps', 'optGif', 'optMerge', 'optPdfQ', 'optOcr'];
 try {
   const saved = JSON.parse(localStorage.getItem('lunaverta-opts') || '{}');
   OPT_IDS.forEach(id => { if (id in saved) { const el = $(id); if (el.type === 'checkbox') el.checked = saved[id]; else el.value = saved[id]; } });
@@ -1193,14 +1193,26 @@ async function cleanPDF(file) {
 }
 
 // ---------- OCR: make scans and photos of text searchable ----------
-// Tesseract reads the text in the picture (Danish and English) on this device.
+// Tesseract reads the text in the picture on this device: the page's language
+// (or the one chosen under settings) together with English. Only that language's
+// data (about 2 MB) is fetched, the first time, and then kept for offline use.
+// English and Danish pages read Danish and English, as before.
 // The result is a PDF with the picture as before and the recognised words as
 // invisible text on top, so the text can be searched, selected and copied.
-let ocrWorker = null, ocrProgress = null;
+let ocrWorker = null, ocrProgress = null, ocrLangs = '';
+const OCR_FOR_PAGE = { da: 'dan', en: 'dan', sv: 'swe', no: 'nor', de: 'deu' };
+function ocrLanguages() {
+  const pick = ($('optOcr') || {}).value || 'auto';
+  const main = pick === 'auto' ? (OCR_FOR_PAGE[document.documentElement.lang] || 'dan') : pick;
+  return main === 'eng' ? ['eng'] : [main, 'eng'];
+}
 async function ocrEngine() {
   await lib('tesseract');
+  const langs = ocrLanguages();
+  if (ocrWorker && ocrLangs !== langs.join('+')) { try { await ocrWorker.terminate(); } catch (e) {} ocrWorker = null; }
   if (!ocrWorker) {
-    ocrWorker = await window.Tesseract.createWorker(['dan', 'eng'], 1, {
+    ocrLangs = langs.join('+');
+    ocrWorker = await window.Tesseract.createWorker(langs, 1, {
       workerPath: VENDOR + 'tesseract/worker.min.js',
       corePath: VENDOR + 'tesseract/',
       langPath: VENDOR + 'tesseract/lang',

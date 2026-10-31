@@ -107,6 +107,8 @@ window.LV_STR.no = {
   'opt.pdfq': 'Word til PDF',
   'opt.pdfq.best': 'Beste kvalitet',
   'opt.pdfq.small': 'Liten fil',
+  'opt.ocr': 'OCR-språk',
+  'opt.ocr.auto': 'Samme som siden',
   'out.h': 'Konvertert',
   'out.empty': 'Konverterte filer vises her, klare til å lagres.',
   'out.saveAll': 'Lagre alle som .zip',

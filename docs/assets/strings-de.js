@@ -107,6 +107,8 @@ window.LV_STR.de = {
   'opt.pdfq': 'Word zu PDF',
   'opt.pdfq.best': 'Beste Qualität',
   'opt.pdfq.small': 'Kleine Datei',
+  'opt.ocr': 'OCR-Sprache',
+  'opt.ocr.auto': 'Wie die Seite',
   'out.h': 'Umgewandelt',
   'out.empty': 'Umgewandelte Dateien erscheinen hier, bereit zum Speichern.',
   'out.saveAll': 'Alle als .zip speichern',

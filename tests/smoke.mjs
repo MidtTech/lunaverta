@@ -51,7 +51,8 @@ const browser = await chromium.launch();
 async function page(path, opts = {}) {
   const ctx = await browser.newContext({ acceptDownloads: true, viewport: opts.viewport || { width: 1280, height: 900 }, locale: 'en-GB' });
   // skip the first-visit niceties and use plain downloads instead of the Save as window
-  await ctx.addInitScript(() => { try { localStorage.setItem('lunaverta-ask-where', '0'); localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-prep-seen', '1'); localStorage.setItem('lunaverta-tour', '1'); } catch (e) {} });
+  // (OCR_LANG=dan npm test forces one OCR language, to check that the OCR tests would catch a wrong one)
+  await ctx.addInitScript(force => { try { localStorage.setItem('lunaverta-ask-where', '0'); localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-prep-seen', '1'); localStorage.setItem('lunaverta-tour', '1'); if (force) localStorage.setItem('lunaverta-opts', JSON.stringify({ optOcr: force })); } catch (e) {} }, process.env.OCR_LANG || '');
   const p = await ctx.newPage();
   p.errors = [];
   p.on('pageerror', e => p.errors.push(e.message));
@@ -151,6 +152,40 @@ await test('every language has its own texts and a menu with all languages', asy
   }
   await done(p);
 });
+
+// OCR in each language: a "scan" (a picture of text, no text layer) is read back with the right letters.
+const SCANS = [
+  ['sv', '/sv/gor-pdf-sokbar/', 'Kära kund, fakturan för måndag är betald. Tack för köpet och välkommen åter.', ['Kära', 'måndag', 'köpet', 'välkommen']],
+  ['no', '/no/gjor-pdf-sokbar/', 'Kjære kunde, fødselsnummeret må ikke deles. Vi ønsker deg en fin søndag på kontoret.', ['Kjære', 'fødselsnummeret', 'ønsker', 'søndag']],
+  ['de', '/de/pdf-durchsuchbar-machen/', 'Sehr geehrte Damen und Herren, die Größe der Lieferung für Grüße aus Köln ist gemäß Übersicht.', ['Größe', 'Grüße', 'Köln', 'Übersicht']]
+];
+async function scanPdf(text) {
+  const p = await browser.newPage({ viewport: { width: 1240, height: 400 } });
+  await p.setContent(`<body style="margin:0;background:#fff"><p style="font:34px/1.5 Georgia,serif;margin:60px;width:1100px">${text}</p></body>`);
+  const png = await p.screenshot(); await p.close();
+  const doc = await PDFDocument.create(), img = await doc.embedPng(png), pg = doc.addPage([595, 192]);
+  pg.drawImage(img, { x: 0, y: 0, width: 595, height: 192 });
+  return Buffer.from(await doc.save());
+}
+async function pdfText(buf) {
+  const pdfjs = require('pdfjs-dist/legacy/build/pdf.js');
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), isEvalSupported: false, verbosity: 0 }).promise;
+  let out = '';
+  for (let i = 1; i <= doc.numPages; i++) out += (await (await doc.getPage(i)).getTextContent()).items.map(it => it.str).join(' ') + '\n';
+  return out;
+}
+for (const [L, path, text, words] of SCANS) {
+  await test(`OCR reads ${L} text with its own letters`, async () => {
+    const p = await page(path);
+    await p.setInputFiles('#fileInput', file('scan.pdf', await scanPdf(text)));
+    const save = p.locator('.row.done .save').first(); await save.waitFor({ timeout: 120000 });
+    const [dl] = await Promise.all([p.waitForEvent('download'), save.click()]);
+    const got = await pdfText(await readFile(await dl.path()));
+    const missing = words.filter(w => !got.includes(w));
+    assert(!missing.length, `missing ${missing.join(', ')} in: ${got.trim().slice(0, 160)}`);
+    await done(p);
+  });
+}
 
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });

@@ -2845,5 +2845,5 @@ this software is based in part on the work of the Independent JPEG Group.
 
 Source: https://github.com/naptha/tesseract.js and https://github.com/naptha/tesseract.js-core (Apache License 2.0),
 built from Tesseract OCR (https://github.com/tesseract-ocr/tesseract, Apache License 2.0).
-Language data: Danish and English "best_int" models from tessdata (Apache License 2.0), via @tesseract.js-data/dan and @tesseract.js-data/eng.
+Language data: Danish, English, Swedish, Norwegian and German "best_int" models from tessdata (Apache License 2.0), via @tesseract.js-data/dan, eng, swe, nor and deu.
 Files: docs/vendor/tesseract/, served unmodified.

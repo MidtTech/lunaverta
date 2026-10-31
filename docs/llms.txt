@@ -22,7 +22,7 @@ Key facts:
 - [Compress PDF](https://lunaverta.com/compress-pdf/): Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.
 - [Protect PDF](https://lunaverta.com/protect-pdf/): Add a password to a PDF in your browser with AES-256 encryption. Free and private: the PDF and the password never leave your device.
 - [Unlock PDF](https://lunaverta.com/unlock-pdf/): Remove the password from a PDF you can open, right in your browser. Free and private: your PDF is never uploaded.
-- [OCR: make a PDF searchable](https://lunaverta.com/ocr-pdf/): Recognise the text in scanned PDFs and photos, in Danish and English, so it can be searched and copied. Free and private: runs on your device.
+- [OCR: make a PDF searchable](https://lunaverta.com/ocr-pdf/): Recognise the text in scanned PDFs and photos, in English, Danish, Swedish, Norwegian and German, so it can be searched and copied. Free and private: runs on your device.
 - [Remove prices from PDF](https://lunaverta.com/remove-prices-from-pdf/): Find every price in a quote or invoice and remove them all at once, keeping measurements and other details. Free and private: no upload.
 - [Redact PDF](https://lunaverta.com/redact-pdf/): Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.
 - [Remove PDF metadata](https://lunaverta.com/remove-pdf-metadata/): Strip author names, software, dates, attachments and scripts from a PDF before you share it. Free and private: your PDF is never uploaded.
@@ -55,7 +55,7 @@ Key facts:
 - [Komprimér PDF](https://lunaverta.com/da/komprimer-pdf/): Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Beskyt PDF](https://lunaverta.com/da/beskyt-pdf-med-adgangskode/): Sæt adgangskode på en PDF direkte i din browser med AES-256-kryptering. Gratis og privat: PDF'en og adgangskoden forlader aldrig din enhed.
 - [Lås PDF op](https://lunaverta.com/da/fjern-adgangskode-fra-pdf/): Fjern adgangskoden fra en PDF, du kan åbne, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
-- [OCR: gør en PDF søgbar](https://lunaverta.com/da/goer-pdf-soegbar/): Genkend teksten i scannede PDF'er og fotos, på dansk og engelsk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.
+- [OCR: gør en PDF søgbar](https://lunaverta.com/da/goer-pdf-soegbar/): Genkend teksten i scannede PDF'er og fotos, på dansk, engelsk, svensk, norsk og tysk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.
 - [Fjern priser fra PDF](https://lunaverta.com/da/fjern-priser-fra-pdf/): Find alle priser i et tilbud eller en faktura, og fjern dem på én gang, mens mål og andre oplysninger bliver stående. Gratis og privat: uden upload.
 - [Anonymisér PDF](https://lunaverta.com/da/anonymiser-pdf/): Anonymisér en PDF: fjern navne, CPR-numre og anden fortrolig tekst. Teksten slettes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
@@ -88,7 +88,7 @@ Key facts:
 - [PDF komprimieren](https://lunaverta.com/de/pdf-komprimieren/): Die Dateigröße eines PDFs im Browser verringern. Der Text bleibt durchsuchbar. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [PDF schützen](https://lunaverta.com/de/pdf-mit-passwort-schuetzen/): Ein PDF im Browser mit einem Passwort und AES-256-Verschlüsselung versehen. Kostenlos und privat: PDF und Passwort verlassen nie dein Gerät.
 - [PDF entsperren](https://lunaverta.com/de/pdf-passwort-entfernen/): Das Passwort aus einem PDF entfernen, das du öffnen kannst, direkt im Browser. Kostenlos und privat: Dein PDF wird nie hochgeladen.
-- [OCR: PDF durchsuchbar machen](https://lunaverta.com/de/pdf-durchsuchbar-machen/): Den Text in gescannten PDFs und Fotos erkennen, auf Dänisch und Englisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.
+- [OCR: PDF durchsuchbar machen](https://lunaverta.com/de/pdf-durchsuchbar-machen/): Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.
 - [Preise aus PDF entfernen](https://lunaverta.com/de/preise-aus-pdf-entfernen/): Alle Preise in einem Angebot oder einer Rechnung finden und auf einmal entfernen, während Maße und andere Angaben bleiben. Kostenlos und privat: ohne Upload.
 - [PDF schwärzen](https://lunaverta.com/de/pdf-schwaerzen/): Namen, Kontonummern und anderen vertraulichen Text in einem PDF schwärzen. Der Text wird entfernt, nicht nur verdeckt. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [PDF-Metadaten entfernen](https://lunaverta.com/de/pdf-metadaten-entfernen/): Autorennamen, Programm, Datumsangaben, Anhänge und Skripte aus einem PDF entfernen, bevor du es teilst. Kostenlos und privat: Dein PDF wird nie hochgeladen.
@@ -121,7 +121,7 @@ Key facts:
 - [Komprimer PDF](https://lunaverta.com/no/komprimer-pdf/): Reduser filstørrelsen på en PDF i nettleseren. Teksten forblir søkbar. Gratis og privat: PDF-en din lastes aldri opp.
 - [Beskytt PDF](https://lunaverta.com/no/beskytt-pdf-med-passord/): Legg til et passord på en PDF i nettleseren med AES-256-kryptering. Gratis og privat: PDF-en og passordet forlater aldri enheten din.
 - [Lås opp PDF](https://lunaverta.com/no/fjern-passord-fra-pdf/): Fjern passordet fra en PDF du kan åpne, rett i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
-- [OCR: gjør en PDF søkbar](https://lunaverta.com/no/gjor-pdf-sokbar/): Gjenkjenn teksten i skannede PDF-er og bilder, på dansk og engelsk, så den kan søkes i og kopieres. Gratis og privat: kjører på enheten din.
+- [OCR: gjør en PDF søkbar](https://lunaverta.com/no/gjor-pdf-sokbar/): Gjenkjenn teksten i skannede PDF-er og bilder, på norsk, engelsk, dansk, svensk og tysk, så den kan søkes i og kopieres. Gratis og privat: kjører på enheten din.
 - [Fjern priser fra PDF](https://lunaverta.com/no/fjern-priser-fra-pdf/): Finn alle priser i et tilbud eller en faktura og fjern dem på én gang, mens mål og andre opplysninger blir stående. Gratis og privat: uten opplasting.
 - [Sladd PDF](https://lunaverta.com/no/sladd-pdf/): Sladd navn, fødselsnumre og annen fortrolig tekst i en PDF. Teksten fjernes, den blir ikke bare dekket til. Gratis og privat: PDF-en din lastes aldri opp.
 - [Fjern metadata fra PDF](https://lunaverta.com/no/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedlegg og skript fra en PDF før du deler den. Gratis og privat: PDF-en din lastes aldri opp.
@@ -154,7 +154,7 @@ Key facts:
 - [Komprimera PDF](https://lunaverta.com/sv/komprimera-pdf/): Minska filstorleken på en PDF i webbläsaren. Texten förblir sökbar. Gratis och privat: din PDF laddas aldrig upp.
 - [Skydda PDF](https://lunaverta.com/sv/skydda-pdf-med-losenord/): Lägg till ett lösenord på en PDF i webbläsaren med AES-256-kryptering. Gratis och privat: PDF:en och lösenordet lämnar aldrig din enhet.
 - [Lås upp PDF](https://lunaverta.com/sv/ta-bort-losenord-fran-pdf/): Ta bort lösenordet från en PDF som du kan öppna, direkt i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
-- [OCR: gör en PDF sökbar](https://lunaverta.com/sv/gor-pdf-sokbar/): Känn igen texten i skannade PDF-filer och foton, på danska och engelska, så att den kan sökas och kopieras. Gratis och privat: körs på din enhet.
+- [OCR: gör en PDF sökbar](https://lunaverta.com/sv/gor-pdf-sokbar/): Känn igen texten i skannade PDF-filer och foton, på svenska, engelska, danska, norska och tyska, så att den kan sökas och kopieras. Gratis och privat: körs på din enhet.
 - [Ta bort priser från PDF](https://lunaverta.com/sv/ta-bort-priser-fran-pdf/): Hitta alla priser i en offert eller faktura och ta bort dem på en gång, medan mått och andra uppgifter står kvar. Gratis och privat: utan uppladdning.
 - [Maskera PDF](https://lunaverta.com/sv/maskera-pdf/): Svärta namn, personnummer och annan konfidentiell text i en PDF. Texten tas bort, den döljs inte bara. Gratis och privat: din PDF laddas aldrig upp.
 - [Ta bort metadata från PDF](https://lunaverta.com/sv/ta-bort-metadata-fran-pdf/): Ta bort författarnamn, program, datum, bilagor och skript från en PDF innan du delar den. Gratis och privat: din PDF laddas aldrig upp.

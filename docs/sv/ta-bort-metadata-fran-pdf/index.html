@@ -38,7 +38,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.css?v=7dd9103f66">
+<link rel="stylesheet" href="/assets/app.css?v=ec32bdeca8">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · Ta bort metadata från PDF","url":"https://lunaverta.com/sv/ta-bort-metadata-fran-pdf/","inLanguage":"sv","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Ta bort författarnamn, program, datum, bilagor och skript från en PDF innan du delar den. Gratis och privat: din PDF laddas aldrig upp.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"sv","mainEntity":[{"@type":"Question","name":"Vad tas bort?","acceptedAnswer":{"@type":"Answer","text":"Dokumentinformation (författare, titel, program, datum), XMP-metadata, bifogade filer, JavaScript och automatiska åtgärder samt kommentarer. De synliga sidorna, länkarna och formulärfälten behålls."}},{"@type":"Question","name":"Tar den också bort text på sidorna?","acceptedAnswer":{"@type":"Answer","text":"Nej. Använd Maskera PDF för att ta bort text på sidorna."}},{"@type":"Question","name":"Laddas mina filer upp någonstans?","acceptedAnswer":{"@type":"Answer","text":"Nej. LunaVerta har ingen server som tar emot filer. Varje konvertering körs i din webbläsare, på din enhet, och resultatet sparas direkt på din enhet."}},{"@type":"Question","name":"Fungerar det offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Efter ditt första besök sparas appen på din enhet. Hjälpprogram för PDF, Word, Excel, MP3 och HEIC sparas första gången du använder dem och fungerar sedan också offline."}},{"@type":"Question","name":"Vad kostar det?","acceptedAnswer":{"@type":"Answer","text":"Ingenting. Det finns inga konton, ingen reklam, inga cookies och inga spårare."}},{"@type":"Question","name":"Varför är det gratis?","acceptedAnswer":{"@type":"Answer","text":"Eftersom allt körs på din egen enhet har LunaVerta nästan inga driftskostnader: det finns inga servrar som tar emot, lagrar eller bearbetar filer. Därför kan det vara gratis utan reklam, utan konton och utan att sälja data. LunaVerta görs av Midt-Tech i Aarhus som ett användbart verktyg och ett exempel på vad vi bygger. Om det sparar dig tid får du gärna bjuda oss på en kaffe (MobilePay, än så länge bara i Danmark)."}},{"@type":"Question","name":"Kommer LunaVerta att förbli gratis?","acceptedAnswer":{"@type":"Answer","text":"Ja, det är planen. LunaVerta kostar väldigt lite att driva, så det finns ingen anledning att ta betalt i dag. Om du tycker att det är användbart och vill stötta arbetet får du gärna bjuda oss på en kaffe. När plattformen växer kan vissa funktioner senare erbjudas som en del av en frivillig prenumeration, men det finns inga sådana planer just nu."}}]},{"@type":"HowTo","name":"Ta bort dolda uppgifter från en PDF","inLanguage":"sv","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Välj en PDF eller släpp den på sidan."},{"@type":"HowToStep","position":2,"text":"LunaVerta tar bort metadata, bilagor, skript och kommentarer."},{"@type":"HowToStep","position":3,"text":"Spara den rensade PDF:en. Resultatet visar vad som togs bort."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Start","item":"https://lunaverta.com/sv/"},{"@type":"ListItem","position":2,"name":"Ta bort metadata från PDF","item":"https://lunaverta.com/sv/ta-bort-metadata-fran-pdf/"}]}]}
 </script>
@@ -98,6 +98,9 @@
         </label>
         <label class="opt"><span data-i18n="opt.pdfq">Word till PDF</span>
           <select id="optPdfQ"><option value="best" data-i18n="opt.pdfq.best">Bästa kvalitet</option><option value="small" data-i18n="opt.pdfq.small">Liten fil</option></select>
+        </label>
+        <label class="opt"><span data-i18n="opt.ocr">OCR-språk</span>
+          <select id="optOcr"><option value="auto" data-i18n="opt.ocr.auto">Samma som sidan</option><option value="dan" lang="da">Dansk</option><option value="eng" lang="en">English</option><option value="swe" lang="sv">Svenska</option><option value="nor" lang="no">Norsk</option><option value="deu" lang="de">Deutsch</option></select>
         </label>
         <label class="opt"><span data-i18n="opt.kbps">MP3-bithastighet</span>
           <select id="optKbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
@@ -251,7 +254,7 @@
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">En produkt från</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Danmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Bjud oss på en kaffe</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Inga cookies · inget konto · ingen reklam</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+7dd9103 · 2026-10-31">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+ec32bde · 2026-10-31">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Rapportera ett fel</a><a href="/privacy.html" data-i18n="nav.privacy">Integritet</a><a href="/licenses.html" data-i18n="nav.licenses">Licenser för öppen källkod</a></nav>
   </footer>
 </div>
@@ -260,11 +263,11 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Välj ett format"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta konverterar filer med JavaScript i din webbläsare. Slå på JavaScript för att använda det.</p></noscript>
-<script src="/assets/strings.js?v=7dd9103f66"></script>
-<script src="/assets/strings-sv.js?v=7dd9103f66"></script>
-<script src="/assets/i18n.js?v=7dd9103f66"></script>
-<script src="/assets/app.js?v=7dd9103f66"></script>
-<script src="/assets/editor.js?v=7dd9103f66"></script>
-<script src="/assets/pdf-text.js?v=7dd9103f66"></script>
+<script src="/assets/strings.js?v=ec32bdeca8"></script>
+<script src="/assets/strings-sv.js?v=ec32bdeca8"></script>
+<script src="/assets/i18n.js?v=ec32bdeca8"></script>
+<script src="/assets/app.js?v=ec32bdeca8"></script>
+<script src="/assets/editor.js?v=ec32bdeca8"></script>
+<script src="/assets/pdf-text.js?v=ec32bdeca8"></script>
 </body>
 </html>

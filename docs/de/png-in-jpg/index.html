@@ -38,7 +38,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.css?v=7dd9103f66">
+<link rel="stylesheet" href="/assets/app.css?v=ec32bdeca8">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · PNG in JPG","url":"https://lunaverta.com/de/png-in-jpg/","inLanguage":"de","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"PNG-Bilder im Browser in JPG umwandeln und viel kleiner machen. Kostenlos und privat: Nichts wird hochgeladen.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"de","mainEntity":[{"@type":"Question","name":"Was passiert mit der Transparenz?","acceptedAnswer":{"@type":"Answer","text":"JPG kann nicht transparent sein, daher werden transparente Bereiche weiß. Behalte PNG oder wähle WebP, wenn du Transparenz brauchst."}},{"@type":"Question","name":"Kann ich gleichzeitig die Größe ändern?","acceptedAnswer":{"@type":"Answer","text":"Ja. Stelle vor dem Umwandeln unter Einstellungen die Längste Seite ein."}},{"@type":"Question","name":"Werden meine Dateien irgendwo hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. LunaVerta hat keinen Server, der Dateien empfängt. Jede Umwandlung läuft in deinem Browser, auf deinem Gerät, und das Ergebnis wird direkt auf deinem Gerät gespeichert."}},{"@type":"Question","name":"Funktioniert es offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Nach deinem ersten Besuch wird die App auf deinem Gerät gespeichert. Hilfsprogramme für PDF, Word, Excel, MP3 und HEIC werden beim ersten Gebrauch gespeichert und funktionieren danach ebenfalls offline."}},{"@type":"Question","name":"Was kostet es?","acceptedAnswer":{"@type":"Answer","text":"Nichts. Es gibt keine Konten, keine Werbung, keine Cookies und keine Tracker."}},{"@type":"Question","name":"Warum ist es kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Weil alles auf deinem eigenen Gerät läuft, hat LunaVerta fast keine laufenden Kosten: Es gibt keine Server, die Dateien empfangen, speichern oder verarbeiten. Deshalb kann es ohne Werbung, ohne Konten und ohne Datenverkauf kostenlos sein. LunaVerta wird von Midt-Tech in Aarhus als nützliches Werkzeug und als Beispiel dafür gebaut, was wir entwickeln. Wenn es dir Zeit spart, kannst du uns gern einen Kaffee spendieren (MobilePay, vorerst nur in Dänemark)."}},{"@type":"Question","name":"Bleibt LunaVerta kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja, das ist der Plan. Der Betrieb von LunaVerta kostet sehr wenig, daher gibt es heute keinen Grund, Geld dafür zu verlangen. Wenn du es nützlich findest und die Arbeit unterstützen möchtest, kannst du uns gern einen Kaffee spendieren. Wenn die Plattform wächst, könnten manche Funktionen später als Teil eines freiwilligen Abos angeboten werden, aber dafür gibt es derzeit keine Pläne."}}]},{"@type":"HowTo","name":"PNG in JPG umwandeln","inLanguage":"de","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Wähle deine PNG-Bilder aus oder lege sie auf der Seite ab."},{"@type":"HowToStep","position":2,"text":"Sie werden sofort zu JPG."},{"@type":"HowToStep","position":3,"text":"Speichere sie einzeln oder alle auf einmal als .zip."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Startseite","item":"https://lunaverta.com/de/"},{"@type":"ListItem","position":2,"name":"PNG in JPG","item":"https://lunaverta.com/de/png-in-jpg/"}]}]}
 </script>
@@ -98,6 +98,9 @@
         </label>
         <label class="opt"><span data-i18n="opt.pdfq">Word zu PDF</span>
           <select id="optPdfQ"><option value="best" data-i18n="opt.pdfq.best">Beste Qualität</option><option value="small" data-i18n="opt.pdfq.small">Kleine Datei</option></select>
+        </label>
+        <label class="opt"><span data-i18n="opt.ocr">OCR-Sprache</span>
+          <select id="optOcr"><option value="auto" data-i18n="opt.ocr.auto">Wie die Seite</option><option value="dan" lang="da">Dansk</option><option value="eng" lang="en">English</option><option value="swe" lang="sv">Svenska</option><option value="nor" lang="no">Norsk</option><option value="deu" lang="de">Deutsch</option></select>
         </label>
         <label class="opt"><span data-i18n="opt.kbps">MP3-Bitrate</span>
           <select id="optKbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
@@ -251,7 +254,7 @@
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">Ein Produkt von</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Dänemark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Spendier uns einen Kaffee</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Keine Cookies · kein Konto · keine Werbung</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+7dd9103 · 2026-10-31">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+ec32bde · 2026-10-31">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Problem melden</a><a href="/privacy.html" data-i18n="nav.privacy">Datenschutz</a><a href="/licenses.html" data-i18n="nav.licenses">Open-Source-Lizenzen</a></nav>
   </footer>
 </div>
@@ -260,11 +263,11 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Format wählen"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta wandelt Dateien mit JavaScript in deinem Browser um. Aktiviere JavaScript, um es zu nutzen.</p></noscript>
-<script src="/assets/strings.js?v=7dd9103f66"></script>
-<script src="/assets/strings-de.js?v=7dd9103f66"></script>
-<script src="/assets/i18n.js?v=7dd9103f66"></script>
-<script src="/assets/app.js?v=7dd9103f66"></script>
-<script src="/assets/editor.js?v=7dd9103f66"></script>
-<script src="/assets/pdf-text.js?v=7dd9103f66"></script>
+<script src="/assets/strings.js?v=ec32bdeca8"></script>
+<script src="/assets/strings-de.js?v=ec32bdeca8"></script>
+<script src="/assets/i18n.js?v=ec32bdeca8"></script>
+<script src="/assets/app.js?v=ec32bdeca8"></script>
+<script src="/assets/editor.js?v=ec32bdeca8"></script>
+<script src="/assets/pdf-text.js?v=ec32bdeca8"></script>
 </body>
 </html>

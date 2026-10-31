@@ -21,14 +21,17 @@ const VENDOR = {
   'pdf-lib.min.js': nm('pdf-lib/dist/pdf-lib.min.js'),
   'qpdf.js': nm('@neslinesli93/qpdf-wasm/dist/qpdf.js'),
   'qpdf.wasm': nm('@neslinesli93/qpdf-wasm/dist/qpdf.wasm'),
-  // OCR (text recognition): tesseract.js, its engine and Danish and English language data
+  // OCR (text recognition): tesseract.js, its engine and language data (Danish, English, Swedish, Norwegian, German)
   'tesseract/tesseract.min.js': nm('tesseract.js/dist/tesseract.min.js'),
   'tesseract/worker.min.js': nm('tesseract.js/dist/worker.min.js'),
   'tesseract/tesseract-core-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-lstm.wasm.js'),
   'tesseract/tesseract-core-simd-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-simd-lstm.wasm.js'),
   'tesseract/tesseract-core-relaxedsimd-lstm.wasm.js': nm('tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js'),
   'tesseract/lang/dan.traineddata.gz': nm('@tesseract.js-data/dan/4.0.0_best_int/dan.traineddata.gz'),
-  'tesseract/lang/eng.traineddata.gz': nm('@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz')
+  'tesseract/lang/eng.traineddata.gz': nm('@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz'),
+  'tesseract/lang/swe.traineddata.gz': nm('@tesseract.js-data/swe/4.0.0_best_int/swe.traineddata.gz'),
+  'tesseract/lang/nor.traineddata.gz': nm('@tesseract.js-data/nor/4.0.0_best_int/nor.traineddata.gz'),
+  'tesseract/lang/deu.traineddata.gz': nm('@tesseract.js-data/deu/4.0.0_best_int/deu.traineddata.gz')
 };
 const FONTS = [
   ['bricolage-grotesque', [500, 700]],
