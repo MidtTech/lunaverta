@@ -2,7 +2,7 @@
 
 Free, private file conversion and PDF editing in the browser: [lunaverta.com](https://lunaverta.com)
 
-Everything happens on your own device. Files are never uploaded, there are no accounts, cookies, trackers or ads, and it works offline once loaded. Available in English and Danish.
+Everything happens on your own device. Files are never uploaded, there are no accounts, cookies, trackers or ads, and it works offline once loaded. Available in English, Danish, Swedish, Norwegian and German.
 
 ## What it does
 
@@ -18,8 +18,10 @@ A static site with no server code: plain HTML, CSS and JavaScript, with self-hos
 ```
 docs/                 the website (published as is)
 src/template.html     page template
-scripts/              build-pages.mjs (pages in both languages, sitemap, llms.txt, version),
-                      site-content.mjs (page texts), vendor.mjs (copies libraries into docs/)
+scripts/              build-pages.mjs (pages in every language, sitemap, llms.txt, version),
+                      site-content.mjs (English and Danish page texts), vendor.mjs (copies libraries into docs/)
+scripts/lang/         one file per extra language (sv, no, de) with its page texts;
+                      its interface texts are in docs/assets/strings-<code>.js
 ```
 
 ## Run and build
@@ -39,7 +41,7 @@ npx playwright install chromium   # once
 npm test
 ```
 
-`tests/smoke.mjs` serves `docs/` and drives a real browser: every page in the sitemap loads, PDF to Word gives a working .docx, Compare finds the changes, many files save as one .zip, a signature lands on every page, the Report a problem e-mail is built, and the home page fits a phone. Run it after `npm run pages` and before you push.
+`tests/smoke.mjs` serves `docs/` and drives a real browser: every page in the sitemap loads, PDF to Word gives a working .docx, Compare finds the changes, many files save as one .zip, a signature lands on every page, the Report a problem e-mail is built, every language has its texts and menu, and the home page fits a phone. Run it after `npm run pages` and before you push.
 
 ## License
 

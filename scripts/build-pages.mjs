@@ -1,4 +1,5 @@
-// Writes every LunaVerta page as finished HTML in English and Danish:
+// Writes every LunaVerta page as finished HTML in every language (English,
+// Danish, and the extra languages in scripts/lang/):
 // the front page, one page per tool, sitemap.xml and llms.txt. Search engines
 // and AI crawlers read the text without running JavaScript.
 // Run with: node scripts/build-pages.mjs  (npm run build does it too)
@@ -8,14 +9,32 @@ import { join, dirname } from 'node:path';
 import vm from 'node:vm';
 import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS, REPO } from './site-content.mjs';
 
+// Extra languages: page texts in scripts/lang/<code>.mjs, interface texts in docs/assets/strings-<code>.js
+const EXTRA = [];
+for (const f of readdirSync('scripts/lang').filter(f => f.endsWith('.mjs')).sort()) EXTRA.push((await import('./lang/' + f)).default);
 const ctx = { window: {} };
 vm.runInNewContext(readFileSync('docs/assets/strings.js', 'utf8'), ctx);
+for (const x of EXTRA) vm.runInNewContext(readFileSync(`docs/assets/strings-${x.code}.js`, 'utf8'), ctx);
 const STR = ctx.window.LV_STR;
-const LANGS = ['en', 'da'];
+// Language facts: name in its own language, the code shown in the switch, Open Graph locale and date format
+const META = {
+  en: { name: 'English', og: 'en_GB' },
+  da: { name: 'Dansk', og: 'da_DK' },
+  ...Object.fromEntries(EXTRA.map(x => [x.code, { name: x.name, og: x.og }]))
+};
+for (const x of EXTRA) {
+  HOME[x.code] = x.home; LABELS[x.code] = x.labels;
+  for (const tl of TOOLS) {
+    const tr = x.tools[tl.id]; if (!tr) throw new Error(`${x.code}: no text for tool ${tl.id}`);
+    const { slug, ...rest } = tr; tl.slug[x.code] = slug; tl[x.code] = rest;
+  }
+}
+const LANGS = ['en', 'da', ...EXTRA.map(x => x.code)];
+const extra = code => EXTRA.find(x => x.code === code);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const t = (lang, key, vars) => { let s = STR[lang][key] ?? STR.en[key] ?? key; if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] ?? m); return s; };
 const label = (lang, tg) => (TOOL_TARGETS.includes(tg) ? t(lang, 'tgt.' + tg) : tg).toUpperCase();
-const path = (lang, slug) => (lang === 'en' ? '/' : '/da/') + (slug ? slug + '/' : '');
+const path = (lang, slug) => (lang === 'en' ? '/' : `/${lang}/`) + (slug ? slug + '/' : '');
 const url = (lang, slug) => SITE + path(lang, slug);
 
 // ---------- static texts by key (data-i18n, data-i18n-html, data-i18n-attr) ----------
@@ -65,7 +84,7 @@ function toolsSection(lang, currentId) {
   const grouped = new Set(TOOL_GROUPS.flatMap(g => g[3]));
   const rest = TOOLS.filter(tl => !grouped.has(tl.id)).map(tl => tl.id);
   const group = ([key, col, name, ids]) => `      <section class="tg tg-${key}" style="--k:var(${col})">
-        <h3>${esc(name[lang])} <small>${ids.length}</small></h3>
+        <h3>${esc(name[lang] || extra(lang).groups[key])} <small>${ids.length}</small></h3>
         <ul class="tool-grid">
 ${ids.map(id => TOOLS.find(x => x.id === id)).filter(Boolean).map(tl => `          <li><a href="${path(lang, tl.slug[lang])}"${tl.id === currentId ? ' aria-current="page"' : ''}>${esc(tl[lang].name)}</a></li>`).join('\n')}
         </ul>
@@ -99,9 +118,10 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
 // Short how-to videos (English voice, subtitles in Danish and English), shown on their tool pages.
 const VIDEO_FOR = { 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
 function videoFigure(lang, key, caption) {
-  const tracks = ['da', 'en'].sort((a, b) => (a === lang ? -1 : b === lang ? 1 : 0))
-    .map(L => `<track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt"${L === lang ? ' default' : ''}>`).join('');
-  return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${lang}.jpg"><source src="/videos/${key}-${lang}.mp4" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
+  const vl = lang === 'da' ? 'da' : 'en'; // the videos exist in Danish and English; other languages get the English one
+  const tracks = ['da', 'en'].sort((a, b) => (a === vl ? -1 : b === vl ? 1 : 0))
+    .map(L => `<track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt"${L === vl ? ' default' : ''}>`).join('');
+  return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${vl}.jpg"><source src="/videos/${key}-${vl}.mp4" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
 }
 function howtoSection(lang, tool) {
   const d = tool[lang], key = VIDEO_FOR[tool.id];
@@ -127,7 +147,7 @@ function popularSection(lang) {
   return `  <nav class="pop" aria-labelledby="h-pop">
     <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><span class="pop-links"><button type="button" class="pop-watch" data-howto="${lang}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>${esc(t(lang, 'howto.watch'))}</button><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></span></h2>
     <ul class="pop-grid">
-${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang])}</span></a></li>`; }).join('\n')}
+${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang] || extra(lang).popular[id])}</span></a></li>`; }).join('\n')}
     </ul>
   </nav>`;
 }
@@ -137,7 +157,7 @@ const org = { '@type': 'Organization', '@id': SITE + '/#org', name: COMPANY.name
   address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
 function jsonLd(lang, page, faqItems) {
   const graph = [org,
-    { '@type': 'WebSite', '@id': SITE + '/#site', name: 'LunaVerta', url: SITE + '/', inLanguage: ['en', 'da'], publisher: { '@id': SITE + '/#org' } },
+    { '@type': 'WebSite', '@id': SITE + '/#site', name: 'LunaVerta', url: SITE + '/', inLanguage: LANGS, publisher: { '@id': SITE + '/#org' } },
     { '@type': 'WebApplication', name: page.tool ? `LunaVerta · ${page.tool[lang].name}` : 'LunaVerta', url: page.url, inLanguage: lang,
       applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any (runs in the browser)', browserRequirements: 'A modern web browser with JavaScript',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'DKK' }, isAccessibleForFree: true, description: page.desc, publisher: { '@id': SITE + '/#org' },
@@ -155,8 +175,12 @@ function jsonLd(lang, page, faqItems) {
 
 // ---------- pages ----------
 const template = readFileSync('src/template.html', 'utf8');
+// The language menu: real links to the same page in each language
+function langMenu(lang, page) {
+  return `<details class="lang-menu"><summary data-i18n-attr="aria-label:lang.label" aria-label="Language"><span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
+          <ul>${LANGS.map(L => `<li><a href="${new URL(page.alts[L]).pathname}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`;
+}
 function render(lang, page) {
-  const other = lang === 'en' ? 'da' : 'en';
   const faq = faqSection(lang, page.tool && page.tool[lang].faq, page.tool && page.tool[lang].name);
   const L = LABELS[lang];
   const hero = page.tool
@@ -174,11 +198,11 @@ function render(lang, page) {
     : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : preset === 'compare' ? L.dockCompare : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dock.replace('{t}', esc(label(lang, preset === 'docx' ? 'Word' : preset)))}</p>`;
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
-    ALTERNATES: [`<link rel="alternate" hreflang="${lang}" href="${page.url}">`, `<link rel="alternate" hreflang="${other}" href="${page.alt}">`, `<link rel="alternate" hreflang="x-default" href="${lang === 'en' ? page.url : page.alt}">`].join('\n'),
+    ALTERNATES: [...LANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${page.alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${page.alts.en}">`].join('\n'),
     OG_IMAGE: SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2',
-    OG_LOCALE: lang === 'da' ? 'da_DK' : 'en_GB', OG_LOCALE_ALT: lang === 'da' ? 'en_GB' : 'da_DK',
+    OG_LOCALE: META[lang].og, OG_LOCALE_ALT: LANGS.filter(L => L !== lang).map(L => META[L].og).join('">\n<meta property="og:locale:alternate" content="'),
+    LANG_MENU: langMenu(lang, page), LANG_STRINGS: extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : '',
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
-    EN_PRESSED: String(lang === 'en'), DA_PRESSED: String(lang === 'da'),
     HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
     // the coffee button (MobilePay) on every page; the English text says it only works in Denmark
     COFFEE: `    <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Buy us a coffee</span></button>\n`,
@@ -193,19 +217,18 @@ function render(lang, page) {
 
 const pages = [];
 for (const lang of LANGS) {
-  const other = lang === 'en' ? 'da' : 'en';
-  pages.push({ lang, file: lang === 'en' ? 'docs/index.html' : 'docs/da/index.html', url: url(lang), alt: url(other), title: HOME[lang].title, desc: HOME[lang].desc });
-  for (const tool of TOOLS) pages.push({ lang, tool, file: `docs${path(lang, tool.slug[lang])}index.html`, url: url(lang, tool.slug[lang]), alt: url(other, tool.slug[other]), title: tool[lang].title, desc: tool[lang].desc });
+  pages.push({ lang, file: `docs${path(lang)}index.html`, url: url(lang), alts: Object.fromEntries(LANGS.map(L => [L, url(L)])), title: HOME[lang].title, desc: HOME[lang].desc });
+  for (const tool of TOOLS) pages.push({ lang, tool, file: `docs${path(lang, tool.slug[lang])}index.html`, url: url(lang, tool.slug[lang]), alts: Object.fromEntries(LANGS.map(L => [L, url(L, tool.slug[L])])), title: tool[lang].title, desc: tool[lang].desc });
 }
 for (const p of pages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, render(p.lang, p)); }
 
 // ---------- sitemap.xml (with language alternates) ----------
 const today = new Date().toISOString().slice(0, 10);
-const extra = [{ loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
+const staticPages = [{ loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
 writeFileSync('docs/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
-${pages.map(p => `  <url><loc>${p.url}</loc><lastmod>${today}</lastmod><xhtml:link rel="alternate" hreflang="${p.lang}" href="${p.url}"/><xhtml:link rel="alternate" hreflang="${p.lang === 'en' ? 'da' : 'en'}" href="${p.alt}"/><xhtml:link rel="alternate" hreflang="x-default" href="${p.lang === 'en' ? p.url : p.alt}"/></url>`).join('\n')}
-${extra.map(e => `  <url><loc>${e.loc}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
+${pages.map(p => `  <url><loc>${p.url}</loc><lastmod>${today}</lastmod>${LANGS.map(L => `<xhtml:link rel="alternate" hreflang="${L}" href="${p.alts[L]}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${p.alts.en}"/></url>`).join('\n')}
+${staticPages.map(e => `  <url><loc>${e.loc}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
 
@@ -214,7 +237,7 @@ writeFileSync('docs/llms.txt', `# LunaVerta
 
 > ${LABELS.en.aboutText}
 
-LunaVerta is available in English (${SITE}/) and Danish (${SITE}/da/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
+LunaVerta is available in ${LANGS.map(L => `${{ en: 'English', da: 'Danish', sv: 'Swedish', no: 'Norwegian', de: 'German' }[L] || META[L].name} (${url(L)})`).join(', ')}. It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
 
 Key facts:
 ${LABELS.en.facts.map(([k, v]) => `- ${k}: ${v}`).join('\n')}
@@ -226,7 +249,10 @@ ${TOOLS.map(tl => `- [${tl.en.name}](${url('en', tl.slug.en)}): ${tl.en.desc}`).
 
 ## Værktøjer (dansk)
 ${TOOLS.map(tl => `- [${tl.da.name}](${url('da', tl.slug.da)}): ${tl.da.desc}`).join('\n')}
-
+${EXTRA.map(x => `
+## ${x.toolsHeading}
+${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl[x.code].desc}`).join('\n')}
+`).join('')}
 ## About
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](${SITE}/licenses.html)

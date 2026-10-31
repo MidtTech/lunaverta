@@ -46,9 +46,7 @@
     <div class="head-actions">
       <span class="net" id="net" hidden data-i18n="net.offline">Offline</span>
       <nav class="head-nav" aria-label="Sections"><a href="#h-tools" data-i18n="nav.tools">All tools</a><a href="#h-faq" data-i18n="nav.faq">Questions</a></nav>
-      <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.label" aria-label="Language">
-        <button type="button" data-set-lang="en" aria-pressed="{{EN_PRESSED}}" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="{{DA_PRESSED}}" lang="da">DA</button>
-      </div>
+      {{LANG_MENU}}
     </div>
   </header>
 
@@ -141,7 +139,7 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Choose a format"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">{{NOSCRIPT}}</p></noscript>
-<script src="/assets/strings.js"></script>
+<script src="/assets/strings.js"></script>{{LANG_STRINGS}}
 <script src="/assets/i18n.js"></script>
 <script src="/assets/app.js"></script>
 <script src="/assets/editor.js"></script>

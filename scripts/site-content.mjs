@@ -1,5 +1,6 @@
 // Page content for the generated pages (scripts/build-pages.mjs): the front
-// page and one page per tool, in English and Danish. Interface texts live in
+// page and one page per tool, in English and Danish (other languages are in
+// scripts/lang/<code>.mjs). Interface texts live in
 // docs/assets/strings.js; this file holds what differs from page to page.
 
 export const SITE = 'https://lunaverta.com';
@@ -35,7 +36,7 @@ export const LABELS = {
     dockCompare: '<strong>Choose two PDFs: first the old version, then the new one.</strong> The changes are shown side by side, on your own device. Nothing is uploaded.',
     noscript: 'LunaVerta converts files with JavaScript inside your browser. Turn JavaScript on to use it.',
     aboutText: 'LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user\'s own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech.',
-    facts: [['Price', 'Free'], ['Uploads', 'None: files stay on your device'], ['Account', 'Not needed'], ['Works offline', 'Yes, after the first visit'], ['Languages', 'English and Danish'], ['Made by', 'Midt-Tech, Aarhus, Denmark (CVR 34256276)']],
+    facts: [['Price', 'Free'], ['Uploads', 'None: files stay on your device'], ['Account', 'Not needed'], ['Works offline', 'Yes, after the first visit'], ['Languages', 'English, Danish, Swedish, Norwegian and German'], ['Made by', 'Midt-Tech, Aarhus, Denmark (CVR 34256276)']],
     factsCode: 'Source code on GitHub'
   },
   da: {
@@ -46,7 +47,7 @@ export const LABELS = {
     dockCompare: '<strong>Vælg to PDF\'er: først den gamle version, så den nye.</strong> Ændringerne vises side om side, på din egen enhed. Intet bliver uploadet.',
     noscript: 'LunaVerta konverterer filer med JavaScript i din browser. Slå JavaScript til for at bruge den.',
     aboutText: 'LunaVerta er en gratis filkonverter og PDF-editor, der kører helt i webbrowseren. Filerne behandles på brugerens egen enhed og bliver aldrig uploadet til en server. Den virker uden internet efter første besøg, kræver ingen konto, sætter ingen cookies og viser ingen reklamer. LunaVerta er lavet i Danmark af Midt-Tech.',
-    facts: [['Pris', 'Gratis'], ['Upload', 'Ingen: filerne bliver på din enhed'], ['Konto', 'Ikke nødvendig'], ['Virker offline', 'Ja, efter første besøg'], ['Sprog', 'Dansk og engelsk'], ['Lavet af', 'Midt-Tech, Aarhus (CVR 34256276)']],
+    facts: [['Pris', 'Gratis'], ['Upload', 'Ingen: filerne bliver på din enhed'], ['Konto', 'Ikke nødvendig'], ['Virker offline', 'Ja, efter første besøg'], ['Sprog', 'Dansk, engelsk, svensk, norsk og tysk'], ['Lavet af', 'Midt-Tech, Aarhus (CVR 34256276)']],
     factsCode: 'Kildekoden på GitHub'
   }
 };

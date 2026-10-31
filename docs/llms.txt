@@ -2,14 +2,14 @@
 
 > LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user's own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech.
 
-LunaVerta is available in English (https://lunaverta.com/) and Danish (https://lunaverta.com/da/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
+LunaVerta is available in English (https://lunaverta.com/), Danish (https://lunaverta.com/da/), German (https://lunaverta.com/de/), Norwegian (https://lunaverta.com/no/), Swedish (https://lunaverta.com/sv/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
 
 Key facts:
 - Price: Free
 - Uploads: None: files stay on your device
 - Account: Not needed
 - Works offline: Yes, after the first visit
-- Languages: English and Danish
+- Languages: English, Danish, Swedish, Norwegian and German
 - Made by: Midt-Tech, Aarhus, Denmark (CVR 34256276)
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
 - Not supported: video-to-video re-encoding (e.g. to MP4) and legacy .doc/.ppt files
@@ -79,6 +79,105 @@ Key facts:
 - [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav teksten i en PDF om til et Word-dokument, du kan redigere, med overskrifter og afsnit. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Sammenlign to PDF'er](https://lunaverta.com/da/sammenlign-pdf/): Sammenlign to versioner af en PDF, og se hver tilføjet, fjernet og ændret linje, ord for ord. Gratis og privat: intet bliver uploadet.
 - [PDF til tekst](https://lunaverta.com/da/pdf-til-tekst/): Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
+
+## Werkzeuge (Deutsch)
+- [HEIC in JPG](https://lunaverta.com/de/heic-in-jpg/): HEIC-Fotos vom iPhone im Browser in JPG umwandeln. Kostenlos, schnell und privat: Deine Fotos werden nie hochgeladen. Funktioniert mit vielen Fotos auf einmal.
+- [Word in PDF](https://lunaverta.com/de/word-in-pdf/): Word-Dokumente (DOCX) im Browser in PDF umwandeln. Schriften, Tabellen, Bilder, Kopf- und Fußzeilen bleiben erhalten. Kostenlos und privat, ohne Upload.
+- [PDF zusammenfügen](https://lunaverta.com/de/pdf-zusammenfuegen/): Mehrere PDF-Dateien (und Bilder) im Browser zu einem PDF zusammenfügen. Die Reihenfolge per Ziehen festlegen. Kostenlos und privat: Nichts wird hochgeladen.
+- [PDF teilen](https://lunaverta.com/de/pdf-teilen/): Ein PDF im Browser in einzelne einseitige PDF-Dateien aufteilen. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF komprimieren](https://lunaverta.com/de/pdf-komprimieren/): Die Dateigröße eines PDFs im Browser verringern. Der Text bleibt durchsuchbar. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF schützen](https://lunaverta.com/de/pdf-mit-passwort-schuetzen/): Ein PDF im Browser mit einem Passwort und AES-256-Verschlüsselung versehen. Kostenlos und privat: PDF und Passwort verlassen nie dein Gerät.
+- [PDF entsperren](https://lunaverta.com/de/pdf-passwort-entfernen/): Das Passwort aus einem PDF entfernen, das du öffnen kannst, direkt im Browser. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [OCR: PDF durchsuchbar machen](https://lunaverta.com/de/pdf-durchsuchbar-machen/): Den Text in gescannten PDFs und Fotos erkennen, auf Dänisch und Englisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.
+- [Preise aus PDF entfernen](https://lunaverta.com/de/preise-aus-pdf-entfernen/): Alle Preise in einem Angebot oder einer Rechnung finden und auf einmal entfernen, während Maße und andere Angaben bleiben. Kostenlos und privat: ohne Upload.
+- [PDF schwärzen](https://lunaverta.com/de/pdf-schwaerzen/): Namen, Kontonummern und anderen vertraulichen Text in einem PDF schwärzen. Der Text wird entfernt, nicht nur verdeckt. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF-Metadaten entfernen](https://lunaverta.com/de/pdf-metadaten-entfernen/): Autorennamen, Programm, Datumsangaben, Anhänge und Skripte aus einem PDF entfernen, bevor du es teilst. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF bearbeiten](https://lunaverta.com/de/pdf-bearbeiten/): PDFs im Browser bearbeiten: Text korrigieren, Text hinzufügen, Formulare ausfüllen, Seiten neu ordnen, drehen und löschen. Kostenlos und privat, ohne Upload.
+- [PDF unterschreiben](https://lunaverta.com/de/pdf-unterschreiben/): Zeichne deine Unterschrift oder lade sie hoch und platziere sie im Browser auf einem PDF. Kostenlos und privat: PDF und Unterschrift verlassen nie dein Gerät.
+- [PDF-Seiten löschen](https://lunaverta.com/de/pdf-seiten-loeschen/): Seiten im Browser aus einem PDF entfernen. Alle Seiten als Miniaturen sehen, die unnötigen löschen und speichern. Kostenlos und privat, ohne Upload.
+- [PDF drehen](https://lunaverta.com/de/pdf-drehen/): PDF-Seiten im Browser richtig herum drehen. Einzelne oder alle Seiten drehen und speichern. Kostenlos und privat, ohne Upload.
+- [Seitenzahlen hinzufügen](https://lunaverta.com/de/seitenzahlen-zu-pdf-hinzufuegen/): Die Seiten eines PDFs im Browser nummerieren. Position und Stil wählen, etwa 1, 2, 3 oder Seite 1 von 10. Kostenlos und privat, ohne Upload.
+- [PDF-Wasserzeichen](https://lunaverta.com/de/pdf-wasserzeichen/): Ein Text-Wasserzeichen wie Kopie, Entwurf oder Vertraulich quer über jede Seite eines PDFs legen. Kostenlos und privat, im Browser, ohne Upload.
+- [PDF-Formular ausfüllen](https://lunaverta.com/de/pdf-formular-ausfuellen/): PDF-Formulare im Browser ausfüllen: in die Felder tippen, Kästchen ankreuzen und speichern. Das Formular bleibt ausfüllbar. Kostenlos und privat, ohne Upload.
+- [PDF in JPG](https://lunaverta.com/de/pdf-in-jpg/): Jede Seite eines PDFs im Browser in ein JPG-Bild umwandeln. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF in PNG](https://lunaverta.com/de/pdf-in-png/): Jede Seite eines PDFs im Browser in ein PNG-Bild umwandeln. Verlustfrei und scharf. Kostenlos und privat, ohne Upload.
+- [JPG in PDF](https://lunaverta.com/de/jpg-in-pdf/): JPG-, PNG- und HEIC-Bilder im Browser in ein PDF umwandeln, eine Seite pro Bild. Kostenlos und privat: Nichts wird hochgeladen.
+- [PNG in JPG](https://lunaverta.com/de/png-in-jpg/): PNG-Bilder im Browser in JPG umwandeln und viel kleiner machen. Kostenlos und privat: Nichts wird hochgeladen.
+- [WebP in JPG](https://lunaverta.com/de/webp-in-jpg/): WebP-Bilder aus dem Netz im Browser in JPG umwandeln, damit sie sich in jedem Programm öffnen lassen. Kostenlos und privat, ohne Upload.
+- [Standort aus Fotos entfernen](https://lunaverta.com/de/standort-aus-fotos-entfernen/): GPS-Standort, Kameradaten und andere versteckte EXIF-Daten vor dem Teilen aus Fotos entfernen. Die Qualität bleibt gleich. Kostenlos, ohne Upload.
+- [Excel in CSV](https://lunaverta.com/de/excel-in-csv/): Excel-Arbeitsmappen (XLSX, XLS, ODS) im Browser in CSV umwandeln, eine CSV pro Blatt. Kostenlos und privat: Nichts wird hochgeladen.
+- [CSV in Excel](https://lunaverta.com/de/csv-in-excel/): CSV- und JSON-Dateien im Browser in Excel (XLSX) umwandeln. Kostenlos und privat: Nichts wird hochgeladen.
+- [Video in GIF](https://lunaverta.com/de/video-in-gif/): Ein animiertes GIF aus den ersten Sekunden eines Videos (MP4, WebM, MOV) im Browser erstellen. Kostenlos und privat, ohne Upload.
+- [Video in MP3](https://lunaverta.com/de/video-in-mp3/): Den Ton aus einem Video holen oder WAV, M4A und andere Audiodateien im Browser in MP3 umwandeln. Kostenlos und privat, ohne Upload.
+- [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Den Text eines PDFs in ein bearbeitbares Word-Dokument mit Überschriften und Absätzen umwandeln. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [Zwei PDFs vergleichen](https://lunaverta.com/de/pdf-vergleichen/): Zwei Versionen eines PDFs vergleichen und jede hinzugefügte, entfernte und geänderte Zeile sehen, Wort für Wort. Kostenlos und privat: Nichts wird hochgeladen.
+- [PDF in Text](https://lunaverta.com/de/pdf-in-text/): Den gesamten Text eines PDFs im Browser in eine einfache Textdatei extrahieren. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+
+## Verktøy (norsk)
+- [HEIC til JPG](https://lunaverta.com/no/heic-til-jpg/): Konverter HEIC-bilder fra iPhone til JPG i nettleseren. Gratis, raskt og privat: bildene dine lastes aldri opp. Fungerer med mange bilder på én gang.
+- [Word til PDF](https://lunaverta.com/no/word-til-pdf/): Konverter Word-dokumenter (DOCX) til PDF i nettleseren. Beholder skrifter, tabeller, bilder, topptekster og bunntekster. Gratis og privat, uten opplasting.
+- [Slå sammen PDF](https://lunaverta.com/no/sla-sammen-pdf/): Slå sammen flere PDF-filer (og bilder) til én PDF i nettleseren. Dra for å bestemme rekkefølgen. Gratis og privat: ingenting lastes opp.
+- [Del opp PDF](https://lunaverta.com/no/del-pdf/): Del opp en PDF i separate PDF-filer med én side hver, i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
+- [Komprimer PDF](https://lunaverta.com/no/komprimer-pdf/): Reduser filstørrelsen på en PDF i nettleseren. Teksten forblir søkbar. Gratis og privat: PDF-en din lastes aldri opp.
+- [Beskytt PDF](https://lunaverta.com/no/beskytt-pdf-med-passord/): Legg til et passord på en PDF i nettleseren med AES-256-kryptering. Gratis og privat: PDF-en og passordet forlater aldri enheten din.
+- [Lås opp PDF](https://lunaverta.com/no/fjern-passord-fra-pdf/): Fjern passordet fra en PDF du kan åpne, rett i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
+- [OCR: gjør en PDF søkbar](https://lunaverta.com/no/gjor-pdf-sokbar/): Gjenkjenn teksten i skannede PDF-er og bilder, på dansk og engelsk, så den kan søkes i og kopieres. Gratis og privat: kjører på enheten din.
+- [Fjern priser fra PDF](https://lunaverta.com/no/fjern-priser-fra-pdf/): Finn alle priser i et tilbud eller en faktura og fjern dem på én gang, mens mål og andre opplysninger blir stående. Gratis og privat: uten opplasting.
+- [Sladd PDF](https://lunaverta.com/no/sladd-pdf/): Sladd navn, fødselsnumre og annen fortrolig tekst i en PDF. Teksten fjernes, den blir ikke bare dekket til. Gratis og privat: PDF-en din lastes aldri opp.
+- [Fjern metadata fra PDF](https://lunaverta.com/no/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedlegg og skript fra en PDF før du deler den. Gratis og privat: PDF-en din lastes aldri opp.
+- [Rediger PDF](https://lunaverta.com/no/rediger-pdf/): Rediger PDF-er i nettleseren: rett tekst, legg til tekst, fyll ut skjemaer, endre rekkefølgen på, roter og slett sider. Gratis og privat, uten opplasting.
+- [Signer PDF](https://lunaverta.com/no/signer-pdf/): Tegn eller last opp signaturen din og plasser den på en PDF i nettleseren. Gratis og privat: PDF-en og signaturen din forlater aldri enheten din.
+- [Slett PDF-sider](https://lunaverta.com/no/slett-sider-fra-pdf/): Fjern sider fra en PDF i nettleseren. Se alle sider som miniatyrer, slett dem du ikke trenger, og lagre. Gratis og privat, uten opplasting.
+- [Roter PDF](https://lunaverta.com/no/roter-pdf/): Snu PDF-sider riktig vei i nettleseren. Roter enkeltsider eller alle sammen og lagre. Gratis og privat, uten opplasting.
+- [Legg til sidetall](https://lunaverta.com/no/legg-til-sidetall-i-pdf/): Nummerer sidene i en PDF i nettleseren. Velg plassering og stil, for eksempel 1, 2, 3 eller Side 1 av 10. Gratis og privat, uten opplasting.
+- [Vannmerke på PDF](https://lunaverta.com/no/vannmerke-pdf/): Legg et tekstvannmerke som Kopi, Utkast eller Konfidensielt over hver side i en PDF. Gratis og privat, i nettleseren, uten opplasting.
+- [Fyll ut PDF-skjema](https://lunaverta.com/no/fyll-ut-pdf-skjema/): Fyll ut PDF-skjemaer i nettleseren: skriv i feltene, kryss av i boksene og lagre. Skjemaet kan fortsatt fylles ut. Gratis og privat, uten opplasting.
+- [PDF til JPG](https://lunaverta.com/no/pdf-til-jpg/): Gjør hver side i en PDF om til et JPG-bilde i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
+- [PDF til PNG](https://lunaverta.com/no/pdf-til-png/): Gjør hver side i en PDF om til et PNG-bilde i nettleseren. Tapsfritt og skarpt. Gratis og privat, uten opplasting.
+- [JPG til PDF](https://lunaverta.com/no/jpg-til-pdf/): Gjør JPG-, PNG- og HEIC-bilder om til en PDF i nettleseren, én side per bilde. Gratis og privat: ingenting lastes opp.
+- [PNG til JPG](https://lunaverta.com/no/png-til-jpg/): Konverter PNG-bilder til JPG i nettleseren og gjør dem mye mindre. Gratis og privat: ingenting lastes opp.
+- [WebP til JPG](https://lunaverta.com/no/webp-til-jpg/): Konverter WebP-bilder fra nettet til JPG i nettleseren, så de kan åpnes i alle programmer. Gratis og privat, uten opplasting.
+- [Fjern posisjon fra bilder](https://lunaverta.com/no/fjern-posisjon-fra-bilder/): Fjern GPS-posisjon, kameradetaljer og andre skjulte EXIF-data fra bilder før du deler dem. Kvaliteten blir den samme. Gratis, uten opplasting.
+- [Excel til CSV](https://lunaverta.com/no/excel-til-csv/): Konverter Excel-arbeidsbøker (XLSX, XLS, ODS) til CSV i nettleseren, én CSV per ark. Gratis og privat: ingenting lastes opp.
+- [CSV til Excel](https://lunaverta.com/no/csv-til-excel/): Konverter CSV- og JSON-filer til Excel (XLSX) i nettleseren. Gratis og privat: ingenting lastes opp.
+- [Video til GIF](https://lunaverta.com/no/video-til-gif/): Lag en animert GIF av de første sekundene i en video (MP4, WebM, MOV) i nettleseren. Gratis og privat, uten opplasting.
+- [Video til MP3](https://lunaverta.com/no/video-til-mp3/): Hent ut lyden fra en video, eller konverter WAV, M4A og annen lyd til MP3 i nettleseren. Gratis og privat, uten opplasting.
+- [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.
+- [Sammenlign to PDF-er](https://lunaverta.com/no/sammenlign-pdf/): Sammenlign to versjoner av en PDF og se hver linje som er lagt til, fjernet og endret, ord for ord. Gratis og privat: ingenting lastes opp.
+- [PDF til tekst](https://lunaverta.com/no/pdf-til-tekst/): Hent ut all tekst fra en PDF til en vanlig tekstfil i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
+
+## Verktyg (svenska)
+- [HEIC till JPG](https://lunaverta.com/sv/heic-till-jpg/): Konvertera HEIC-foton från iPhone till JPG i webbläsaren. Gratis, snabbt och privat: dina foton laddas aldrig upp. Fungerar med många foton på en gång.
+- [Word till PDF](https://lunaverta.com/sv/word-till-pdf/): Konvertera Word-dokument (DOCX) till PDF i webbläsaren. Behåller typsnitt, tabeller, bilder, sidhuvuden och sidfötter. Gratis och privat, utan uppladdning.
+- [Slå ihop PDF](https://lunaverta.com/sv/sla-ihop-pdf/): Slå ihop flera PDF-filer (och bilder) till en PDF i webbläsaren. Dra för att bestämma ordningen. Gratis och privat: inget laddas upp.
+- [Dela PDF](https://lunaverta.com/sv/dela-pdf/): Dela en PDF i separata PDF-filer med en sida var, i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
+- [Komprimera PDF](https://lunaverta.com/sv/komprimera-pdf/): Minska filstorleken på en PDF i webbläsaren. Texten förblir sökbar. Gratis och privat: din PDF laddas aldrig upp.
+- [Skydda PDF](https://lunaverta.com/sv/skydda-pdf-med-losenord/): Lägg till ett lösenord på en PDF i webbläsaren med AES-256-kryptering. Gratis och privat: PDF:en och lösenordet lämnar aldrig din enhet.
+- [Lås upp PDF](https://lunaverta.com/sv/ta-bort-losenord-fran-pdf/): Ta bort lösenordet från en PDF som du kan öppna, direkt i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
+- [OCR: gör en PDF sökbar](https://lunaverta.com/sv/gor-pdf-sokbar/): Känn igen texten i skannade PDF-filer och foton, på danska och engelska, så att den kan sökas och kopieras. Gratis och privat: körs på din enhet.
+- [Ta bort priser från PDF](https://lunaverta.com/sv/ta-bort-priser-fran-pdf/): Hitta alla priser i en offert eller faktura och ta bort dem på en gång, medan mått och andra uppgifter står kvar. Gratis och privat: utan uppladdning.
+- [Maskera PDF](https://lunaverta.com/sv/maskera-pdf/): Svärta namn, personnummer och annan konfidentiell text i en PDF. Texten tas bort, den döljs inte bara. Gratis och privat: din PDF laddas aldrig upp.
+- [Ta bort metadata från PDF](https://lunaverta.com/sv/ta-bort-metadata-fran-pdf/): Ta bort författarnamn, program, datum, bilagor och skript från en PDF innan du delar den. Gratis och privat: din PDF laddas aldrig upp.
+- [Redigera PDF](https://lunaverta.com/sv/redigera-pdf/): Redigera PDF-filer i webbläsaren: rätta text, lägg till text, fyll i formulär, ändra ordning på, rotera och ta bort sidor. Gratis och privat, utan uppladdning.
+- [Signera PDF](https://lunaverta.com/sv/signera-pdf/): Rita eller ladda upp din namnteckning och placera den på en PDF i webbläsaren. Gratis och privat: PDF:en och din namnteckning lämnar aldrig din enhet.
+- [Ta bort PDF-sidor](https://lunaverta.com/sv/ta-bort-sidor-fran-pdf/): Ta bort sidor från en PDF i webbläsaren. Se alla sidor som miniatyrer, ta bort dem du inte behöver och spara. Gratis och privat, utan uppladdning.
+- [Rotera PDF](https://lunaverta.com/sv/rotera-pdf/): Vänd PDF-sidor rätt i webbläsaren. Rotera enstaka sidor eller alla och spara. Gratis och privat, utan uppladdning.
+- [Lägg till sidnummer](https://lunaverta.com/sv/lagg-till-sidnummer-i-pdf/): Numrera sidorna i en PDF i webbläsaren. Välj placering och stil, till exempel 1, 2, 3 eller Sida 1 av 10. Gratis och privat, utan uppladdning.
+- [Vattenstämpel på PDF](https://lunaverta.com/sv/vattenstampel-pdf/): Lägg en textvattenstämpel som Kopia, Utkast eller Konfidentiell över varje sida i en PDF. Gratis och privat, i webbläsaren, utan uppladdning.
+- [Fyll i PDF-formulär](https://lunaverta.com/sv/fyll-i-pdf-formular/): Fyll i PDF-formulär i webbläsaren: skriv i fälten, kryssa i rutorna och spara. Formuläret går fortfarande att fylla i. Gratis och privat, utan uppladdning.
+- [PDF till JPG](https://lunaverta.com/sv/pdf-till-jpg/): Gör varje sida i en PDF till en JPG-bild i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
+- [PDF till PNG](https://lunaverta.com/sv/pdf-till-png/): Gör varje sida i en PDF till en PNG-bild i webbläsaren. Förlustfritt och skarpt. Gratis och privat, utan uppladdning.
+- [JPG till PDF](https://lunaverta.com/sv/jpg-till-pdf/): Gör JPG-, PNG- och HEIC-bilder till en PDF i webbläsaren, en sida per bild. Gratis och privat: inget laddas upp.
+- [PNG till JPG](https://lunaverta.com/sv/png-till-jpg/): Konvertera PNG-bilder till JPG i webbläsaren och gör dem mycket mindre. Gratis och privat: inget laddas upp.
+- [WebP till JPG](https://lunaverta.com/sv/webp-till-jpg/): Konvertera WebP-bilder från webben till JPG i webbläsaren så att de öppnas i alla program. Gratis och privat, utan uppladdning.
+- [Ta bort plats från foton](https://lunaverta.com/sv/ta-bort-plats-fran-bilder/): Ta bort GPS-position, kamerauppgifter och andra dolda EXIF-data från foton innan du delar dem. Kvaliteten blir densamma. Gratis, utan uppladdning.
+- [Excel till CSV](https://lunaverta.com/sv/excel-till-csv/): Konvertera Excel-arbetsböcker (XLSX, XLS, ODS) till CSV i webbläsaren, en CSV per blad. Gratis och privat: inget laddas upp.
+- [CSV till Excel](https://lunaverta.com/sv/csv-till-excel/): Konvertera CSV- och JSON-filer till Excel (XLSX) i webbläsaren. Gratis och privat: inget laddas upp.
+- [Video till GIF](https://lunaverta.com/sv/video-till-gif/): Gör en animerad GIF av de första sekunderna i en video (MP4, WebM, MOV) i webbläsaren. Gratis och privat, utan uppladdning.
+- [Video till MP3](https://lunaverta.com/sv/video-till-mp3/): Ta ut ljudet ur en video, eller konvertera WAV, M4A och annat ljud till MP3 i webbläsaren. Gratis och privat, utan uppladdning.
+- [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om texten i en PDF till ett Word-dokument som du kan redigera, med rubriker och stycken. Gratis och privat: din PDF laddas aldrig upp.
+- [Jämför två PDF-filer](https://lunaverta.com/sv/jamfor-pdf/): Jämför två versioner av en PDF och se varje tillagd, borttagen och ändrad rad, ord för ord. Gratis och privat: inget laddas upp.
+- [PDF till text](https://lunaverta.com/sv/pdf-till-text/): Ta ut all text ur en PDF till en vanlig textfil i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
 
 ## About
 - [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta

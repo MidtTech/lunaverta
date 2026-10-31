@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="no" data-page-lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PDF til Word · Redigerbar tekst i en .docx, uten opplasting</title>
+<meta name="description" content="Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<link rel="canonical" href="https://lunaverta.com/no/pdf-til-word/">
+<link rel="alternate" hreflang="en" href="https://lunaverta.com/pdf-to-word/">
+<link rel="alternate" hreflang="da" href="https://lunaverta.com/da/pdf-til-word/">
+<link rel="alternate" hreflang="de" href="https://lunaverta.com/de/pdf-in-word/">
+<link rel="alternate" hreflang="no" href="https://lunaverta.com/no/pdf-til-word/">
+<link rel="alternate" hreflang="sv" href="https://lunaverta.com/sv/pdf-till-word/">
+<link rel="alternate" hreflang="x-default" href="https://lunaverta.com/pdf-to-word/">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="mask-icon" href="/icons/mask-icon.svg" color="#2f45c9">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#e9ecf1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12141b" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LunaVerta">
+<meta property="og:locale" content="nb_NO">
+<meta property="og:locale:alternate" content="en_GB">
+<meta property="og:locale:alternate" content="da_DK">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:locale:alternate" content="sv_SE">
+<meta property="og:title" content="PDF til Word · Redigerbar tekst i en .docx, uten opplasting">
+<meta property="og:description" content="Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.">
+<meta property="og:url" content="https://lunaverta.com/no/pdf-til-word/">
+<meta property="og:image" content="https://lunaverta.com/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/app.css?v=7dd9103f66">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · PDF til Word","url":"https://lunaverta.com/no/pdf-til-word/","inLanguage":"no","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"no","mainEntity":[{"@type":"Question","name":"Ser den nøyaktig ut som PDF-en?","acceptedAnswer":{"@type":"Answer","text":"Nei. Du får teksten, overskriftene og avsnittene, side for side. Bilder, tabeller og nøyaktige plasseringer blir ikke med. Hvis du bare skal rette noen få ord, beholder Rediger PDF oppsettet som det er."}},{"@type":"Question","name":"Fungerer det med skannede PDF-er?","acceptedAnswer":{"@type":"Answer","text":"Bare hvis skanningen har et tekstlag. Kjør OCR først for å gjøre skanningen søkbar, og gjør den så om til Word."}},{"@type":"Question","name":"Blir PDF-en min lastet opp?","acceptedAnswer":{"@type":"Answer","text":"Nei. Word-filen lages i nettleseren din."}},{"@type":"Question","name":"Blir filene mine lastet opp noe sted?","acceptedAnswer":{"@type":"Answer","text":"Nei. LunaVerta har ingen server som tar imot filer. Hver konvertering kjører i nettleseren din, på enheten din, og resultatet lagres rett på enheten din."}},{"@type":"Question","name":"Fungerer det uten nett?","acceptedAnswer":{"@type":"Answer","text":"Ja. Etter første besøk lagres appen på enheten din. Hjelpeprogrammer for PDF, Word, Excel, MP3 og HEIC lagres første gang du bruker dem, og fungerer deretter også uten nett."}},{"@type":"Question","name":"Hva koster det?","acceptedAnswer":{"@type":"Answer","text":"Ingenting. Det finnes ingen kontoer, ingen reklame, ingen informasjonskapsler og ingen sporing."}},{"@type":"Question","name":"Hvorfor er det gratis?","acceptedAnswer":{"@type":"Answer","text":"Fordi alt kjører på din egen enhet, har LunaVerta nesten ingen driftskostnader: det finnes ingen servere som tar imot, lagrer eller behandler filer. Derfor kan det være gratis uten reklame, uten kontoer og uten å selge data. LunaVerta lages av Midt-Tech i Aarhus som et nyttig verktøy og et eksempel på hva vi bygger. Hvis det sparer deg tid, er du velkommen til å spandere en kaffe (MobilePay, foreløpig bare i Danmark)."}},{"@type":"Question","name":"Kommer LunaVerta til å forbli gratis?","acceptedAnswer":{"@type":"Answer","text":"Ja, det er planen. LunaVerta koster svært lite å drive, så det er ingen grunn til å ta betalt i dag. Hvis du synes det er nyttig og vil støtte arbeidet, er du velkommen til å spandere en kaffe. Etter hvert som plattformen vokser, kan noen funksjoner senere bli tilbudt som en del av et frivillig abonnement, men det finnes ingen slike planer nå."}}]},{"@type":"HowTo","name":"Gjør en PDF om til Word","inLanguage":"no","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Velg en PDF, eller slipp den på siden."},{"@type":"HowToStep","position":2,"text":"LunaVerta leser teksten på hver side og lager en .docx-fil."},{"@type":"HowToStep","position":3,"text":"Lagre den, og åpne den i Word, Pages, LibreOffice eller Google Dokumenter."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Forside","item":"https://lunaverta.com/no/"},{"@type":"ListItem","position":2,"name":"PDF til Word","item":"https://lunaverta.com/no/pdf-til-word/"}]}]}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/no/" aria-label="LunaVerta">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><mask id="lm"><rect width="64" height="64" fill="#fff"/><circle cx="37" cy="27.5" r="9.5" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="14 4.8" transform="rotate(-80 32 32)"/><circle cx="32" cy="32" r="12" fill="var(--moon)" mask="url(#lm)"/></svg>
+      <span class="brand-name">LunaVerta</span>
+    </a>
+    <a class="maker-head" href="https://midttech.com/" target="_blank" rel="noopener"><span data-i18n="maker.head">fra Midt-Tech</span></a>
+    <div class="head-actions">
+      <span class="net" id="net" hidden data-i18n="net.offline">Frakoblet</span>
+      <nav class="head-nav" aria-label="Sections"><a href="#h-tools" data-i18n="nav.tools">Alle verktøy</a><a href="#h-faq" data-i18n="nav.faq">Spørsmål</a></nav>
+      <details class="lang-menu"><summary data-i18n-attr="aria-label:lang.label" aria-label="Språk"><span lang="no">NO</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
+          <ul><li><a href="/pdf-to-word/" hreflang="en" lang="en" data-set-lang="en"><b>EN</b>English</a></li><li><a href="/da/pdf-til-word/" hreflang="da" lang="da" data-set-lang="da"><b>DA</b>Dansk</a></li><li><a href="/de/pdf-in-word/" hreflang="de" lang="de" data-set-lang="de"><b>DE</b>Deutsch</a></li><li><a href="/no/pdf-til-word/" hreflang="no" lang="no" data-set-lang="no" aria-current="true"><b>NO</b>Norsk</a></li><li><a href="/sv/pdf-till-word/" hreflang="sv" lang="sv" data-set-lang="sv"><b>SV</b>Svenska</a></li></ul></details>
+    </div>
+  </header>
+
+  <section class="hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/no/">Forside</a> <span aria-hidden="true">›</span> <span aria-current="page">PDF til Word</span></nav>
+    <h1>Gjør en PDF om til Word</h1>
+    <p class="lead">Få teksten ut av en PDF og inn i et Word-dokument du kan redigere, med overskrifter, avsnitt og sideskift. Det nøyaktige oppsettet, kolonner og bilder blir ikke med, så det passer best til brev, rapporter og annen tekst.</p>
+  </section>
+
+  <main class="main" data-preset="docx" data-mode="">
+    <section class="panel" aria-labelledby="h-dock">
+      <div class="panel-head">
+        <h2 id="h-dock" class="sr-only" data-i18n="files.h">Filer som skal konverteres</h2>
+        <button class="btn sm ghost" id="clearTray" type="button" data-i18n="btn.clear">Tøm</button>
+        <button class="btn sm ghost opt-toggle" id="optToggle" type="button" aria-expanded="false" aria-controls="options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-i18n="opt.toggle">Innstillinger</span></button>
+      </div>
+      <div class="dock" id="dock">
+        <div class="dock-hint">
+          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></span>
+          <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Velg filer</button>
+          <p class="dock-or"><span data-i18n="drop.or">eller dra dem hit</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">for å lime inn</span></p>
+          <p class="dock-sub"><strong>Velg filer, eller slipp dem hvor som helst på siden.</strong> De blir til WORD med en gang, på din egen enhet. Velg gjerne mange på én gang, og lagre dem samlet som én .zip. Ingenting lastes opp.</p>
+          <span class="privacy-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="privacy.pill">Filene dine forlater aldri enheten din</span></span>
+          <input type="file" id="fileInput" multiple hidden>
+        </div>
+        <div class="tray" id="tray" aria-live="polite"></div>
+        <div class="targets" id="targets" hidden>
+          <span class="targets-label" data-i18n="convertAll">Konverter alle til</span>
+          <div class="target-row" id="targetRow"></div>
+        </div>
+      </div>
+      <div class="options" id="options" hidden data-i18n-attr="aria-label:opt.aria" aria-label="Innstillinger for konvertering">
+        <label class="opt"><span><span data-i18n="opt.quality">Bildekvalitet</span> <output id="qOut">90%</output></span>
+          <input type="range" id="optQuality" min="40" max="100" step="5" value="90">
+        </label>
+        <label class="opt"><span data-i18n="opt.size">Lengste side</span>
+          <select id="optSize">
+            <option value="0" data-i18n="opt.keep">Behold original</option><option value="4096">4096 px</option><option value="2048">2048 px</option><option value="1280">1280 px</option><option value="512">512 px</option>
+          </select>
+        </label>
+        <label class="opt"><span data-i18n="opt.pdfq">Word til PDF</span>
+          <select id="optPdfQ"><option value="best" data-i18n="opt.pdfq.best">Beste kvalitet</option><option value="small" data-i18n="opt.pdfq.small">Liten fil</option></select>
+        </label>
+        <label class="opt"><span data-i18n="opt.kbps">MP3-bithastighet</span>
+          <select id="optKbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
+        </label>
+        <label class="opt"><span data-i18n="opt.gif">GIF fra video</span>
+          <select id="optGif"><option value="3" class="gifN">Første 3 s</option><option value="5" class="gifN" selected>Første 5 s</option><option value="10" class="gifN">Første 10 s</option></select>
+        </label>
+        <label class="opt check"><input type="checkbox" id="optMerge" checked> <span data-i18n="opt.merge">Slå sammen bilder til én PDF</span></label>
+        <label class="opt check" id="optAskWrap"><input type="checkbox" id="optAsk" checked> <span data-i18n="opt.ask">Spør hvor filen skal lagres (Lagre som)</span></label>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-out">
+      <div class="panel-head">
+        <h2 id="h-out" data-i18n="out.h">Konvertert</h2>
+        <span class="targets-label" id="outCount"></span>
+      </div>
+      <div class="manifest" id="manifest">
+        <div class="empty-manifest" id="emptyOut" data-i18n="out.empty">Konverterte filer vises her, klare til å lagres.</div>
+      </div>
+      <div class="manifest-foot">
+        <button class="btn" id="saveAll" type="button" disabled data-i18n="out.saveAll">Lagre alle som .zip</button>
+        <button class="btn ghost" id="clearOut" type="button" disabled data-i18n="out.clear">Tøm listen</button>
+      </div>
+    </section>
+  </main>
+
+
+
+  <section class="howto" aria-labelledby="h-howto">
+    <h2 id="h-howto">Slik gjør du det: PDF til Word</h2>
+    
+    <ol>
+      <li>Velg en PDF, eller slipp den på siden.</li>
+      <li>LunaVerta leser teksten på hver side og lager en .docx-fil.</li>
+      <li>Lagre den, og åpne den i Word, Pages, LibreOffice eller Google Dokumenter.</li>
+    </ol>
+  </section>
+
+  <nav class="tools" aria-labelledby="h-tools">
+    <h2 id="h-tools">Alle verktøy</h2>
+    <div class="tool-groups">
+      <section class="tg tg-pdf" style="--k:var(--c-doc)">
+        <h3>PDF <small>21</small></h3>
+        <ul class="tool-grid">
+          <li><a href="/no/rediger-pdf/">Rediger PDF</a></li>
+          <li><a href="/no/signer-pdf/">Signer PDF</a></li>
+          <li><a href="/no/fyll-ut-pdf-skjema/">Fyll ut PDF-skjema</a></li>
+          <li><a href="/no/sladd-pdf/">Sladd PDF</a></li>
+          <li><a href="/no/fjern-priser-fra-pdf/">Fjern priser fra PDF</a></li>
+          <li><a href="/no/sla-sammen-pdf/">Slå sammen PDF</a></li>
+          <li><a href="/no/del-pdf/">Del opp PDF</a></li>
+          <li><a href="/no/slett-sider-fra-pdf/">Slett PDF-sider</a></li>
+          <li><a href="/no/roter-pdf/">Roter PDF</a></li>
+          <li><a href="/no/komprimer-pdf/">Komprimer PDF</a></li>
+          <li><a href="/no/legg-til-sidetall-i-pdf/">Legg til sidetall</a></li>
+          <li><a href="/no/vannmerke-pdf/">Vannmerke på PDF</a></li>
+          <li><a href="/no/beskytt-pdf-med-passord/">Beskytt PDF</a></li>
+          <li><a href="/no/fjern-passord-fra-pdf/">Lås opp PDF</a></li>
+          <li><a href="/no/gjor-pdf-sokbar/">OCR: gjør en PDF søkbar</a></li>
+          <li><a href="/no/fjern-metadata-fra-pdf/">Fjern metadata fra PDF</a></li>
+          <li><a href="/no/sammenlign-pdf/">Sammenlign to PDF-er</a></li>
+          <li><a href="/no/pdf-til-word/" aria-current="page">PDF til Word</a></li>
+          <li><a href="/no/pdf-til-jpg/">PDF til JPG</a></li>
+          <li><a href="/no/pdf-til-png/">PDF til PNG</a></li>
+          <li><a href="/no/pdf-til-tekst/">PDF til tekst</a></li>
+        </ul>
+      </section>
+      <section class="tg tg-image" style="--k:var(--c-image)">
+        <h3>Bilder <small>5</small></h3>
+        <ul class="tool-grid">
+          <li><a href="/no/heic-til-jpg/">HEIC til JPG</a></li>
+          <li><a href="/no/jpg-til-pdf/">JPG til PDF</a></li>
+          <li><a href="/no/png-til-jpg/">PNG til JPG</a></li>
+          <li><a href="/no/webp-til-jpg/">WebP til JPG</a></li>
+          <li><a href="/no/fjern-posisjon-fra-bilder/">Fjern posisjon fra bilder</a></li>
+        </ul>
+      </section>
+      <div class="tg-stack">
+      <section class="tg tg-data" style="--k:var(--c-data)">
+        <h3>Dokumenter og data <small>3</small></h3>
+        <ul class="tool-grid">
+          <li><a href="/no/word-til-pdf/">Word til PDF</a></li>
+          <li><a href="/no/excel-til-csv/">Excel til CSV</a></li>
+          <li><a href="/no/csv-til-excel/">CSV til Excel</a></li>
+        </ul>
+      </section>
+      <section class="tg tg-media" style="--k:var(--c-video)">
+        <h3>Video og lyd <small>2</small></h3>
+        <ul class="tool-grid">
+          <li><a href="/no/video-til-gif/">Video til GIF</a></li>
+          <li><a href="/no/video-til-mp3/">Video til MP3</a></li>
+        </ul>
+      </section>
+      </div>
+    </div>
+  </nav>
+
+  <section class="faq" aria-labelledby="h-faq">
+    <h2 id="h-faq">Spørsmål om PDF til Word</h2>
+    <div class="faq-list">
+      <details open><summary>Ser den nøyaktig ut som PDF-en?</summary><p>Nei. Du får teksten, overskriftene og avsnittene, side for side. Bilder, tabeller og nøyaktige plasseringer blir ikke med. Hvis du bare skal rette noen få ord, beholder Rediger PDF oppsettet som det er.</p></details>
+      <details><summary>Fungerer det med skannede PDF-er?</summary><p>Bare hvis skanningen har et tekstlag. Kjør OCR først for å gjøre skanningen søkbar, og gjør den så om til Word.</p></details>
+      <details><summary>Blir PDF-en min lastet opp?</summary><p>Nei. Word-filen lages i nettleseren din.</p></details>
+      <details><summary data-i18n="faq.q1">Blir filene mine lastet opp noe sted?</summary><p data-i18n-html="faq.a1">Nei. LunaVerta har ingen server som tar imot filer. Hver konvertering kjører i nettleseren din, på enheten din, og resultatet lagres rett på enheten din.</p></details>
+      <details><summary data-i18n="faq.q2">Fungerer det uten nett?</summary><p data-i18n-html="faq.a2">Ja. Etter første besøk lagres appen på enheten din. Hjelpeprogrammer for PDF, Word, Excel, MP3 og HEIC lagres første gang du bruker dem, og fungerer deretter også uten nett.</p></details>
+      <details><summary data-i18n="faq.q5">Hva koster det?</summary><p data-i18n-html="faq.a5">Ingenting. Det finnes ingen kontoer, ingen reklame, ingen informasjonskapsler og ingen sporing.</p></details>
+      <details><summary data-i18n="faq.q9">Hvorfor er det gratis?</summary><p data-i18n-html="faq.a9">Fordi alt kjører på din egen enhet, har LunaVerta nesten ingen driftskostnader: det finnes ingen servere som tar imot, lagrer eller behandler filer. Derfor kan det være gratis uten reklame, uten kontoer og uten å selge data. LunaVerta lages av Midt-Tech i Aarhus som et nyttig verktøy og et eksempel på hva vi bygger. Hvis det sparer deg tid, er du velkommen til å <button type="button" class="linkish" data-coffee>spandere en kaffe</button> (MobilePay, foreløpig bare i Danmark).</p></details>
+      <details><summary data-i18n="faq.q10">Kommer LunaVerta til å forbli gratis?</summary><p data-i18n-html="faq.a10">Ja, det er planen. LunaVerta koster svært lite å drive, så det er ingen grunn til å ta betalt i dag. Hvis du synes det er nyttig og vil støtte arbeidet, er du velkommen til å <button type="button" class="linkish" data-coffee>spandere en kaffe</button>. Etter hvert som plattformen vokser, kan noen funksjoner senere bli tilbudt som en del av et frivillig abonnement, men det finnes ingen slike planer nå.</p></details>
+    </div>
+  </section>
+
+  <details class="ref" id="refBox">
+    <summary><span class="ref-head"><h2 id="h-ref" data-i18n="ref.h">Hva blir til hva</h2><span class="ref-sum">35 filtyper inn, 24 veier ut</span></span><span class="ref-toggle"><span class="ref-more" data-i18n="ref.more">Vis alle formater</span><span class="ref-less" data-i18n="ref.less">Skjul formater</span></span></summary>
+    <div class="ref-grid" id="refGrid"><div class="kind" style="--k:var(--c-image)"><h3>Bilder</h3>
+  <p class="note">HEIC-bilder fra iPhone fungerer også. Rens fjerner posisjonen og andre skjulte data uten å miste kvalitet.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">PNG</span><span class="fmt">JPG</span><span class="fmt">WEBP</span><span class="fmt">GIF</span><span class="fmt">BMP</span><span class="fmt">AVIF</span><span class="fmt">SVG</span><span class="fmt">ICO</span><span class="fmt">HEIC</span><span class="fmt">HEIF</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt">PNG</span><span class="fmt">JPG</span><span class="fmt">WEBP</span><span class="fmt">GIF</span><span class="fmt">PDF</span><span class="fmt tool">OCR</span><span class="fmt">ICO</span><span class="fmt">BMP</span><span class="fmt tool">Rens</span></span></div></div><div class="kind" style="--k:var(--c-doc)"><h3>PDF</h3>
+  <p class="note">Rediger sider, tekst og skjemaer, sladd tekst, slå sammen, del opp, krymp, legg til eller fjern passord, rens skjulte data eller gjør sider om til bilder eller tekst.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">PDF</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt tool">Rediger</span><span class="fmt tool">Sladd</span><span class="fmt tool">OCR</span><span class="fmt tool">Slå sammen</span><span class="fmt tool">Del opp</span><span class="fmt tool">Beskytt</span><span class="fmt tool">Lås opp</span><span class="fmt">DOCX</span><span class="fmt">PNG</span><span class="fmt">JPG</span></span></div></div><div class="kind" style="--k:var(--c-doc)"><h3>Dokumenter</h3>
+  <p class="note">Word til PDF beholder sideoppsett, skrifter, farger, tabeller, bilder, topptekster og bunntekster, og teksten forblir søkbar. Gamle .doc-filer støttes ikke: lagre dem som .docx først.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">DOCX</span><span class="fmt">MD</span><span class="fmt">TXT</span><span class="fmt">HTML</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt">PDF</span><span class="fmt">HTML</span><span class="fmt">MD</span><span class="fmt">TXT</span></span></div></div><div class="kind" style="--k:var(--c-data)"><h3>Regneark og data</h3>
+  <p class="note">Arbeidsbøker med flere ark gir én CSV per ark.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">XLSX</span><span class="fmt">XLS</span><span class="fmt">ODS</span><span class="fmt">CSV</span><span class="fmt">TSV</span><span class="fmt">JSON</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt">XLSX</span><span class="fmt">CSV</span><span class="fmt">JSON</span><span class="fmt">HTML</span><span class="fmt">MD</span></span></div></div><div class="kind" style="--k:var(--c-audio)"><h3>Lyd</h3>
+  <p class="note">Dekodingen skjer i nettleseren din, så formatene varierer litt fra nettleser til nettleser.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">MP3</span><span class="fmt">WAV</span><span class="fmt">OGG</span><span class="fmt">OGA</span><span class="fmt">OPUS</span><span class="fmt">FLAC</span><span class="fmt">M4A</span><span class="fmt">AAC</span><span class="fmt">WEBA</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt">MP3</span><span class="fmt">WAV</span></span></div></div><div class="kind" style="--k:var(--c-video)"><h3>Video</h3>
+  <p class="note">Lag en GIF av de første sekundene, hent ut lydsporet eller ta et stillbilde. MP4 krever programmer som er for tunge for en nettleser, så det tilbys ikke.</p>
+  <div class="kind-row"><span class="kind-lbl">Fra</span><span class="fmts from"><span class="fmt">MP4</span><span class="fmt">WEBM</span><span class="fmt">MOV</span><span class="fmt">M4V</span><span class="fmt">MKV</span></span></div>
+  <div class="kind-row"><span class="kind-lbl">Til</span><span class="fmts to"><span class="fmt">GIF</span><span class="fmt">MP3</span><span class="fmt">WAV</span><span class="fmt">PNG</span><span class="fmt">JPG</span></span></div></div></div>
+  </details>
+
+  <section class="about" aria-labelledby="h-about">
+    <div class="about-text">
+      <h2 id="h-about">Om LunaVerta</h2>
+      <p>LunaVerta er en gratis filkonvertering og PDF-redigering som kjører helt i nettleseren. Filene behandles på brukerens egen enhet og lastes aldri opp til en server. Det fungerer uten nett etter første besøk, krever ingen konto, setter ingen informasjonskapsler og viser ingen reklame. LunaVerta er laget i Danmark av Midt-Tech.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>Pris</dt><dd>Gratis</dd></div>
+      <div><dt>Opplasting</dt><dd>Ingen: filene blir på enheten din</dd></div>
+      <div><dt>Konto</dt><dd>Ikke nødvendig</dd></div>
+      <div><dt>Fungerer uten nett</dt><dd>Ja, etter første besøk</dd></div>
+      <div><dt>Språk</dt><dd>Norsk, dansk, engelsk, svensk og tysk</dd></div>
+      <div><dt>Laget av</dt><dd><a href="https://midttech.com/" target="_blank" rel="noopener">Midt-Tech, Aarhus, Danmark (CVR 34256276)</a></dd></div>
+    </dl>
+  </section>
+
+  <footer>
+    <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">Et produkt fra</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Danmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
+    <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Spander en kaffe</span></button>
+    <span class="foot-promise" data-i18n="foot.promise">Ingen informasjonskapsler · ingen konto · ingen reklame</span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+7dd9103 · 2026-10-31">CVR 34256276</span></span>
+    <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Meld fra om en feil</a><a href="/privacy.html" data-i18n="nav.privacy">Personvern</a><a href="/licenses.html" data-i18n="nav.licenses">Lisenser for åpen kildekode</a></nav>
+  </footer>
+</div>
+
+<div id="scrim"></div>
+<div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Velg et format"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
+<div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
+<noscript><p style="padding:16px">LunaVerta konverterer filer med JavaScript i nettleseren din. Slå på JavaScript for å bruke det.</p></noscript>
+<script src="/assets/strings.js?v=7dd9103f66"></script>
+<script src="/assets/strings-no.js?v=7dd9103f66"></script>
+<script src="/assets/i18n.js?v=7dd9103f66"></script>
+<script src="/assets/app.js?v=7dd9103f66"></script>
+<script src="/assets/editor.js?v=7dd9103f66"></script>
+<script src="/assets/pdf-text.js?v=7dd9103f66"></script>
+</body>
+</html>

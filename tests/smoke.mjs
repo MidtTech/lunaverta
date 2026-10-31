@@ -141,6 +141,17 @@ await test('A signature can be put on every page at once', async () => {
   await done(p);
 });
 
+await test('every language has its own texts and a menu with all languages', async () => {
+  const p = await page('/');
+  for (const [L, word] of [['da', 'Vælg filer'], ['sv', 'Välj filer'], ['no', 'Velg filer'], ['de', 'Dateien wählen']]) {
+    await p.goto(`${BASE}/${L}/`);
+    assert((await p.locator('#btnChoose, [data-i18n="btn.choose"]').first().innerText()).trim() === word, `${L}: choose button not translated`);
+    assert(await p.locator('.lang-menu a').count() === 5, `${L}: language menu should have 5 languages`);
+    assert(await p.evaluate(l => !!(window.LV_STR && window.LV_STR[l]), L), `${L}: texts not loaded`);
+  }
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

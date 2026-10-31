@@ -734,7 +734,7 @@ async function insertBlank(after) {
 const STAMP_COLORS = { red: '#c62828', blue: '#1f4fb8', green: '#1b7a3c', grey: '#555b66' };
 function stampImage(text, color, withDate) {
   const c = document.createElement('canvas'), ctx = c.getContext('2d'), fs = 64;
-  const lines = [text.toUpperCase()]; if (withDate) lines.push(new Date().toLocaleDateString(window.LV && window.LV.lang === 'da' ? 'da-DK' : 'en-GB'));
+  const lines = [text.toUpperCase()]; if (withDate) lines.push(new Date().toLocaleDateString({ da: 'da-DK', sv: 'sv-SE', no: 'nb-NO', de: 'de-DE' }[window.LV && window.LV.lang] || 'en-GB'));
   ctx.font = `800 ${fs}px Arial, Helvetica, sans-serif`;
   const w = Math.max(...lines.map((l, i) => { ctx.font = `${i ? 600 : 800} ${i ? fs * .45 : fs}px Arial, Helvetica, sans-serif`; return ctx.measureText(l).width; })) + 60;
   const h = fs + 44 + (withDate ? fs * .55 : 0);
@@ -1123,7 +1123,8 @@ function drawBoxes(pg, vp, layer) {
 const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
   priceText: null, // found by findPriceText: labels, terms and notes about money
-  cpr: /\b(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4}\b/g,
+  // Danish CPR (ddmmyy-xxxx), Norwegian fødselsnummer (ddmmyy xxxxx) and Swedish personnummer ((yy)yymmdd-xxxx)
+  cpr: /\b(?:(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4,5}|(?:19|20)?\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[-+]\d{4})\b/g,
   accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
   phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)/g,
@@ -1309,7 +1310,7 @@ function segments(ln) {
 }
 // Words that show a text is about money. Every sender lays out invoices
 // differently, so this is a broad list in Danish and English.
-const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?(?!\s?[-.]?\s?(?:nr|nummer|reg))|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
+const PRICE_TEXT = /(?<![A-Za-zæøåÆØÅ])(?:(?:liste|netto|brutto|enheds|styk|total|salgs|kost|ny|tilbuds|vejl\.?\s?|udsalgs)?pris(?:er|en)?|[a-zæøå-]*beløb(?:et)?|moms(?:grundlag|beløb|fri|pligtig)?(?!\s?[-.]?\s?(?:nr|nummer|reg))|ekskl\.?\s?moms|inkl\.?\s?moms|rabat(?:ten)?|total(?:t|en)?|i alt|sub-?total|sum(?:men)?|netto|brutto|at betale|til betaling|betaling(?:s?betingelse(?:r)?|sfrist|sdato|en)?|betales|betalt|forfald(?:sdato)?|sidste rettidige|rente(?:sats|r)?|gebyr(?:er)?|fragt|afgift(?:er)?|[a-zæøå]*tillæg|depositum|saldo|kredit|debet|udlæg|valuta|DKK|EUR|NOK|SEK|kr\.|pr\.?\s?(?:md|mdr|måned|stk|enhed|time)\.?|à|a-pris|belopp(?:et)?|beløp(?:et)?|summa|totalt|att betala|å betale|mva|preis(?:e)?|betrag|gesamt(?:betrag|summe|preis)?|summe|mwst\.?|ust\.?|zu zahlen|rabatt|price|prices|amount|subtotal|vat|tax|discount|due|payment|balance|net|gross|freight|fee|interest|currency|paid)(?![A-Za-zæøåÆØÅ])/i;
 async function findPriceText(progress) {
   const hits = [];
   const live = S.pages.filter(p => !p.deleted);

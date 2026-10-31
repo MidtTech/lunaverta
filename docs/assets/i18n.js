@@ -7,21 +7,27 @@
 const STR = window.LV_STR;
 
 const KEY = 'lunaverta-lang';
+// Every language the site has pages in. A page only loads its own language's texts (plus English).
+const SUPPORTED = ['en', 'da', 'sv', 'no', 'de'];
+const browserLang = l => (/^(nb|nn|no)\b/i.test(l) ? 'no' : l.slice(0, 2).toLowerCase());
 function detect() {
-  try { const saved = localStorage.getItem(KEY); if (saved && STR[saved]) return saved; } catch (e) {}
+  try { const saved = localStorage.getItem(KEY); if (saved && SUPPORTED.includes(saved)) return saved; } catch (e) {}
   const langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'en'];
-  return langs.some(l => /^da\b/i.test(l)) ? 'da' : 'en';
+  for (const l of langs) { const c = browserLang(l); if (SUPPORTED.includes(c)) return c; }
+  return 'en';
 }
 const pageLang = STR[document.documentElement.dataset.pageLang] ? document.documentElement.dataset.pageLang : null;
 // The other language's address, on whatever host this page is served from.
 const altUrl = l => { const a = document.querySelector(`link[rel="alternate"][hreflang="${l}"]`); return a ? new URL(a.href).pathname : null; };
-let lang = pageLang || detect();
-// A Danish browser arriving at an English page goes to the Danish version,
-// unless the visitor has chosen a language. Never the other way round: search
-// engines read pages with English settings and must be able to see /da/.
+// Pages without a fixed language (privacy, licences) only have English and Danish texts.
+let lang = pageLang || (STR[detect()] ? detect() : 'en');
+// A Danish (Swedish, Norwegian, German) browser arriving at an English page goes
+// to its own language, unless the visitor has chosen a language. Never the other
+// way round: search engines read pages with English settings and must see them all.
 if (pageLang === 'en') {
   let saved = null; try { saved = localStorage.getItem(KEY); } catch (e) {}
-  if (!saved && detect() === 'da' && altUrl('da') && !navigator.webdriver) location.replace(altUrl('da'));
+  const want = detect();
+  if (!saved && want !== 'en' && altUrl(want) && !navigator.webdriver) location.replace(altUrl(want));
 }
 
 function t(key, vars) {
@@ -43,20 +49,27 @@ function apply(root = document) {
   root.querySelectorAll('[data-i18n-html]').forEach(el => { const s = tx(el.dataset.i18nHtml); if (s !== null) el.innerHTML = s; });
   root.querySelectorAll('[data-i18n-attr]').forEach(el => el.dataset.i18nAttr.split(';').forEach(pair => { const [a, k] = pair.split(':'); const s = a && k && tx(k.trim()); if (s) el.setAttribute(a.trim(), s); }));
   root.querySelectorAll('[data-lang]').forEach(el => { el.hidden = el.dataset.lang !== lang; });
-  root.querySelectorAll('[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
+  root.querySelectorAll('button[data-set-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
   const title = document.querySelector('[data-i18n-title]');
   if (title) document.title = title.dataset.i18nTitle === 'title' ? t('title') : t(title.dataset.i18nTitle) + ' · LunaVerta';
 }
 function setLang(l) {
-  if (!STR[l]) return;
+  if (!SUPPORTED.includes(l)) return;
   try { localStorage.setItem(KEY, l); } catch (e) {}
   if (pageLang) { const u = altUrl(l); if (u && l !== pageLang) location.href = u; return; }
-  if (l === lang) return;
+  if (l === lang || !STR[l]) return;
   lang = l;
   apply();
   document.dispatchEvent(new CustomEvent('lv-lang', { detail: l }));
 }
-document.addEventListener('click', e => { const b = e.target.closest('[data-set-lang]'); if (b) setLang(b.dataset.setLang); });
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-set-lang]');
+  if (b && b.tagName === 'A') { try { localStorage.setItem(KEY, b.dataset.setLang); } catch (x) {} return; } // a link in the language menu: remember, then follow it
+  if (b) setLang(b.dataset.setLang);
+  // the language menu closes when you click outside it
+  document.querySelectorAll('details.lang-menu[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('details.lang-menu[open]').forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
 // A one-time note that the site uses no cookies. Nothing to consent to: the
 // only things stored are the visitor's own settings and the offline copy.
 const NOTICE = 'lunaverta-notice';

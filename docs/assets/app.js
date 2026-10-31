@@ -1736,6 +1736,8 @@ function arc(a0, a1, r0, r1) {
   const [x0, y0] = p(r1, a0), [x1, y1] = p(r1, a1), [x2, y2] = p(r0, a1), [x3, y3] = p(r0, a0);
   return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
 }
+// Long labels (BEARBEITEN, ANONYMISÉR …) get a smaller font so they stay inside their slice.
+function fit(text, room) { const w = text.length * 8.4; return w > room ? ` style="font-size:${Math.max(9, Math.floor(13 * room / w))}px"` : ''; }
 function drawRing(targets, count, subtitle) {
   const n = targets.length, gap = n > 1 ? 0.03 : 0;
   let s = '';
@@ -1747,7 +1749,7 @@ function drawRing(targets, count, subtitle) {
     s += `<g class="slice" role="menuitem" tabindex="0" data-t="${t}" aria-label="${esc(T('ring.convertTo', { t: label(t) }) + (T('rd.' + t) !== 'rd.' + t ? '. ' + T('rd.' + t) : ''))}" style="--k:${kv(OUT[t].k)}">
       <path d="${n === 1 ? arc(-Math.PI / 2, Math.PI * 1.5 - 0.0001, R.r0, R.r1) : arc(a0, a1, R.r0, R.r1)}"/>
       <circle class="tick" cx="${tx}" cy="${ty}" r="3"/>
-      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central">${esc(label(t))}</text></g>`;
+      <text class="lab" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="central"${fit(label(t), n === 1 ? 999 : 2 * lr * Math.sin((a1 - a0) / 2) - 14)}>${esc(label(t))}</text></g>`;
   });
   s += `<g class="hub"><circle cx="${R.cx}" cy="${R.cy}" r="${R.r0 - 6}"/>
     <text class="t1" id="hubT1" x="${R.cx}" y="${R.cy - 6}" text-anchor="middle">${count}</text>
