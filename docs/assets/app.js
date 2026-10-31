@@ -35,7 +35,7 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','png','jpg'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','docx','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
@@ -44,7 +44,7 @@ const KINDS = {
 const OUT = {
   png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true },
   pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
-  html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' },
+  html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' }, docx: { k: '--c-doc' }, compare: { k: '--c-doc', tool: true },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
   mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }
 };
@@ -62,7 +62,7 @@ function kindOf(file) { return kindOfExt(ext(file.name)) || kindOfMime(file.type
 function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) if (re.test(t)) return k; return null; }
 // Tools kept out of the ring for a kind, but still used by their own pages
 // (Compress PDF, Remove PDF metadata, PDF to text, Remove prices).
-const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices'] };
+const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare'] };
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
@@ -1305,6 +1305,7 @@ async function convertPDF(file, target, o, progress) {
   if (target === 'shrink') return shrinkPDF(file, pdf, progress);
   if (target === 'ocr') return ocrPDF(file, pdf, progress);
   const b = base(file.name), out = [], pad = String(pdf.numPages).length;
+  if (target === 'docx') return pdfToWord(pdf, b, progress);
   if (target === 'txt') {
     const pages = [];
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -1327,6 +1328,104 @@ async function convertPDF(file, target, o, progress) {
   }
   return out;
 }
+// ---------- Compare two PDFs: the text, line by line, with what was added, removed and changed ----------
+function lcsDiff(a, b, eq) {
+  const n = a.length, m = b.length, w = m + 1, L = new Uint32Array((n + 1) * (m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i * w + j] = eq(a[i], b[j]) ? L[(i + 1) * w + j + 1] + 1 : Math.max(L[(i + 1) * w + j], L[i * w + j + 1]);
+  const out = []; let i = 0, j = 0;
+  while (i < n && j < m) { if (eq(a[i], b[j])) { out.push(['=', a[i], b[j]]); i++; j++; } else if (L[(i + 1) * w + j] >= L[i * w + j + 1]) out.push(['-', a[i++], null]); else out.push(['+', null, b[j++]]); }
+  while (i < n) out.push(['-', a[i++], null]); while (j < m) out.push(['+', null, b[j++]]);
+  return out;
+}
+const norm = s => s.replace(/\s+/g, ' ').trim();
+function wordDiff(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/), d = lcsDiff(A, B, (x, y) => x === y);
+  let L = '', R = '';
+  for (const [op, x, y] of d) { if (op === '=') { L += esc(x); R += esc(y); } else if (op === '-') L += `<del>${esc(x)}</del>`; else R += `<ins>${esc(y)}</ins>`; }
+  return [L, R];
+}
+async function openCompare(fa, fb) {
+  const d = document.createElement('div'); d.id = 'compare'; d.className = 'cmp'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true');
+  d.innerHTML = `<div class="cmp-bar"><h2>${esc(T('cmp.title'))}</h2><span class="cmp-sum">${esc(T('cmp.reading'))}</span><label class="cmp-only"><input type="checkbox" checked> ${esc(T('cmp.onlyChanges'))}</label><button type="button" class="btn sm" data-x>${esc(T('cmp.close'))}</button></div>
+    <div class="cmp-head"><div><b>${esc(T('cmp.old'))}</b> <span>${esc(fa.name)}</span></div><div><b>${esc(T('cmp.new'))}</b> <span>${esc(fb.name)}</span></div></div><div class="cmp-body"></div>`;
+  document.body.appendChild(d); document.documentElement.classList.add('ed-open');
+  const close = () => { d.remove(); document.documentElement.classList.remove('ed-open'); };
+  d.querySelector('[data-x]').onclick = close;
+  d.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  d.querySelector('[data-x]').focus();
+  await lib('pdfjs'); pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR + 'pdf.worker.min.js';
+  const read = async f => { const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()), isEvalSupported: false }).promise; return (await pdfLines(pdf)).flatMap((ls, pi) => ls.map(l => ({ t: norm(l.t.replace(/\t/g, ' ')), p: pi + 1 }))).filter(l => l.t); };
+  let A, B;
+  try { [A, B] = await Promise.all([read(fa), read(fb)]); } catch (e) { d.querySelector('.cmp-sum').textContent = T('err.pdf.read'); return; }
+  // pair a removed line with an added one next to it: that is a changed line, shown word by word
+  const raw = lcsDiff(A, B, (x, y) => x.t === y.t), rows = [];
+  for (let k = 0; k < raw.length; k++) {
+    const [op, a, b] = raw[k];
+    if (op === '-' && raw[k + 1] && raw[k + 1][0] === '+') { rows.push(['~', a, raw[k + 1][2]]); k++; }
+    else rows.push([op, a, b]);
+  }
+  const n = { a: 0, r: 0, c: 0 }; rows.forEach(r => { if (r[0] === '+') n.a++; else if (r[0] === '-') n.r++; else if (r[0] === '~') n.c++; });
+  const total = n.a + n.r + n.c;
+  d.querySelector('.cmp-sum').textContent = total ? T('cmp.sum', { n: total, a: n.a, r: n.r, c: n.c }) : T('cmp.same');
+  const pg = l => l ? `<span class="cmp-pg">${esc(T('cmp.page', { n: l.p }))}</span>` : '';
+  d.querySelector('.cmp-body').innerHTML = rows.map(([op, a, b]) => {
+    if (op === '~') { const [L, R] = wordDiff(a.t, b.t); return `<div class="cmp-row chg"><div>${pg(a)}${L}</div><div>${pg(b)}${R}</div></div>`; }
+    return `<div class="cmp-row ${op === '=' ? 'same' : op === '+' ? 'add' : 'del'}"><div>${a ? pg(a) + esc(a.t) : ''}</div><div>${b ? pg(b) + esc(b.t) : ''}</div></div>`;
+  }).join('');
+  const only = d.querySelector('.cmp-only input'); const apply = () => d.classList.toggle('only', only.checked && total > 0); only.onchange = apply; apply();
+}
+
+// ---------- PDF to Word: the text and paragraphs as an editable .docx ----------
+// Lines are rebuilt from the text positions; a bigger line becomes a heading. The exact layout is not kept.
+async function pdfLines(pdf, progress) {
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const tc = await (await pdf.getPage(i)).getTextContent();
+    const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({ s: it.str, x: it.transform[4], y: it.transform[5], h: Math.abs(it.transform[3]) || it.height || 10, w: it.width || 0 }));
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+    const lines = [];
+    for (const it of items) {
+      const l = lines[lines.length - 1];
+      if (l && Math.abs(l.y - it.y) < Math.max(2, it.h * 0.4)) { const gap = it.x - l.end; l.t += (gap > it.h * 0.15 && !/\s$/.test(l.t) ? (gap > it.h * 2.5 ? '\t' : ' ') : '') + it.s; l.end = it.x + it.w; l.h = Math.max(l.h, it.h); }
+      else lines.push({ t: it.s, y: it.y, x: it.x, end: it.x + it.w, h: it.h });
+    }
+    pages.push(lines);
+    if (progress) progress(i / pdf.numPages * 0.8);
+  }
+  return pages;
+}
+async function pdfToWord(pdf, b, progress) {
+  const pages = await pdfLines(pdf, progress);
+  const all = pages.flat(); if (!all.length) throw new Error(T('docx.noText'));
+  const sizes = all.map(l => l.h).sort((x, y) => x - y), body = sizes[Math.floor(sizes.length / 2)];
+  const x = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const run = (t, big) => t.split('\t').map((part, i) => (i ? '<w:r><w:tab/></w:r>' : '') + `<w:r><w:t xml:space="preserve">${x(part)}</w:t></w:r>`).join('');
+  let xml = '';
+  pages.forEach((lines, pi) => {
+    // lines close together with the same size flow into one paragraph
+    let para = null;
+    const flush = () => { if (para) { xml += `<w:p><w:pPr><w:pStyle w:val="${para.big ? (para.big > body * 1.7 ? 'Heading1' : 'Heading2') : 'Normal'}"/></w:pPr>${run(para.t, para.big)}</w:p>`; para = null; } };
+    lines.forEach((l, li) => {
+      const big = l.h > body * 1.25 ? l.h : 0, prev = lines[li - 1];
+      const near = prev && (prev.y - l.y) < Math.max(l.h, prev.h) * 1.6 && !big && !para?.big && !l.t.includes('\t') && !prev.t.includes('\t');
+      if (para && near) para.t += (/-$/.test(para.t) ? '' : ' ') + l.t;
+      else { flush(); para = { t: l.t, big }; }
+    });
+    flush();
+    if (pi < pages.length - 1) xml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+  });
+  await lib('jszip');
+  const z = new JSZip();
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+  z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  z.file('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+  z.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="200" w:after="60"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style></w:styles>');
+  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${xml}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  const blob = await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  if (progress) progress(1);
+  return [{ name: b + '.docx', blob, noteKey: 'docx.note' }];
+}
+
 async function convertAudio(file, target, o, progress) {
   const buf = await decodeAudio(file), b = base(file.name);
   progress(.15);
@@ -1395,6 +1494,8 @@ function afterAdd(added, x, y) {
   const files = added.map(a => a.file), targets = fileTargets(files);
   // Prices is not in the ring; it lives in the editor. Its page opens the editor with prices marked.
   if (PRESET === 'prices') { const pdfs = files.filter(f => kindOf(f) === 'pdf'); if (pdfs.length && window.LVEditor) { window.LVEditor.open(pdfs, { find: true, preset: 'prices' }); return; } }
+  // Compare PDFs: as soon as two PDFs are in, they are compared
+  if (PRESET === 'compare') { const pdfs = tray.filter(t => t.kind === 'pdf').map(t => t.file); if (pdfs.length >= 2) openCompare(pdfs[pdfs.length - 2], pdfs[pdfs.length - 1]); else toast(T('cmp.need2')); return; }
   if (PRESET && PRESET !== 'merge' && targets.includes(PRESET)) { runBatch(files, PRESET); return; }
   if (PRESET === 'merge') return; // merge waits until the files are in order; the MERGE button is first and highlighted
   // A short "getting ready" moment first, so the ring doesn't jump at the visitor.

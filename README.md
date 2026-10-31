@@ -32,6 +32,15 @@ npm run serve        # http://localhost:8080
 
 Service workers only run on `localhost` or HTTPS, so open it through the server, not as a file.
 
+## Tests
+
+```
+npx playwright install chromium   # once
+npm test
+```
+
+`tests/smoke.mjs` serves `docs/` and drives a real browser: every page in the sitemap loads, PDF to Word gives a working .docx, Compare finds the changes, many files save as one .zip, a signature lands on every page, the Report a problem e-mail is built, and the home page fits a phone. Run it after `npm run pages` and before you push.
+
 ## License
 
 MIT, see `LICENSE`. The bundled libraries and fonts keep their own licenses.

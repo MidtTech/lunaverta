@@ -378,7 +378,13 @@ function addTextAt(v, e) {
     const r = v.layer.getBoundingClientRect(), [px, py] = v.vp.convertToPdfPoint(e.clientX - r.left, e.clientY - r.top);
     const w = 150, h = w * S.placing.ratio;
     const im = { id: ++uid, pageId: v.pg.id, x: px - w / 2, y: py - h / 2, w, h, src: S.placing.src };
-    S.images.push(im); S.dirty = true; placingMode(false); sigBox(v, im); setHint();
+    S.images.push(im);
+    // "every page": the same spot on all the other pages too (each one can be moved on its own afterwards)
+    if (S.placing.all) {
+      for (const pg of S.pages) if (!pg.deleted && pg.id !== v.pg.id) S.images.push({ ...im, id: ++uid, pageId: pg.id });
+      for (const o of S.pv.views.values()) if (o !== v && o.drawn) { o.job++; fillLayer(o); }
+    }
+    S.dirty = true; placingMode(false); sigBox(v, im); setHint();
     return;
   }
   if (!S.adding || e.target !== v.layer) return;
@@ -968,6 +974,7 @@ function openSign() {
     <div class="sig-pane" data-pane="upload" hidden><label>${esc(T('sign.pick'))}<input type="file" accept="image/*"></label><label class="pw-show"><input type="checkbox" name="white" checked> ${esc(T('sign.white'))}</label><img class="sig-preview" alt="" hidden></div>
     <div class="sig-pane" data-pane="saved" hidden><div class="sig-saved"></div></div>
     <label class="pw-show"><input type="checkbox" name="remember"> ${esc(T('sign.remember'))}</label>
+    <label class="pw-show"><input type="checkbox" name="all"> ${esc(T('sign.all'))}</label>
     <p class="pw-err" role="alert" hidden></p>
     <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary">${esc(T('sign.place'))}</button></div>
   </form>`;
@@ -1021,7 +1028,8 @@ function openSign() {
     if (f.remember.checked && tab !== 'saved') storeSigs([src, ...savedSigs().filter(s => s !== src)]);
     d.close();
     const im = new Image();
-    im.onload = () => { S.placing = { src, ratio: im.height / im.width }; placingMode(true); };
+    const all = f.all.checked;
+    im.onload = () => { S.placing = { src, ratio: im.height / im.width, all }; placingMode(true); };
     im.src = src;
   };
   d.addEventListener('close', () => d.remove());

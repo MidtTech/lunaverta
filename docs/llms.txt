@@ -43,6 +43,8 @@ Key facts:
 - [CSV to Excel](https://lunaverta.com/csv-to-excel/): Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.
 - [Video to GIF](https://lunaverta.com/video-to-gif/): Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.
 - [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
+- [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn the text in a PDF into a Word document you can edit, with headings and paragraphs. Free and private: your PDF is never uploaded.
+- [Compare two PDFs](https://lunaverta.com/compare-pdf/): Compare two versions of a PDF and see every added, removed and changed line, word by word. Free and private: nothing is uploaded.
 - [PDF to text](https://lunaverta.com/pdf-to-text/): Extract all text from a PDF into a plain text file in your browser. Free and private: your PDF is never uploaded.
 
 ## Værktøjer (dansk)
@@ -74,6 +76,8 @@ Key facts:
 - [CSV til Excel](https://lunaverta.com/da/csv-til-excel/): Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.
 - [Video til GIF](https://lunaverta.com/da/video-til-gif/): Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.
 - [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
+- [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav teksten i en PDF om til et Word-dokument, du kan redigere, med overskrifter og afsnit. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Sammenlign to PDF'er](https://lunaverta.com/da/sammenlign-pdf/): Sammenlign to versioner af en PDF, og se hver tilføjet, fjernet og ændret linje, ord for ord. Gratis og privat: intet bliver uploadet.
 - [PDF til tekst](https://lunaverta.com/da/pdf-til-tekst/): Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 
 ## About

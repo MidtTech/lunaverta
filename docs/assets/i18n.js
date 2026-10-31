@@ -72,6 +72,13 @@ function notice() {
   });
   document.body.appendChild(el);
 }
+// "Report a problem": a ready-made e-mail with the page and browser, nothing else
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-report]'); if (!a) return;
+  const v = (document.getElementById('buildVer') || {}).title || '';
+  const body = t('report.body').replace('{url}', location.href.split('#')[0]).replace('{ua}', navigator.userAgent).replace('{v}', v);
+  a.href = 'mailto:lee@midttech.com?subject=' + encodeURIComponent(t('report.subject')) + '&body=' + encodeURIComponent(body);
+});
 window.LV = { t, apply, setLang, get lang() { return lang; } };
 function start() { apply(); } // no cookie note: the footer says it, and there is nothing to consent to
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

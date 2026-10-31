@@ -9,7 +9,8 @@
     "vendor": "node scripts/vendor.mjs",
     "build": "node scripts/vendor.mjs && node scripts/build-pages.mjs",
     "serve": "npx --yes serve@14.2.4 docs -l 8080",
-    "pages": "node scripts/build-pages.mjs"
+    "pages": "node scripts/build-pages.mjs",
+    "test": "node tests/smoke.mjs"
   },
   "devDependencies": {
     "@fontsource/bricolage-grotesque": "5.3.0",
@@ -28,6 +29,7 @@
     "marked": "9.1.6",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "3.11.174",
+    "playwright": "1.56.0",
     "tesseract.js": "^7.0.0",
     "tesseract.js-core": "^7.0.0",
     "turndown": "7.1.2",
