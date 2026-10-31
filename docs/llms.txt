@@ -55,7 +55,7 @@ Key facts:
 - [Lås PDF op](https://lunaverta.com/da/fjern-adgangskode-fra-pdf/): Fjern adgangskoden fra en PDF, du kan åbne, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 - [OCR: gør en PDF søgbar](https://lunaverta.com/da/goer-pdf-soegbar/): Genkend teksten i scannede PDF'er og fotos, på dansk og engelsk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.
 - [Fjern priser fra PDF](https://lunaverta.com/da/fjern-priser-fra-pdf/): Find alle priser i et tilbud eller en faktura, og fjern dem på én gang, mens mål og andre oplysninger bliver stående. Gratis og privat: uden upload.
-- [Overstreg PDF](https://lunaverta.com/da/overstreg-pdf/): Overstreg navne, CPR-numre og anden fortrolig tekst i en PDF. Teksten fjernes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
+- [Anonymisér PDF](https://lunaverta.com/da/anonymiser-pdf/): Anonymisér en PDF: fjern navne, CPR-numre og anden fortrolig tekst. Teksten slettes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Redigér PDF](https://lunaverta.com/da/rediger-pdf/): Redigér PDF i din browser: ret tekst, tilføj tekst, udfyld formularer, ændr rækkefølge, drej og slet sider. Gratis og privat, uden upload.
 - [Underskriv PDF](https://lunaverta.com/da/underskriv-pdf/): Tegn eller upload din underskrift, og sæt den på en PDF i din browser. Gratis og privat: PDF'en og din underskrift forlader aldrig din enhed.

@@ -246,6 +246,12 @@ const label7 = `v${pkgVersion}+${version.slice(0, 7)}`;
 // Asset addresses carry the version, so a new page never runs with old CSS or
 // scripts from a browser or offline cache.
 const bust = html => html.replace(/((?:\/|")assets\/[\w.-]+\.(?:css|js))(?:\?v=\w+)?"/g, `$1?v=${version}"`);
+// Old addresses that moved: a tiny page that sends visitors (and search engines) to the new one.
+const MOVED = { 'da/overstreg-pdf': '/da/anonymiser-pdf/' };
+for (const [from, to] of Object.entries(MOVED)) {
+  mkdirSync(`docs/${from}`, { recursive: true });
+  writeFileSync(`docs/${from}/index.html`, `<!doctype html><html lang="da"><head><meta charset="utf-8"><title>LunaVerta</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"></head><body><p><a href="${to}">${SITE}${to}</a></p></body></html>\n`);
+}
 for (const p of pages) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
 for (const f of ['docs/privacy.html', 'docs/licenses.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
 writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`));
