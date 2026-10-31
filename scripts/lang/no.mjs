@@ -18,8 +18,7 @@ export default {
     dockCompare: '<strong>Velg to PDF-er: først den gamle versjonen, så den nye.</strong> Endringene vises side om side, på din egen enhet. Ingenting lastes opp.',
     noscript: 'LunaVerta konverterer filer med JavaScript i nettleseren din. Slå på JavaScript for å bruke det.',
     aboutText: 'LunaVerta er en gratis filkonvertering og PDF-redigering som kjører helt i nettleseren. Filene behandles på brukerens egen enhet og lastes aldri opp til en server. Det fungerer uten nett etter første besøk, krever ingen konto, setter ingen informasjonskapsler og viser ingen reklame. LunaVerta er laget i Danmark av Midt-Tech.',
-    facts: [['Pris', 'Gratis'], ['Opplasting', 'Ingen: filene blir på enheten din'], ['Konto', 'Ikke nødvendig'], ['Fungerer uten nett', 'Ja, etter første besøk'], ['Språk', 'Norsk, dansk, engelsk, svensk og tysk'], ['Laget av', 'Midt-Tech, Aarhus, Danmark (CVR 34256276)']],
-    factsCode: 'Kildekoden på GitHub'
+    facts: [['Pris', 'Gratis'], ['Opplasting', 'Ingen: filene blir på enheten din'], ['Konto', 'Ikke nødvendig'], ['Fungerer uten nett', 'Ja, etter første besøk'], ['Språk', 'Norsk, dansk, engelsk, svensk og tysk'], ['Laget av', 'Midt-Tech, Aarhus, Danmark (CVR 34256276)']]
   },
   groups: { pdf: 'PDF', image: 'Bilder', data: 'Dokumenter og data', media: 'Video og lyd' },
   popular: { 'edit-pdf': 'Rett tekst direkte', 'redact-pdf': 'Fjern tekst for godt', 'merge-pdf': 'Slå sammen flere filer', 'compress-pdf': 'Mindre fil til e-post', 'heic-to-jpg': 'Bilder fra iPhone', 'pdf-to-jpg': 'Hver side som et bilde' },

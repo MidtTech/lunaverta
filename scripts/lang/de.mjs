@@ -18,8 +18,7 @@ export default {
     dockCompare: '<strong>Wähle zwei PDFs: zuerst die alte Version, dann die neue.</strong> Die Änderungen werden nebeneinander gezeigt, auf deinem eigenen Gerät. Nichts wird hochgeladen.',
     noscript: 'LunaVerta wandelt Dateien mit JavaScript in deinem Browser um. Aktiviere JavaScript, um es zu nutzen.',
     aboutText: 'LunaVerta ist ein kostenloser Dateikonverter und PDF-Editor, der vollständig im Webbrowser läuft. Die Dateien werden auf dem eigenen Gerät verarbeitet und nie auf einen Server hochgeladen. Nach dem ersten Besuch funktioniert es offline, braucht kein Konto, setzt keine Cookies und zeigt keine Werbung. LunaVerta wird in Dänemark von Midt-Tech entwickelt.',
-    facts: [['Preis', 'Kostenlos'], ['Uploads', 'Keine: Die Dateien bleiben auf deinem Gerät'], ['Konto', 'Nicht nötig'], ['Funktioniert offline', 'Ja, nach dem ersten Besuch'], ['Sprachen', 'Deutsch, Dänisch, Englisch, Schwedisch und Norwegisch'], ['Entwickelt von', 'Midt-Tech, Aarhus, Dänemark (CVR 34256276)']],
-    factsCode: 'Quellcode auf GitHub'
+    facts: [['Preis', 'Kostenlos'], ['Uploads', 'Keine: Die Dateien bleiben auf deinem Gerät'], ['Konto', 'Nicht nötig'], ['Funktioniert offline', 'Ja, nach dem ersten Besuch'], ['Sprachen', 'Deutsch, Dänisch, Englisch, Schwedisch und Norwegisch'], ['Entwickelt von', 'Midt-Tech, Aarhus, Dänemark (CVR 34256276)']]
   },
   groups: { pdf: 'PDF', image: 'Bilder', data: 'Dokumente und Daten', media: 'Video und Audio' },
   popular: { 'edit-pdf': 'Text direkt korrigieren', 'redact-pdf': 'Text dauerhaft entfernen', 'merge-pdf': 'Mehrere Dateien verbinden', 'compress-pdf': 'Kleinere Datei für E-Mails', 'heic-to-jpg': 'Fotos vom iPhone', 'pdf-to-jpg': 'Jede Seite als Bild' },

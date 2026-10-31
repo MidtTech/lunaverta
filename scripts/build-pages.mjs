@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from 'n
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import vm from 'node:vm';
-import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS, REPO } from './site-content.mjs';
+import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-content.mjs';
 
 // Extra languages: page texts in scripts/lang/<code>.mjs, interface texts in docs/assets/strings-<code>.js
 const EXTRA = [];
@@ -257,7 +257,6 @@ ${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl
 ## About
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](${SITE}/licenses.html)
-- [Source code](${REPO})
 - Publisher: ${COMPANY.name}, ${COMPANY.city}, Denmark, CVR ${COMPANY.cvr}, ${COMPANY.email}
 `);
 
