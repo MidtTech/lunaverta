@@ -1872,6 +1872,14 @@ document.addEventListener('click', e => {
   document.body.appendChild(d); d.showModal();
 });
 
+// ---------- iPhone/iPad: stop Safari zooming in when a small text field is tapped ----------
+// iOS ignores maximum-scale for pinch zoom, so people can still zoom by hand.
+if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+  const vp = document.querySelector('meta[name="viewport"]');
+  if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1';
+  document.documentElement.classList.add('ios');
+}
+
 // ---------- shared from another app (Android "Share to LunaVerta") ----------
 if (new URLSearchParams(location.search).has('shared') && 'caches' in window) {
   history.replaceState(null, '', location.pathname);

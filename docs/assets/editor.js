@@ -262,7 +262,9 @@ function setHint() {
 }
 function scrollToPage(id, smooth) {
   const v = S.pv && S.pv.views.get(id); if (!v) return;
-  S.pv.body.scrollTo({ top: v.wrap.offsetTop - 12, behavior: smooth ? 'smooth' : 'auto' });
+  // position inside the scrolling area (offsetTop would also count the toolbar above it)
+  const body = S.pv.body, top = v.wrap.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
+  body.scrollTo({ top: Math.max(0, top - 12), behavior: smooth ? 'smooth' : 'auto' });
   S.current = id; updatePager();
 }
 
@@ -1347,7 +1349,7 @@ async function openFind() {
   panel = document.createElement('aside');
   panel.id = 'edFindPanel'; panel.className = 'ed-findpanel'; panel.setAttribute('aria-labelledby', 'edFindTitle');
   panel.innerHTML = `
-    <div class="ed-find-head"><h2 id="edFindTitle">${esc(T('find.title'))}</h2><button type="button" class="ed-ico" id="edFindClose" aria-label="${esc(T('find.close'))}" title="${esc(T('find.close'))}">${ICON.x}</button></div>
+    <div class="ed-find-head"><h2 id="edFindTitle">${esc(T('find.title'))}</h2><button type="button" class="ed-ico ed-find-min" id="edFindMin" aria-expanded="true" aria-label="${esc(T('find.fold'))}" title="${esc(T('find.fold'))}">⌄</button><button type="button" class="ed-ico" id="edFindClose" aria-label="${esc(T('find.close'))}" title="${esc(T('find.close'))}">${ICON.x}</button></div>
     <p class="ed-find-intro">${esc(T('find.intro'))}</p>
     <div class="ed-tpl"><label for="edTplSel">${esc(T('tpl.label'))}</label><select id="edTplSel"></select>
       <button type="button" class="linkish" id="edTplSave">${esc(T('tpl.save'))}</button><button type="button" class="linkish" id="edTplDel" hidden>${esc(T('tpl.delete'))}</button></div>
@@ -1529,6 +1531,8 @@ async function openFind() {
   $('#edFindAll').onclick = () => { F.hits.forEach(h => { if (!h.done) h.on = true; }); drawList(); paintHits(); };
   $('#edFindNone').onclick = () => { F.hits.forEach(h => { h.on = false; }); drawList(); paintHits(); };
   $('#edFindClose').onclick = () => closeFind();
+  // On a phone the panel is a sheet at the bottom; fold it down to see the page, tap again to open it.
+  $('#edFindMin').onclick = () => { const p = $('#edFindPanel'), min = p.classList.toggle('min'); $('#edFindMin').setAttribute('aria-expanded', String(!min)); document.documentElement.classList.toggle('ed-find-min', min); };
   relayout();
   drawCats(); drawList();
   // Look for every kind of suggestion straight away.
@@ -1547,7 +1551,7 @@ async function openFind() {
 }
 function closeFind(leaving) {
   const p = $('#edFindPanel'); if (!p) return;
-  p.remove(); document.documentElement.classList.remove('ed-finding');
+  p.remove(); document.documentElement.classList.remove('ed-finding', 'ed-find-min');
   if (!S) return;
   S.find = null;
   if (leaving) return;
