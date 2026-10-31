@@ -1872,6 +1872,21 @@ document.addEventListener('click', e => {
   document.body.appendChild(d); d.showModal();
 });
 
+// ---------- "See how it works": the convert video in a small window ----------
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-howto]'); if (!btn) return;
+  const L = btn.dataset.howto === 'da' ? 'da' : 'en', other = L === 'da' ? 'en' : 'da';
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog howto-dialog';
+  d.innerHTML = `<form method="dialog"><div class="howto-head"><h2>${esc(T('howto.title'))}</h2><button type="submit" class="ed-ico" aria-label="${esc(T('coffee.close'))}">×</button></div>
+    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/convert-${L}.jpg"><source src="/videos/convert-${L}.mp4" type="video/mp4">
+      <track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/convert.${L}.vtt" default>
+      <track kind="subtitles" srclang="${other}" label="${other === 'da' ? 'Dansk' : 'English'}" src="/videos/convert.${other}.vtt"></video>
+    <p class="howto-cap">${esc(T('howto.caption'))}</p></form>`;
+  d.addEventListener('close', () => { const v = d.querySelector('video'); if (v) v.pause(); d.remove(); });
+  document.body.appendChild(d); d.showModal();
+});
+
 // ---------- iPhone/iPad: stop Safari zooming in when a small text field is tapped ----------
 // iOS ignores maximum-scale for pinch zoom, so people can still zoom by hand.
 if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {

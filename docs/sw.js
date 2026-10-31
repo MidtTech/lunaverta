@@ -1,6 +1,6 @@
 // LunaVerta service worker: keeps the app working offline.
 // The app shell is stored on install; helper libraries are stored the first time they are used.
-const VERSION = '6c3b70dbdf';
+const VERSION = 'd6165892c9';
 const CACHE = 'lunaverta-' + VERSION;
 const SHELL = [
   './', 'index.html', 'da/', 'privacy.html', 'licenses.html', 'assets/app.css', 'assets/strings.js', 'assets/i18n.js', 'assets/app.js', 'assets/editor.js', 'assets/pdf-text.js', 'manifest.webmanifest',
@@ -45,6 +45,8 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
     return;
   }
+  // How-to videos stream straight from the server (range requests), and are not stored for offline use.
+  if (new URL(req.url).pathname.startsWith('/videos/')) return;
   // Everything else: cache first, then network (and remember it for next time).
   // Asset addresses carry ?v=<version>, so a new version is a new address.
   e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => {

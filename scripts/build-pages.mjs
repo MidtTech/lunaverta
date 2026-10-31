@@ -96,10 +96,18 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
     </dl>
   </section>`;
 }
+// Short how-to videos (English voice, subtitles in Danish and English), shown on their tool pages.
+const VIDEO_FOR = { 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
+function videoFigure(lang, key, caption) {
+  const tracks = ['da', 'en'].sort((a, b) => (a === lang ? -1 : b === lang ? 1 : 0))
+    .map(L => `<track kind="subtitles" srclang="${L}" label="${L === 'da' ? 'Dansk' : 'English'}" src="/videos/${key}.${L}.vtt"${L === lang ? ' default' : ''}>`).join('');
+  return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${lang}.jpg"><source src="/videos/${key}-${lang}.mp4" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
+}
 function howtoSection(lang, tool) {
-  const d = tool[lang];
+  const d = tool[lang], key = VIDEO_FOR[tool.id];
   return `  <section class="howto" aria-labelledby="h-howto">
     <h2 id="h-howto">${esc(LABELS[lang].howto.replace('{name}', d.name))}</h2>
+    ${key ? videoFigure(lang, key, t(lang, 'howto.caption')) : ''}
     <ol>
 ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
     </ol>
@@ -117,7 +125,7 @@ const POPULAR = [
 ];
 function popularSection(lang) {
   return `  <nav class="pop" aria-labelledby="h-pop">
-    <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></h2>
+    <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><span class="pop-links"><button type="button" class="pop-watch" data-howto="${lang}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>${esc(t(lang, 'howto.watch'))}</button><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></span></h2>
     <ul class="pop-grid">
 ${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang])}</span></a></li>`; }).join('\n')}
     </ul>

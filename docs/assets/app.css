@@ -725,3 +725,23 @@ html.ios input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), h
   .ed-tools #edBack { order: -2; }
   .ed-tools .ed-group { order: -1; }
 }
+/* Remove sensitive on short screens (laptops): the panel scrolls, and the buttons stay in view at the bottom */
+.ed-findpanel { overflow-y: auto; overscroll-behavior: contain; }
+.ed-find-list { min-height: 140px; flex-shrink: 0; max-height: 40vh; }
+.ed-find-foot { position: sticky; bottom: calc(-14px - env(safe-area-inset-bottom, 0px)); background: var(--raised); padding-bottom: 14px; margin-bottom: -14px; z-index: 1; }
+@media (max-height: 820px) { .ed-find-intro { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } }
+/* how-to videos */
+.howto-video { margin: 4px 0 14px; max-width: 860px; }
+.howto-video video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 14px; border: 1px solid var(--line); background: #e9ecf1; box-shadow: 0 18px 40px -24px rgba(23, 26, 38, .45); }
+.howto-video figcaption, .howto-cap { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.pop-links { margin-left: auto; display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+.pop-links .pop-all { margin-left: 0; }
+.pop-watch { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0; font: 600 14px var(--f-body); color: var(--accent); cursor: pointer; }
+.pop-watch svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.pop-watch:hover { text-decoration: underline; }
+.howto-dialog { width: min(920px, calc(100vw - 24px)); }
+.howto-dialog form { padding: 16px; display: grid; gap: 10px; }
+.howto-head { display: flex; align-items: center; justify-content: space-between; }
+.howto-head h2 { margin: 0; font: 700 20px var(--f-display); }
+.howto-dialog video { width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 10px; background: #e9ecf1; }
+.howto-dialog::backdrop { background: rgba(10, 12, 20, .6); }
