@@ -275,6 +275,31 @@ await test('Scan to PDF straightens a photo of paper and reads its text', async 
   await done(p);
 });
 
+await test('Move text turns a paragraph into a box that can be rewritten and moved to another page', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica);
+  const p1 = d.addPage([595, 842]);
+  ['The first paragraph explains what the project is about and', 'why it matters to the people who will use it.'].forEach((t, i) => p1.drawText(t, { x: 60, y: 730 - i * 16, size: 12, font: f }));
+  d.addPage([595, 842]).drawText('Appendix', { x: 60, y: 780, size: 22, font: f });
+  const p = await page('/edit-pdf/');
+  await p.setInputFiles('#fileInput', file('report.pdf', Buffer.from(await d.save())));
+  await p.waitForTimeout(1000);
+  if (!(await p.$('#edParas'))) { await p.locator('#edBody button').first().click(); await p.waitForSelector('#edParas'); }
+  await p.click('#edParas'); await p.locator('.ed-stage-wrap').first().locator('.ed-para').first().click();
+  const ta = p.locator('.ed-block textarea').first(); await ta.waitFor();
+  assert((await ta.inputValue()).startsWith('The first paragraph explains what the project is about and why'), 'paragraph text: ' + await ta.inputValue());
+  await ta.fill('A rewritten paragraph.');
+  const sel = p.locator('.ed-block select').first(); const opts = await sel.locator('option').evaluateAll(o => o.map(x => x.value)); await sel.selectOption(opts[1]);
+  await p.waitForTimeout(500);
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const out = await readFile(await dl.path());
+  const pdfjs = require('pdfjs-dist/legacy/build/pdf.js'), doc = await pdfjs.getDocument({ data: new Uint8Array(out), isEvalSupported: false, verbosity: 0 }).promise;
+  const pageText = async n => (await (await doc.getPage(n)).getTextContent()).items.map(i => i.str).join(' ');
+  const t1 = await pageText(1), t2 = await pageText(2);
+  assert(!t1.includes('first paragraph'), 'old text still on page 1: ' + t1);
+  assert(t2.includes('A rewritten paragraph.'), 'new text not on page 2: ' + t2);
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

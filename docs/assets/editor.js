@@ -175,8 +175,8 @@ let renderSeq = 0;
 // undo), from scratch otherwise.
 // Only one tool shows as chosen at a time. "Remove sensitive" counts as chosen
 // while its panel is open and no other tool is on, because clicks on the page then go to it.
-function endModes() { S.editing = S.adding = S.redacting = S.marking = false; S.justDone = false; }
-function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking; }
+function endModes() { S.editing = S.adding = S.redacting = S.marking = S.paras = false; S.justDone = false; }
+function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking && !S.paras; }
 function renderPage() { if (S.pv && S.view === 'page') refreshModes(); else buildPages(S.current); }
 
 // A short tour the first time someone opens a page: three steps, shown once.
@@ -212,6 +212,7 @@ function pageTools() {
       <button class="ed-ico" type="button" id="edNext" aria-label="${esc(T('ed.next'))}">›</button></span>
     <span class="ed-group" role="group" aria-label="${esc(T('grp.text'))}" data-label="${esc(T('grp.text'))}">
       <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}" title="${esc(T('tip.edit'))}">${esc(T('ed.editText'))}</button>
+      <button class="btn sm${S.paras ? ' primary' : ''}" type="button" id="edParas" aria-pressed="${!!S.paras}" title="${esc(T('tip.paras'))}">${esc(T('ed.paras'))}</button>
       <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}" title="${esc(T('tip.add'))}">${esc(T('ed.addText'))}</button>
       <label class="ed-size" title="${esc(T('tip.size'))}"><span class="sr-only">${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     </span>
@@ -232,14 +233,16 @@ function pageTools() {
   const go = d => { const i = live.findIndex(p => p.id === S.current); const t = live[i + d]; if (t) scrollToPage(t.id, true); };
   $('#edPrev').onclick = () => go(-1);
   $('#edNext').onclick = () => go(1);
-  $('#edRedact').onclick = () => { S.redacting = !S.redacting; S.editing = false; S.adding = false; S.marking = false; S.justDone = false; renderPage(); };
-  $('#edAddText').onclick = () => { S.adding = !S.adding; S.editing = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
-  $('#edEditText').onclick = () => { S.editing = !S.editing; S.adding = false; S.redacting = false; S.marking = false; S.justDone = false; renderPage(); };
+  const mode = k => () => { const on = !S[k]; endModes(); S[k] = on; renderPage(); };
+  $('#edRedact').onclick = mode('redacting');
+  $('#edAddText').onclick = mode('adding');
+  $('#edEditText').onclick = mode('editing');
+  $('#edParas').onclick = mode('paras');
   $('#edSize').onchange = e => { S.size = +e.target.value; };
   $('#edFind').onclick = () => { endModes(); openFind(); renderPage(); };
   $('#edSign').onclick = () => { endModes(); renderPage(); openSign(); };
   $('#edStamp').onclick = () => { endModes(); renderPage(); openStamps(); };
-  $('#edMark').onclick = () => { S.marking = !S.marking; S.editing = S.adding = S.redacting = false; S.justDone = false; renderPage(); };
+  $('#edMark').onclick = mode('marking');
   $('#edZoomOut').onclick = () => stepZoom(-1); $('#edZoomIn').onclick = () => stepZoom(1); $('#edZoomReset').onclick = () => setZoom(1);
   $('#edSearchBtn').onclick = openSearch;
   wireUndo();
@@ -257,7 +260,7 @@ function setHint() {
   const views = S.pv ? [...S.pv.views.values()] : [];
   const fields = views.reduce((n, v) => n + (v.fields || 0), 0);
   const noText = S.editing && views.some(v => v.drawn) && views.every(v => !v.drawn || v.runs === 0);
-  h.textContent = justDone ? T('ed.doneHint') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint')
+  h.textContent = justDone ? T('ed.doneHint') : S.paras ? T('ed.parasHint') + ' ' + T('blk.word') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint')
     : S.editing ? (noText ? T('ed.noText') : T('ed.editHint')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 }
 function scrollToPage(id, smooth) {
@@ -354,6 +357,9 @@ async function fillLayer(v) {
   v.runs = (S.editing || S.edits.some(x => x.pageId === pg.id)) ? await textRuns(page, pg, vp, layer, canvas, dpr) : 0;
   if (job !== v.job) return;
   S.texts.filter(t => t.pageId === pg.id).forEach(t => textBox(t, vp, layer, rot));
+  if (S.paras) await paraLayer(v);
+  if (job !== v.job) return;
+  S.blocks.filter(b => b.pageId === pg.id).forEach(b => blockBox(v, b));
   S.boxes.filter(b => b.pageId === pg.id).forEach(b => blackBox(b, vp, layer));
   S.images.filter(im => im.pageId === pg.id).forEach(im => sigBox(v, im));
   S.marks.filter(m => m.pageId === pg.id).forEach(m => markEl(v, m));
@@ -404,7 +410,7 @@ function addTextAt(v, e) {
 // clear how to finish.
 function finishBar() {
   let bar = $('#edFinish');
-  const mode = S.editing ? 'edit' : S.redacting ? 'redact' : S.adding ? 'add' : S.marking ? 'mark' : '';
+  const mode = S.editing ? 'edit' : S.paras ? 'paras' : S.redacting ? 'redact' : S.adding ? 'add' : S.marking ? 'mark' : '';
   if (!mode) { if (bar) bar.remove(); return; }
   if (!bar) {
     bar = document.createElement('div'); bar.id = 'edFinish'; bar.className = 'ed-finish'; bar.setAttribute('role', 'status');
@@ -422,14 +428,16 @@ function updateFinish() {
   const live = new Set(S.pages.filter(p => !p.deleted).map(p => p.id));
   const lines = S.edits.filter(x => live.has(x.pageId) && x.text !== x.orig).length;
   const boxes = S.boxes.filter(b => live.has(b.pageId)).length;
+  const blocks = S.blocks.filter(b => live.has(b.pageId)).length;
   el.textContent = S.editing ? (lines ? T('ed.barEdit', { n: lines }) : T('ed.barEditNone'))
+    : S.paras ? (blocks ? T('ed.barBlocks', { n: blocks }) : T('ed.barBlocksNone'))
     : S.redacting ? (boxes ? T('ed.barRedact', { n: boxes }) : T('ed.barRedactNone'))
     : S.marking ? T('mark.hint.' + S.markTool)
     : T('ed.barAdd');
 }
 function finishPage() {
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  S.editing = false; S.adding = false; S.redacting = false; S.marking = false; S.justDone = true;
+  endModes(); S.justDone = true;
   renderPage();
   const sv = $('#edSave'); sv.classList.remove('pulse'); void sv.offsetWidth; sv.classList.add('pulse');
 }
@@ -494,7 +502,8 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       const el = document.createElement('input');
       el.type = 'text'; el.className = 'ed-edit'; el.value = edit.text; el.spellcheck = true;
       el.setAttribute('aria-label', T('ed.editLabel', { text: edit.orig }));
-      if (!S.editing) { el.readOnly = true; el.tabIndex = -1; el.classList.add('ed-done'); }
+      const ro = !S.editing || !!edit.block;
+      if (ro) { el.readOnly = true; el.tabIndex = -1; el.classList.add('ed-done'); }
       Object.assign(el.style, {
         left: box.left + 'px', top: box.top + 'px', minWidth: box.width + 'px', height: box.height + 'px',
         fontFamily: CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
@@ -506,7 +515,7 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
         c.font = `${el.style.fontStyle} ${el.style.fontWeight} ${el.style.fontSize} ${el.style.fontFamily}`;
         el.style.width = Math.ceil(c.measureText(edit.text || '  ').width + 12) + 'px';
       };
-      if (!S.editing) { layer.append(el); fit(); if (!edit.text) el.style.width = box.width + 'px'; return el; } // finished: just show the result
+      if (ro) { layer.append(el); fit(); if (!edit.text) el.style.width = box.width + 'px'; return el; } // finished (or moved into a box): just show the result
       el.oninput = () => { edit.text = el.value; S.dirty = true; fit(); updateFinish(); };
       // Enter (or the tick) finishes the line. If some text is selected, Enter
       // deletes it first: select what should go, press Enter. Esc also finishes.
@@ -620,11 +629,208 @@ function textBox(t, vp, layer, rot) {
   return box;
 }
 
+// ---------- moving and rewriting text as boxes ----------
+// A paragraph (or the lines inside a dragged frame) becomes a box: its letters are
+// taken out of the page (as with Edit text), and the text is written again on saving,
+// wrapped to the box's width, wherever the box now is, on this page or another.
+function groupParas(runs) {
+  const rs = runs.slice().sort((a, b) => b.y - a.y || a.x - b.x), paras = [];
+  for (const r of rs) {
+    let best = null;
+    for (const p of paras) {
+      // the same line (a bold word, say, is its own piece), right next to what is there
+      if (p.lines.some(l => Math.abs(l.y - r.y) < l.size * .2 && r.x > l.x - r.size && r.x < l.x + l.w + r.size * 1.2)) { best = p; break; }
+      const l = p.lines[p.lines.length - 1], gap = l.y - r.y, sz = Math.max(l.size, r.size);
+      if (gap < sz * .4 || gap > sz * 1.75 || Math.abs(l.size - r.size) > sz * .2) continue;
+      const ov = Math.min(l.x + l.w, r.x + r.w) - Math.max(l.x, r.x);
+      if (ov < Math.min(l.w, r.w) * .3 && Math.abs(l.x - r.x) > sz) continue;
+      if (!best || l.y < best.lines[best.lines.length - 1].y) best = p;
+    }
+    if (best) best.lines.push(r); else paras.push({ lines: [r] });
+  }
+  return paras;
+}
+// The runs as lines of text, top to bottom, joined into one paragraph (hyphenated words put back together)
+function paraText(runs) {
+  const rows = [];
+  for (const r of runs.slice().sort((a, b) => b.y - a.y || a.x - b.x)) {
+    const row = rows.find(w => Math.abs(w.y - r.y) < r.size * .3);
+    if (row) row.runs.push(r); else rows.push({ y: r.y, runs: [r] });
+  }
+  let text = '';
+  for (const w of rows) {
+    const line = w.runs.sort((a, b) => a.x - b.x).map(r => r.str.trim()).join(' ');
+    if (!text) text = line;
+    else if (/[a-zæøåäöüß]-$/i.test(text) && /^[a-zæøåäöüß]/.test(line)) text = text.slice(0, -1) + line;
+    else text += ' ' + line;
+  }
+  return { text, rows };
+}
+async function paraLayer(v) {
+  const { pg, page, vp, layer, rot } = v;
+  if (rot % 360) return;
+  let tc; try { tc = await page.getTextContent(); } catch (e) { return; }
+  const used = new Set(S.edits.filter(e => e.pageId === pg.id).map(e => e.key));
+  const runs = lineRuns(tc.items).filter(r => !used.has(`${pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`));
+  v.paraRuns = runs; v.paraStyles = tc.styles;
+  const rect = r => { const [x1, y1, x2, y2] = vp.convertToViewportRectangle([r.x - 1, r.y - r.size * .25, r.x + r.w + 1, r.y + r.size * .95]); return { left: Math.min(x1, x2), top: Math.min(y1, y2), right: Math.max(x1, x2), bottom: Math.max(y1, y2) }; };
+  for (const p of groupParas(runs)) {
+    const rs = p.lines.map(rect), b = { left: Math.min(...rs.map(r => r.left)), top: Math.min(...rs.map(r => r.top)), right: Math.max(...rs.map(r => r.right)), bottom: Math.max(...rs.map(r => r.bottom)) };
+    const hit = document.createElement('button');
+    hit.type = 'button'; hit.className = 'ed-para';
+    hit.setAttribute('aria-label', T('blk.label') + ': ' + paraText(p.lines).text.slice(0, 80));
+    Object.assign(hit.style, { left: b.left - 3 + 'px', top: b.top - 3 + 'px', width: b.right - b.left + 6 + 'px', height: b.bottom - b.top + 6 + 'px' });
+    hit.onclick = () => makeBlock(v, p.lines);
+    layer.appendChild(hit);
+  }
+  // drag a frame over lines: exactly those become one box
+  layer.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || e.target.closest('.ed-block')) return;
+    const lr = layer.getBoundingClientRect(), x0 = e.clientX - lr.left, y0 = e.clientY - lr.top;
+    let frame = null;
+    const move = ev => {
+      const x = ev.clientX - lr.left, y = ev.clientY - lr.top;
+      if (!frame && Math.hypot(x - x0, y - y0) < 8) return;
+      if (!frame) { frame = document.createElement('div'); frame.className = 'ed-frame'; layer.appendChild(frame); }
+      Object.assign(frame.style, { left: Math.min(x, x0) + 'px', top: Math.min(y, y0) + 'px', width: Math.abs(x - x0) + 'px', height: Math.abs(y - y0) + 'px' });
+    };
+    const up = ev => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+      if (!frame) return;
+      const f = frame.getBoundingClientRect(); frame.remove();
+      const swallow = c => { c.stopPropagation(); c.preventDefault(); removeEventListener('click', swallow, true); };
+      addEventListener('click', swallow, true); setTimeout(() => removeEventListener('click', swallow, true), 50);
+      const inside = (v.paraRuns || []).filter(r => { const b = rect(r), cx = lr.left + (b.left + b.right) / 2, cy = lr.top + (b.top + b.bottom) / 2; return cx >= f.left && cx <= f.right && cy >= f.top && cy <= f.bottom; });
+      if (inside.length) makeBlock(v, inside);
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+}
+function makeBlock(v, runs) {
+  const { pg, page, vp, canvas, dpr } = v;
+  if (v.rot % 360) { app().toast(T('blk.rotated')); return; }
+  const id = ++uid, { text, rows } = paraText(runs);
+  const first = runs.slice().sort((a, b) => b.y - a.y || a.x - b.x)[0];
+  const [x1, y1, x2, y2] = vp.convertToViewportRectangle([first.x, first.y - first.size * .25, first.x + first.w, first.y + first.size * .95]);
+  const c = sampleColours(canvas, dpr, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
+  const font = fontStyle(page, first.fontName, v.paraStyles || {});
+  for (const r of runs) {
+    const key = `${pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
+    S.edits = S.edits.filter(e => e.key !== key);
+    S.edits.push({ key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: '', font: fontStyle(page, r.fontName, v.paraStyles || {}), ink: c.ink, bg: c.bg, block: id });
+  }
+  const size = first.size, gaps = rows.slice(1).map((w, i) => rows[i].y - w.y);
+  const lh = gaps.length ? Math.min(size * 1.8, Math.max(size * 1.05, gaps.reduce((a, b) => a + b, 0) / gaps.length)) : size * 1.2;
+  const x = Math.min(...runs.map(r => r.x)), right = Math.max(...runs.map(r => r.x + r.w));
+  S.blocks.push({ id, pageId: pg.id, x, top: Math.max(...runs.map(r => r.y)) + size * .95, w: Math.max(right - x + size * .5, size * 4), size, lh: lh / size, text, font, ink: c.ink });
+  S.dirty = true; v.job++; fillLayer(v).then(() => { const ta = v.layer.querySelector(`.ed-block[data-id="${id}"] textarea`); if (ta) ta.focus(); });
+  updateFinish();
+}
+function refreshPage(id) { const o = S.pv && S.pv.views.get(id); if (o && o.drawn) { o.job++; fillLayer(o); } }
+function blockBox(v, b) {
+  const { vp, layer } = v, k = vp.scale;
+  const el = document.createElement('div');
+  el.className = 'ed-block'; el.dataset.id = b.id;
+  const live = S.pages.filter(p => !p.deleted);
+  el.innerHTML = `<div class="ed-block-bar">
+      <button type="button" class="ed-ico ed-grip2" data-b="move" title="${esc(T('blk.move'))}" aria-label="${esc(T('blk.move'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3M21 12l-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button type="button" class="ed-ico" data-b="smaller" title="${esc(T('blk.smaller'))}" aria-label="${esc(T('blk.smaller'))}">A−</button>
+      <button type="button" class="ed-ico" data-b="bigger" title="${esc(T('blk.bigger'))}" aria-label="${esc(T('blk.bigger'))}">A+</button>
+      <button type="button" class="ed-ico" data-b="bold" aria-pressed="${!!b.font.bold}" title="${esc(T('blk.bold'))}" aria-label="${esc(T('blk.bold'))}"><b>B</b></button>
+      <label class="ed-blk-page" title="${esc(T('blk.toPage'))}"><span class="sr-only">${esc(T('blk.toPage'))}</span><select>${live.map((p, i) => `<option value="${p.id}"${p.id === b.pageId ? ' selected' : ''}>${esc(T('ed.page', { n: i + 1 }))}</option>`).join('')}</select></label>
+      <button type="button" class="ed-ico" data-b="restore" title="${esc(T('blk.restore'))}" aria-label="${esc(T('blk.restore'))}">${ICON.undo}</button>
+      <button type="button" class="ed-ico" data-b="delete" title="${esc(T('blk.delete'))}" aria-label="${esc(T('blk.delete'))}">${ICON.del}</button>
+    </div><textarea spellcheck="true" aria-label="${esc(T('blk.label'))}"></textarea><span class="ed-block-w" title="${esc(T('blk.width'))}" aria-hidden="true"></span>`;
+  const ta = el.querySelector('textarea');
+  const style = () => {
+    const [vx, vy] = vp.convertToViewportPoint(b.x, b.top);
+    Object.assign(el.style, { left: vx + 'px', top: vy + 'px', width: b.w * k + 'px' });
+    Object.assign(ta.style, { fontFamily: CSS_FONT[b.font.family], fontWeight: b.font.bold ? '700' : '400', fontStyle: b.font.italic ? 'italic' : 'normal', fontSize: b.size * k + 'px', lineHeight: b.size * b.lh * k + 'px', color: `rgb(${b.ink})` });
+    ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px';
+  };
+  ta.value = b.text;
+  ta.addEventListener('input', () => { b.text = ta.value; S.dirty = true; style(); });
+  const bar = el.querySelector('.ed-block-bar');
+  bar.addEventListener('pointerdown', e => { if (e.target.closest('[data-b="move"]') === null && e.target.tagName !== 'SELECT') e.preventDefault(); });
+  bar.querySelector('[data-b="smaller"]').onclick = () => { b.size = Math.max(5, Math.round((b.size - 1) * 2) / 2); S.dirty = true; style(); };
+  bar.querySelector('[data-b="bigger"]').onclick = () => { b.size = Math.min(96, Math.round((b.size + 1) * 2) / 2); S.dirty = true; style(); };
+  bar.querySelector('[data-b="bold"]').onclick = e => { b.font = { ...b.font, bold: !b.font.bold }; e.currentTarget.setAttribute('aria-pressed', String(b.font.bold)); S.dirty = true; style(); };
+  bar.querySelector('[data-b="restore"]').onclick = () => { S.blocks = S.blocks.filter(x => x !== b); S.edits = S.edits.filter(x => x.block !== b.id); S.dirty = true; renderPage(); };
+  bar.querySelector('[data-b="delete"]').onclick = () => { S.blocks = S.blocks.filter(x => x !== b); S.dirty = true; el.remove(); updateFinish(); };
+  bar.querySelector('select').onchange = e => moveBlockTo(b, +e.target.value, null);
+  // drag to move: anywhere on this page or onto another one
+  bar.querySelector('[data-b="move"]').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const r0 = el.getBoundingClientRect(), ox = e.clientX - r0.left, oy = e.clientY - r0.top - (ta.offsetTop || 0);
+    el.classList.add('dragging');
+    const ghost = el.cloneNode(true); ghost.classList.add('ed-ghost'); ghost.style.width = r0.width + 'px'; document.body.appendChild(ghost);
+    el.style.visibility = 'hidden';
+    const at = ev => { ghost.style.left = ev.clientX - ox + 'px'; ghost.style.top = ev.clientY - oy - (ta.offsetTop || 0) + 'px'; };
+    at(e);
+    const move = ev => {
+      at(ev);
+      const body = S.pv.body.getBoundingClientRect(); // scroll the pages when dragging near the top or bottom
+      if (ev.clientY > body.bottom - 40) S.pv.body.scrollBy(0, 18); else if (ev.clientY < body.top + 40) S.pv.body.scrollBy(0, -18);
+    };
+    const up = ev => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up);
+      ghost.remove(); el.style.visibility = ''; el.classList.remove('dragging');
+      const tx = ev.clientX - ox, ty = ev.clientY - oy; // where the text's top-left corner was dropped
+      for (const o of S.pv.views.values()) {
+        const sr = o.stage.getBoundingClientRect();
+        if (ev.clientX >= sr.left && ev.clientX <= sr.right && ev.clientY >= sr.top && ev.clientY <= sr.bottom) {
+          if (o.rot % 360) { app().toast(T('blk.rotated')); return; }
+          const [px, py] = o.vp.convertToPdfPoint(tx - sr.left, ty - sr.top);
+          moveBlockTo(b, o.pg.id, [px, py]); return;
+        }
+      }
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+  // drag the right edge to change the width; the text wraps again
+  el.querySelector('.ed-block-w').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const x0 = e.clientX, w0 = b.w;
+    const move = ev => { b.w = Math.max(b.size * 3, w0 + (ev.clientX - x0) / k); style(); };
+    const up = () => { removeEventListener('pointermove', move); removeEventListener('pointerup', up); S.dirty = true; };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+  layer.appendChild(el); style();
+  return el;
+}
+function moveBlockTo(b, pageId, at) {
+  const from = b.pageId, o = S.pv.views.get(pageId);
+  if (o) { // keep it on the page
+    const [, , pw, ph] = o.page.view;
+    if (at) [b.x, b.top] = at;
+    b.x = Math.min(Math.max(o.page.view[0], b.x), pw - Math.min(b.w, pw - o.page.view[0]) );
+    b.top = Math.min(Math.max(o.page.view[1] + b.size, b.top), ph);
+    if (b.w > pw - b.x) b.w = Math.max(b.size * 3, pw - b.x);
+  }
+  b.pageId = pageId; S.dirty = true;
+  refreshPage(from); if (pageId !== from) refreshPage(pageId);
+  if (pageId !== from && !at) scrollToPage(pageId, true);
+  updateFinish();
+}
+// Wrap a box's text to its width with the font it will be written in
+function wrapBlock(b, font, size) {
+  const out = [];
+  for (const para of b.text.replace(app().WIN_ANSI, '?').split('\n')) {
+    let line = '';
+    for (const word of para.split(/\s+/).filter(Boolean)) {
+      const tryLine = line ? line + ' ' + word : word;
+      if (!line || font.widthOfTextAtSize(tryLine, size) <= b.w) line = tryLine; else { out.push(line); line = word; }
+    }
+    out.push(line);
+  }
+  return out;
+}
+
 // ---------- undo and redo ----------
 // Every change sets S.dirty; a moment later the state is noted down. Undo and
 // redo step through those notes (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y).
 const H = { stack: [], i: -1, timer: 0, quiet: false };
-const snap = () => JSON.stringify({ pages: S.pages, texts: S.texts, edits: S.edits, boxes: S.boxes, images: S.images, marks: S.marks, values: S.values, wm: S.watermark, nums: S.pageNums });
+const snap = () => JSON.stringify({ pages: S.pages, texts: S.texts, blocks: S.blocks, edits: S.edits, boxes: S.boxes, images: S.images, marks: S.marks, values: S.values, wm: S.watermark, nums: S.pageNums });
 function trackChanges() {
   let dirty = false;
   Object.defineProperty(S, 'dirty', { configurable: true, enumerable: true, get: () => dirty, set: v => { dirty = v; if (v && !H.quiet) { clearTimeout(H.timer); H.timer = setTimeout(noteState, 350); } } });
@@ -652,7 +858,7 @@ function stepHistory(d) {
   H.i = to;
   const o = JSON.parse(H.stack[to]);
   H.quiet = true;
-  Object.assign(S, { pages: o.pages, texts: o.texts, edits: o.edits, boxes: o.boxes, images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
+  Object.assign(S, { pages: o.pages, texts: o.texts, blocks: o.blocks || [], edits: o.edits, boxes: o.boxes, images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
   S.dirty = true; H.quiet = false;
   if (S.view === 'page') buildPages(S.current); else renderGrid();
   app().toast(T(d < 0 ? 'hist.undone' : 'hist.redone'));
@@ -1861,6 +2067,10 @@ async function save(opt) {
         page.drawImage(sigCache[im.src], { x: at.x, y: at.y, width: at.w, height: at.h });
       }
       await drawExtras(out, page, pg, pi, final.length, extraFonts);
+      for (const b of S.blocks.filter(x => x.pageId === pg.id && x.text.trim())) {
+        const f = await fontFor(b.font);
+        wrapBlock(b, f, b.size).forEach((line, i) => { if (line) page.drawText(line, { x: b.x, y: b.top - b.size * .9 - i * b.size * b.lh, size: b.size, font: f, color: col(b.ink) }); });
+      }
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });
       }
@@ -1925,7 +2135,7 @@ async function save(opt) {
 
 // ---------- open ----------
 async function open(files, opt = {}) {
-  S = { docs: [], pages: [], texts: [], edits: [], boxes: [], images: [], marks: [], watermark: null, pageNums: null, zoom: 1, marking: false, markTool: 'hl', markColor: 'yellow', search: null, placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+  S = { docs: [], pages: [], texts: [], blocks: [], paras: false, edits: [], boxes: [], images: [], marks: [], watermark: null, pageNums: null, zoom: 1, marking: false, markTool: 'hl', markColor: 'yellow', search: null, placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear(); textCache.clear(); libDocs.clear(); pathCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
