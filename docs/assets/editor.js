@@ -455,6 +455,10 @@ function fontStyle(page, fontName, styles) {
   const serif = !mono && /times|georgia|garamond|cambria|minion|palatino|book|serif/i.test(all) && !/sans/i.test(all);
   return { family: mono ? 'mono' : serif ? 'serif' : 'sans', bold: /bold|black|heavy|semibold|demi/i.test(name), italic: /italic|oblique/i.test(name) };
 }
+// The family name of a PDF font ("ABCDEF+Georgia-Bold" → "Georgia"), to show edited text in it when the computer has it
+function cssName(page, fontName) {
+  try { const fo = page.commonObjs.has(fontName) && page.commonObjs.get(fontName); return String((fo && fo.name) || '').replace(/^[A-Z]{6}\+/, '').split(/[-,]/)[0].replace(/(PS)?MT$|PS$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').trim(); } catch (e) { return ''; }
+}
 function lineRuns(items) {
   const runs = [];
   for (const it of items) {
@@ -506,7 +510,7 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       if (ro) { el.readOnly = true; el.tabIndex = -1; el.classList.add('ed-done'); }
       Object.assign(el.style, {
         left: box.left + 'px', top: box.top + 'px', minWidth: box.width + 'px', height: box.height + 'px',
-        fontFamily: CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
+        fontFamily: (edit.cssName ? `"${edit.cssName}", ` : '') + CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
         fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`
       });
       // Size the box to its text in the font it is shown in, so all of it is visible.
@@ -582,7 +586,7 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       Object.assign(hit.style, { left: box.left + 'px', top: box.top + 'px', width: box.width + 'px', height: box.height + 'px' });
       hit.onclick = () => {
         const c = sampleColours(canvas, dpr, box);
-        edit = { key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: r.str, font: fontStyle(page, r.fontName, tc.styles), ink: c.ink, bg: c.bg };
+        edit = { key, pageId: pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text: r.str, font: fontStyle(page, r.fontName, tc.styles), cssName: cssName(page, r.fontName), ink: c.ink, bg: c.bg };
         S.edits.push(edit); S.dirty = true;
         hit.remove();
         const el = show(); el.focus(); el.select();
@@ -716,8 +720,7 @@ function makeBlock(v, runs) {
   const [x1, y1, x2, y2] = vp.convertToViewportRectangle([first.x, first.y - first.size * .25, first.x + first.w, first.y + first.size * .95]);
   const c = sampleColours(canvas, dpr, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
   const font = fontStyle(page, first.fontName, v.paraStyles || {});
-  let cssName = ''; // e.g. "ABCDEF+Georgia-Bold" → "Georgia", to show the box in the same font when the computer has it
-  try { const fo = page.commonObjs.has(first.fontName) && page.commonObjs.get(first.fontName); cssName = String((fo && fo.name) || '').replace(/^[A-Z]{6}\+/, '').split(/[-,]/)[0].replace(/(PS)?MT$|PS$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').trim(); } catch (e) {}
+  const fam = cssName(page, first.fontName);
   for (const r of runs) {
     const key = `${pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
     S.edits = S.edits.filter(e => e.key !== key);
@@ -734,7 +737,7 @@ function makeBlock(v, runs) {
   const snap = document.createElement('canvas'); snap.width = Math.max(1, Math.round(cw)); snap.height = Math.max(1, Math.round(ch));
   snap.getContext('2d').drawImage(canvas, cx, cy, cw, ch, 0, 0, snap.width, snap.height);
   SNAPS.set(id, snap.toDataURL('image/png'));
-  S.blocks.push({ id, pageId: pg.id, x: src.x1, top: src.y2, w: src.x2 - src.x1, h: src.y2 - src.y1, src, retype: false, size, lh: lh / size, text, orig: text, font, cssName, ink: c.ink,
+  S.blocks.push({ id, pageId: pg.id, x: src.x1, top: src.y2, w: src.x2 - src.x1, h: src.y2 - src.y1, src, retype: false, size, lh: lh / size, text, orig: text, font, cssName: fam, ink: c.ink,
     // one line stays one line; centred text stays centred
     single: rows.length === 1, align: Math.abs((x + right) / 2 - (page.view[0] + page.view[2]) / 2) < size * 1.5 && right - x < (page.view[2] - page.view[0]) * .8 ? 'center' : 'left', cx: (x + right) / 2 });
   S.dirty = true; v.job++; fillLayer(v).then(() => { const el = v.layer.querySelector(`.ed-block[data-id="${id}"]`); if (el) el.focus(); });
@@ -790,8 +793,9 @@ function blockBox(v, b) {
   bar.querySelector('[data-b="delete"]').onclick = () => { S.blocks = S.blocks.filter(x => x !== b); S.dirty = true; el.remove(); updateFinish(); };
   bar.querySelector('select').onchange = e => moveBlockTo(b, +e.target.value, null);
   // drag to move: anywhere on this page or onto another one
-  bar.querySelector('[data-b="move"]').addEventListener('pointerdown', e => {
-    e.preventDefault();
+  const startMove = e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault(); e.stopPropagation(); el.focus({ preventScroll: true });
     const r0 = el.getBoundingClientRect(), ox = e.clientX - r0.left, oy = e.clientY - r0.top - (ta.offsetTop || 0);
     el.classList.add('dragging');
     const ghost = el.cloneNode(true); ghost.classList.add('ed-ghost'); ghost.style.width = r0.width + 'px'; document.body.appendChild(ghost);
@@ -817,7 +821,10 @@ function blockBox(v, b) {
       }
     };
     addEventListener('pointermove', move); addEventListener('pointerup', up);
-  });
+  };
+  bar.querySelector('[data-b="move"]').addEventListener('pointerdown', startMove);
+  // the text itself can be dragged too, as long as it isn't being typed in
+  if (pic) ta.addEventListener('pointerdown', startMove);
   // drag the right edge to change the width; the text wraps again
   if (pic) ta.addEventListener('dblclick', () => btn('rewrite').onclick());
   if (!pic) el.querySelector('.ed-block-w').addEventListener('pointerdown', e => {
@@ -2063,6 +2070,9 @@ async function save(opt) {
       const boxList = S.boxes.filter(b => b.pageId === pg.id);
       const boxes = boxList.map(b => [b.x1, b.y1, b.x2, b.y2, !!b.found]);
       let how = eds.map(() => 'failed');
+      // each changed line's own font, read before its letters are taken out
+      const lineFont = [];
+      for (const ed of eds) { try { lineFont.push(ed.text.trim() ? await window.LVPdfText.fontAt(out, page, [ed.x - 1, ed.y - ed.size * .3, ed.x + ed.w + 1, ed.y + ed.size]) : null); } catch (e) { lineFont.push(null); } }
       if (eds.length || boxes.length) {
         try { how = await window.LVPdfText.strip(out, page, eds, boxes); if (how.oldContents) oldRefs.push(how.oldContents); }
         catch (e) { console.warn('Text removal failed', e); how.flatten = boxes.length > 0; }
@@ -2090,6 +2100,15 @@ async function save(opt) {
         if (how[i] === 'kept') continue; // only words were deleted; the rest stays in its own font
         if (how[i] === 'failed' || how[i] === 'picture') { covered++; page.drawRectangle({ x: ed.x - 1, y: ed.y - ed.size * .25, width: ed.w + 2, height: ed.size * 1.2, color: col(ed.bg) }); }
         if (!ed.text.trim()) continue;
+        const own = lineFont[i];
+        if (own) { // the line's own font, at its own size
+          const L = window.LVPdfText, fb = await fontFor(ed.font), notAnsi = new RegExp(app().WIN_ANSI.source);
+          const t2 = [...ed.text].map(ch => L.canDraw(own, ch) || !notAnsi.test(ch) ? ch : '?').join('');
+          const tw = L.measure(own, fb, t2, ed.size), mid = ed.x + ed.w / 2;
+          const centred = Math.abs(mid - (mb.x + mb.width / 2)) < mb.width * .03 && ed.w < mb.width * .8;
+          L.writeLine(out, page, own, fb, t2, centred ? mid - tw / 2 : ed.x, ed.y, ed.size, ed.ink.map(v => v / 255));
+          continue;
+        }
         const f = await fontFor(ed.font), text = ed.text.replace(app().WIN_ANSI, '?');
         // Size the standard font so the original line would have had its original width.
         const natural = f.widthOfTextAtSize(ed.orig.replace(app().WIN_ANSI, '?'), ed.size);
@@ -2109,8 +2128,11 @@ async function save(opt) {
       await drawExtras(out, page, pg, pi, final.length, extraFonts);
       for (const b of S.blocks.filter(x => x.pageId === pg.id && x.text.trim())) {
         if (!b.retype && b.src) { // the original drawing of the text, moved as it is (same font, size and colour)
-          snapDocs[b.src.doc] = snapDocs[b.src.doc] || await app().loadPdfBytes(new Uint8Array(await S.docs[b.src.doc].file.arrayBuffer()));
-          const emb = await out.embedPage(snapDocs[b.src.doc].getPage(b.src.index), { left: b.src.x1, bottom: b.src.y1, right: b.src.x2, top: b.src.y2 });
+          // a fresh copy of the source page with every letter outside the box taken out, so only this text moves
+          snapDocs[b.src.doc] = snapDocs[b.src.doc] || new Uint8Array(await S.docs[b.src.doc].file.arrayBuffer());
+          const copy = await app().loadPdfBytes(snapDocs[b.src.doc].slice()), sp = copy.getPage(b.src.index), { x1, y1, x2, y2 } = b.src, F = 1e5;
+          try { await window.LVPdfText.strip(copy, sp, [], [[-F, -F, F, y1, false], [-F, y2, F, F, false], [-F, y1, x1, y2, false], [x2, y1, F, y2, false]]); } catch (e) { console.warn('Could not trim the moved text', e); }
+          const emb = await out.embedPage(sp, { left: x1, bottom: y1, right: x2, top: y2 });
           page.drawPage(emb, { x: b.x, y: b.top - (b.src.y2 - b.src.y1) });
           continue;
         }

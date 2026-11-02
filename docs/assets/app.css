@@ -880,5 +880,5 @@ html.ed-open .welcome-card { display: none; }
 @media (pointer: coarse) { .ed-block-bar { display: flex; } .ed-block:not(:focus-within) .ed-block-bar { display: none; } .ed-block-w { right: -14px; width: 24px; } }
 .ed-block-pic { outline: 1.5px dashed color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; cursor: default; }
 .ed-block-pic:focus, .ed-block-pic:focus-within { outline: 2px solid var(--accent); }
-.ed-block-img { display: block; user-select: none; pointer-events: auto; }
+.ed-block-img { display: block; user-select: none; pointer-events: auto; cursor: move; touch-action: none; }
 .ed-block-bar .ed-rewrite { width: auto; padding: 0 8px; font-size: 12px; white-space: nowrap; }
