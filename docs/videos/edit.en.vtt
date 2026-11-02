@@ -17,13 +17,25 @@ Click Edit text.
 Then click the line you want to change.
 
 5
-00:00:13.910 --> 00:00:16.524
-Type the new text, and press Enter.
+00:00:13.910 --> 00:00:19.396
+Type the new text, and press Enter. It keeps the PDF's own font.
 
 6
-00:00:16.924 --> 00:00:22.010
-Finally, click Save PDF. Your edited copy is saved on your device.
+00:00:19.796 --> 00:00:22.522
+To move a paragraph, click Move text.
 
 7
-00:00:22.410 --> 00:00:25.696
+00:00:22.922 --> 00:00:25.744
+Click the paragraph you want to move.
+
+8
+00:00:26.144 --> 00:00:29.398
+Drag it to its new place, even onto another page.
+
+9
+00:00:29.798 --> 00:00:34.884
+Finally, click Save PDF. Your edited copy is saved on your device.
+
+10
+00:00:35.284 --> 00:00:38.570
 The rest of the page stays exactly as it was.
