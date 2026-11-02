@@ -43,7 +43,7 @@ Key facts:
 - [CSV to Excel](https://lunaverta.com/csv-to-excel/): Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.
 - [Video to GIF](https://lunaverta.com/video-to-gif/): Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.
 - [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
-- [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn the text in a PDF into a Word document you can edit, with headings and paragraphs. Free and private: your PDF is never uploaded.
+- [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn a PDF into a Word document you can edit, keeping fonts, colours, paragraphs and pictures. Free and private: your PDF is never uploaded.
 - [Compare two PDFs](https://lunaverta.com/compare-pdf/): Compare two versions of a PDF and see every added, removed and changed line, word by word. Free and private: nothing is uploaded.
 - [Extract PDF pages](https://lunaverta.com/extract-pdf-pages/): Pick the pages you need from a PDF, such as 2-5 and 9, and save them as a new PDF. Free and private: your PDF is never uploaded.
 - [Compress image](https://lunaverta.com/compress-image/): Make photos and pictures smaller for e-mail and the web. See the new size before you save. Free and private: your images are never uploaded.
@@ -81,7 +81,7 @@ Key facts:
 - [CSV til Excel](https://lunaverta.com/da/csv-til-excel/): Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.
 - [Video til GIF](https://lunaverta.com/da/video-til-gif/): Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.
 - [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
-- [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav teksten i en PDF om til et Word-dokument, du kan redigere, med overskrifter og afsnit. Gratis og privat: din PDF bliver aldrig uploadet.
+- [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav en PDF om til et Word-dokument, du kan redigere, med skrifttyper, farver, afsnit og billeder. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Sammenlign to PDF'er](https://lunaverta.com/da/sammenlign-pdf/): Sammenlign to versioner af en PDF, og se hver tilføjet, fjernet og ændret linje, ord for ord. Gratis og privat: intet bliver uploadet.
 - [Udtræk sider fra PDF](https://lunaverta.com/da/udtraek-sider-fra-pdf/): Vælg de sider, du skal bruge fra en PDF, fx 2-5 og 9, og gem dem som en ny PDF. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Komprimér billede](https://lunaverta.com/da/komprimer-billede/): Gør fotos og billeder mindre til mail og web. Se den nye størrelse, før du gemmer. Gratis og privat: dine billeder bliver aldrig uploadet.
@@ -119,7 +119,7 @@ Key facts:
 - [CSV in Excel](https://lunaverta.com/de/csv-in-excel/): CSV- und JSON-Dateien im Browser in Excel (XLSX) umwandeln. Kostenlos und privat: Nichts wird hochgeladen.
 - [Video in GIF](https://lunaverta.com/de/video-in-gif/): Ein animiertes GIF aus den ersten Sekunden eines Videos (MP4, WebM, MOV) im Browser erstellen. Kostenlos und privat, ohne Upload.
 - [Video in MP3](https://lunaverta.com/de/video-in-mp3/): Den Ton aus einem Video holen oder WAV, M4A und andere Audiodateien im Browser in MP3 umwandeln. Kostenlos und privat, ohne Upload.
-- [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Den Text eines PDFs in ein bearbeitbares Word-Dokument mit Überschriften und Absätzen umwandeln. Kostenlos und privat: Dein PDF wird nie hochgeladen.
+- [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Ein PDF in ein bearbeitbares Word-Dokument umwandeln, mit Schriften, Farben, Absätzen und Bildern. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [Zwei PDFs vergleichen](https://lunaverta.com/de/pdf-vergleichen/): Zwei Versionen eines PDFs vergleichen und jede hinzugefügte, entfernte und geänderte Zeile sehen, Wort für Wort. Kostenlos und privat: Nichts wird hochgeladen.
 - [PDF-Seiten extrahieren](https://lunaverta.com/de/pdf-seiten-extrahieren/): Wähle die Seiten, die du aus einem PDF brauchst, etwa 2-5 und 9, und speichere sie als neues PDF. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [Bild komprimieren](https://lunaverta.com/de/bild-komprimieren/): Fotos und Bilder für E-Mail und Web verkleinern. Die neue Größe siehst du vor dem Speichern. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
@@ -157,7 +157,7 @@ Key facts:
 - [CSV til Excel](https://lunaverta.com/no/csv-til-excel/): Konverter CSV- og JSON-filer til Excel (XLSX) i nettleseren. Gratis og privat: ingenting lastes opp.
 - [Video til GIF](https://lunaverta.com/no/video-til-gif/): Lag en animert GIF av de første sekundene i en video (MP4, WebM, MOV) i nettleseren. Gratis og privat, uten opplasting.
 - [Video til MP3](https://lunaverta.com/no/video-til-mp3/): Hent ut lyden fra en video, eller konverter WAV, M4A og annen lyd til MP3 i nettleseren. Gratis og privat, uten opplasting.
-- [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør teksten i en PDF om til et Word-dokument du kan redigere, med overskrifter og avsnitt. Gratis og privat: PDF-en din lastes aldri opp.
+- [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør en PDF om til et Word-dokument du kan redigere, med skrifter, farger, avsnitt og bilder. Gratis og privat: PDF-en din lastes aldri opp.
 - [Sammenlign to PDF-er](https://lunaverta.com/no/sammenlign-pdf/): Sammenlign to versjoner av en PDF og se hver linje som er lagt til, fjernet og endret, ord for ord. Gratis og privat: ingenting lastes opp.
 - [Hent ut PDF-sider](https://lunaverta.com/no/hent-ut-sider-fra-pdf/): Velg sidene du trenger fra en PDF, for eksempel 2-5 og 9, og lagre dem som en ny PDF. Gratis og privat: PDF-en din lastes aldri opp.
 - [Komprimer bilde](https://lunaverta.com/no/komprimer-bilde/): Gjør bilder mindre til e-post og nettet. Se den nye størrelsen før du lagrer. Gratis og privat: bildene dine lastes aldri opp.
@@ -195,7 +195,7 @@ Key facts:
 - [CSV till Excel](https://lunaverta.com/sv/csv-till-excel/): Konvertera CSV- och JSON-filer till Excel (XLSX) i webbläsaren. Gratis och privat: inget laddas upp.
 - [Video till GIF](https://lunaverta.com/sv/video-till-gif/): Gör en animerad GIF av de första sekunderna i en video (MP4, WebM, MOV) i webbläsaren. Gratis och privat, utan uppladdning.
 - [Video till MP3](https://lunaverta.com/sv/video-till-mp3/): Ta ut ljudet ur en video, eller konvertera WAV, M4A och annat ljud till MP3 i webbläsaren. Gratis och privat, utan uppladdning.
-- [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om texten i en PDF till ett Word-dokument som du kan redigera, med rubriker och stycken. Gratis och privat: din PDF laddas aldrig upp.
+- [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om en PDF till ett Word-dokument som du kan redigera, med typsnitt, färger, stycken och bilder. Gratis och privat: din PDF laddas aldrig upp.
 - [Jämför två PDF-filer](https://lunaverta.com/sv/jamfor-pdf/): Jämför två versioner av en PDF och se varje tillagd, borttagen och ändrad rad, ord för ord. Gratis och privat: inget laddas upp.
 - [Extrahera PDF-sidor](https://lunaverta.com/sv/extrahera-sidor-ur-pdf/): Välj de sidor du behöver ur en PDF, till exempel 2-5 och 9, och spara dem som en ny PDF. Gratis och privat: din PDF laddas aldrig upp.
 - [Komprimera bild](https://lunaverta.com/sv/komprimera-bild/): Gör foton och bilder mindre för e-post och webben. Se den nya storleken innan du sparar. Gratis och privat: dina bilder laddas aldrig upp.

@@ -1814,33 +1814,182 @@ async function pdfLines(pdf, progress) {
   }
   return pages;
 }
+// The layout is rebuilt as a normal, editable Word document: each line's font, size, weight,
+// slant and colour; paragraphs with their alignment, indent and spacing; columns kept apart
+// with tab stops; pictures where they were; the page size and margins of the PDF.
+const DOCX_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+const xmlEsc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// "ABCDEF+TimesNewRomanPS-BoldMT" → { family: 'Times New Roman', bold: true, italic: false }
+function wordFont(raw, fallbackFamily) {
+  const name = String(raw || '').replace(/^[A-Z]{6}\+/, '');
+  const bold = /bold|black|heavy|semibold|demi/i.test(name), italic = /italic|oblique/i.test(name);
+  let fam = name.split(/[-,]/)[0].replace(/(PS)?MT$|PSMT$|PS$/, '');
+  const known = { timesnewroman: 'Times New Roman', times: 'Times New Roman', arial: 'Arial', helvetica: 'Arial', couriernew: 'Courier New', courier: 'Courier New', calibri: 'Calibri', cambria: 'Cambria', georgia: 'Georgia', verdana: 'Verdana', tahoma: 'Tahoma', garamond: 'Garamond', segoeui: 'Segoe UI', symbol: 'Symbol' };
+  const key = fam.toLowerCase().replace(/[^a-z]/g, '');
+  fam = known[key] || fam.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
+  if (!fam || /^(g_d|f\d|t\d|tt\d)/i.test(fam) || fam.length < 2) fam = { serif: 'Times New Roman', monospace: 'Courier New' }[fallbackFamily] || 'Arial';
+  return { family: fam, bold, italic };
+}
+// The colour of a piece of text: the darkest pixel inside it on the drawn page
+function inkAt(ctx, box) {
+  const x = Math.max(0, Math.floor(box.x)), y = Math.max(0, Math.floor(box.y)), w = Math.max(1, Math.min(ctx.canvas.width - x, Math.ceil(box.w))), h = Math.max(1, Math.min(ctx.canvas.height - y, Math.ceil(box.h)));
+  let d; try { d = ctx.getImageData(x, y, w, h).data; } catch (e) { return null; }
+  let best = 765, c = null;
+  for (let i = 0; i < d.length; i += 4) { const l = d[i] + d[i + 1] + d[i + 2]; if (l < best) { best = l; c = [d[i], d[i + 1], d[i + 2]]; } }
+  if (!c || (c[0] < 70 && c[1] < 70 && c[2] < 70)) return null; // black: leave it as automatic
+  return c.map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+// Where the pictures are on a page: follow the drawing operations and note each picture's box
+async function pagePictures(page) {
+  const ops = await page.getOperatorList(), O = pdfjsLib.OPS, mul = pdfjsLib.Util.transform, out = [];
+  let m = [1, 0, 0, 1, 0, 0]; const stack = [];
+  for (let i = 0; i < ops.fnArray.length; i++) {
+    const fn = ops.fnArray[i], args = ops.argsArray[i];
+    if (fn === O.save) stack.push(m);
+    else if (fn === O.restore) m = stack.pop() || m;
+    else if (fn === O.transform) m = mul(m, args);
+    else if (fn === O.paintFormXObjectBegin) { stack.push(m); if (args && args[0]) m = mul(m, args[0]); }
+    else if (fn === O.paintFormXObjectEnd) m = stack.pop() || m;
+    else if (fn === O.paintImageXObject || fn === O.paintInlineImageXObject || fn === O.paintImageMaskXObject || fn === O.paintImageXObjectRepeat) {
+      const pts = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y]) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]);
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      out.push({ x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys) });
+    }
+  }
+  return out;
+}
 async function pdfToWord(pdf, b, progress) {
-  const pages = await pdfLines(pdf, progress);
-  const all = pages.flat(); if (!all.length) throw new Error(T('docx.noText'));
-  const sizes = all.map(l => l.h).sort((x, y) => x - y), body = sizes[Math.floor(sizes.length / 2)];
-  const x = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const run = (t, big) => t.split('\t').map((part, i) => (i ? '<w:r><w:tab/></w:r>' : '') + `<w:r><w:t xml:space="preserve">${x(part)}</w:t></w:r>`).join('');
-  let xml = '';
-  pages.forEach((lines, pi) => {
-    // lines close together with the same size flow into one paragraph
-    let para = null;
-    const flush = () => { if (para) { xml += `<w:p><w:pPr><w:pStyle w:val="${para.big ? (para.big > body * 1.7 ? 'Heading1' : 'Heading2') : 'Normal'}"/></w:pPr>${run(para.t, para.big)}</w:p>`; para = null; } };
-    lines.forEach((l, li) => {
-      const big = l.h > body * 1.25 ? l.h : 0, prev = lines[li - 1];
-      const near = prev && (prev.y - l.y) < Math.max(l.h, prev.h) * 1.6 && !big && !para?.big && !l.t.includes('\t') && !prev.t.includes('\t');
-      if (para && near) para.t += (/-$/.test(para.t) ? '' : ' ') + l.t;
-      else { flush(); para = { t: l.t, big }; }
-    });
-    flush();
-    if (pi < pages.length - 1) xml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
-  });
   await lib('jszip');
+  const SC = 2, body = [], media = [], rels = [];
+  let hasText = false, sect = null;
+  const tw = pt => Math.round(pt * 20), emu = pt => Math.round(pt * 12700);
+  for (let pn = 1; pn <= pdf.numPages; pn++) {
+    const page = await pdf.getPage(pn), vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: SC });
+    const W = vp1.width, Hh = vp1.height;
+    // draw the page once: for the text colours, the fonts' names and the pictures
+    const cv = document.createElement('canvas'); cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+    const ctx = cv.getContext('2d', { willReadFrequently: true }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const tc = await page.getTextContent();
+    const fontOf = id => { try { if (page.commonObjs.has(id)) { const f = page.commonObjs.get(id); return f && (f.name || f.loadedName); } } catch (e) {} return ''; };
+    // the text pieces in page coordinates (top-down, in points)
+    const items = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.transform) continue;
+      const [a, bb, c, d, e, f] = pdfjsLib.Util.transform(vp1.transform, it.transform);
+      if (Math.abs(bb) > .01 || Math.abs(c) > .01) continue; // turned text: left out
+      const size = Math.abs(d) || Math.abs(it.height) || 10;
+      if (!it.str.trim()) { items.push({ space: true, x: e, y: f, w: it.width, size }); continue; }
+      const font = wordFont(fontOf(it.fontName), tc.styles[it.fontName] && tc.styles[it.fontName].fontFamily);
+      const ink = inkAt(ctx, { x: e * SC, y: (f - size * .8) * SC, w: it.width * SC, h: size * SC });
+      items.push({ str: it.str, x: e, y: f, w: it.width, size, font, ink });
+    }
+    const textItems = items.filter(i => !i.space);
+    if (textItems.length) hasText = true;
+    // lines: pieces on the same baseline, left to right
+    const lines = [];
+    for (const it of textItems.sort((p, q) => p.y - q.y || p.x - q.x)) {
+      const l = lines.find(L => Math.abs(L.y - it.y) < Math.max(L.size, it.size) * .35);
+      if (l) { l.items.push(it); l.size = Math.max(l.size, it.size); } else lines.push({ y: it.y, size: it.size, items: [it] });
+    }
+    lines.forEach(l => { l.items.sort((p, q) => p.x - q.x); l.x1 = l.items[0].x; const last = l.items[l.items.length - 1]; l.x2 = last.x + last.w; l.main = l.items.reduce((s, i) => s + i.str.length, 0); });
+    lines.sort((p, q) => p.y - q.y);
+    // the margins: where the text starts and ends on this page
+    const minX = lines.length ? Math.min(...lines.map(l => l.x1)) : 72, maxX = lines.length ? Math.max(...lines.map(l => l.x2)) : W - 72;
+    const ml = Math.max(18, Math.min(minX, 144)), mr = Math.max(18, Math.min(W - maxX, 144)), mt = Math.max(18, Math.min(lines.length ? lines[0].y - lines[0].size : 72, 108));
+    if (!sect) sect = { W, H: Hh, ml, mr, mt };
+    const textW = W - sect.ml - sect.mr;
+    // paragraphs: lines close together, same size, lined up
+    const paras = [];
+    for (const l of lines) {
+      const p = paras[paras.length - 1], prev = p && p.lines[p.lines.length - 1];
+      const multiCol = l.items.some((it, i) => i && it.x - (l.items[i - 1].x + l.items[i - 1].w) > it.size * 2.5);
+      const joins = prev && !multiCol && !p.multiCol && Math.abs(prev.size - l.size) < l.size * .15 && l.y - prev.y < l.size * 1.75 && l.y - prev.y > l.size * .5
+        && (Math.abs(l.x1 - prev.x1) < l.size * 1.5 || (p.lines.length === 1 && l.x1 < prev.x1 && prev.x1 - l.x1 < l.size * 4))
+        && !/[.:!?]$/.test(prev.items.map(i => i.str).join('').trim()) || (joins0(prev, l, p));
+      if (joins) p.lines.push(l); else paras.push({ lines: [l], multiCol });
+    }
+    function joins0(prev, l, p) { // a long paragraph line that ends a sentence still continues if the next line is in the same block
+      return !!prev && !p.multiCol && Math.abs(prev.size - l.size) < l.size * .15 && l.y - prev.y < l.size * 1.6 && l.y - prev.y > l.size * .5 && Math.abs(l.x1 - prev.x1) < l.size && prev.x2 > sect.ml + textW * .85;
+    }
+    // the pictures, cut out of the drawn page
+    const pics = [];
+    try {
+      for (const r of await pagePictures(page)) {
+        const [x1, y1, x2, y2] = vp1.convertToViewportRectangle([r.x1, r.y1, r.x2, r.y2]);
+        const bx = Math.max(0, Math.min(x1, x2)), by = Math.max(0, Math.min(y1, y2)), bw = Math.min(W, Math.max(x1, x2)) - bx, bh = Math.min(Hh, Math.max(y1, y2)) - by;
+        if (bw < 12 || bh < 12) continue;
+        const c2 = document.createElement('canvas'); c2.width = Math.round(bw * SC); c2.height = Math.round(bh * SC);
+        c2.getContext('2d').drawImage(cv, bx * SC, by * SC, bw * SC, bh * SC, 0, 0, c2.width, c2.height);
+        const id = media.length + 1, blob = await canvasToBlob(c2, 'image/jpeg', .88);
+        media.push({ name: `image${id}.jpeg`, blob });
+        rels.push(`<Relationship Id="rIdImg${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image${id}.jpeg"/>`);
+        const scale = Math.min(1, textW / bw);
+        pics.push({ y: by, x: bx, id, w: bw * scale, h: bh * scale });
+      }
+    } catch (e) { console.warn('Pictures skipped', e); }
+    // write the page: paragraphs and pictures from top to bottom
+    const blocks = [...paras.map(p => ({ y: p.lines[0].y - p.lines[0].size, p })), ...pics.map(g => ({ y: g.y, g }))].sort((u, v) => u.y - v.y);
+    let lastBottom = mt, firstOnPage = true;
+    const run = (it, text) => {
+      const f = it.font, sz = Math.max(2, Math.round(it.size * 2));
+      return `<w:r><w:rPr><w:rFonts w:ascii="${xmlEsc(f.family)}" w:hAnsi="${xmlEsc(f.family)}" w:cs="${xmlEsc(f.family)}"/>${f.bold ? '<w:b/>' : ''}${f.italic ? '<w:i/>' : ''}${it.ink ? `<w:color w:val="${it.ink}"/>` : ''}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${xmlEsc(text)}</w:t></w:r>`;
+    };
+    const tabRun = '<w:r><w:tab/></w:r>';
+    for (const blk of blocks) {
+      const before = Math.max(0, blk.y - lastBottom);
+      const brk = firstOnPage && pn > 1 ? '<w:pageBreakBefore/>' : '';
+      firstOnPage = false;
+      if (blk.g) {
+        const g = blk.g, ind = Math.max(0, g.x - sect.ml);
+        body.push(`<w:p><w:pPr>${brk}<w:spacing w:before="${tw(Math.min(before, 72))}" w:after="0"/><w:ind w:left="${tw(Math.min(ind, textW - g.w))}"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${emu(g.w)}" cy="${emu(g.h)}"/><wp:docPr id="${g.id}" name="Picture ${g.id}"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${g.id}" name="image${g.id}.jpeg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdImg${g.id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(g.w)}" cy="${emu(g.h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`);
+        lastBottom = blk.y + g.h; continue;
+      }
+      const p = blk.p, L = p.lines, first = L[0], size = first.size;
+      // alignment from where the lines start and end
+      const lefts = L.map(l => l.x1), rights = L.map(l => l.x2), mids = L.map(l => (l.x1 + l.x2) / 2), centre = sect.ml + textW / 2;
+      let jc = 'left';
+      if (!p.multiCol && mids.every(m => Math.abs(m - centre) < size * 1.2) && lefts.every(x => x > sect.ml + size * 2)) jc = 'center';
+      else if (!p.multiCol && rights.every(x => Math.abs(x - (W - sect.mr)) < size) && lefts.every(x => x > sect.ml + textW * .3)) jc = 'right';
+      else if (L.length > 2 && rights.slice(0, -1).every(x => Math.abs(x - Math.max(...rights)) < size * .6) && Math.max(...rights) > W - sect.mr - size * 2) jc = 'both';
+      const body1 = L.length > 1 ? Math.min(...lefts.slice(1)) : first.x1;
+      const indL = jc === 'center' || jc === 'right' ? 0 : Math.max(0, body1 - sect.ml), first1 = jc === 'center' || jc === 'right' ? 0 : first.x1 - body1;
+      const gaps = L.slice(1).map((l, i) => l.y - L[i].y), lh = gaps.length ? gaps.reduce((u, v) => u + v, 0) / gaps.length : size * 1.2;
+      // tab stops for text in columns
+      let tabs = '';
+      if (p.multiCol) {
+        const stops = [];
+        L[0].items.forEach((it, i) => { if (i && it.x - (L[0].items[i - 1].x + L[0].items[i - 1].w) > it.size * 2.5) stops.push(it.x - sect.ml - indL); });
+        if (stops.length) tabs = `<w:tabs>${stops.map(x => `<w:tab w:val="left" w:pos="${tw(Math.max(0, x))}"/>`).join('')}</w:tabs>`;
+      }
+      let runs = '';
+      L.forEach((l, li) => {
+        if (li) {
+          const prevText = runs.slice(-60);
+          runs += /-<\/w:t><\/w:r>$/.test(prevText) ? '' : run(l.items[0], ' ');
+          if (/-<\/w:t><\/w:r>$/.test(prevText)) runs = runs.replace(/-<\/w:t><\/w:r>$/, '</w:t></w:r>');
+        }
+        l.items.forEach((it, i) => {
+          if (i) { const gap = it.x - (l.items[i - 1].x + l.items[i - 1].w); if (gap > it.size * 2.5 && p.multiCol) runs += tabRun; else if (gap > it.size * .18 && !/\s$/.test(l.items[i - 1].str) && !/^\s/.test(it.str)) runs += run(it, ' '); }
+          runs += run(it, it.str);
+        });
+      });
+      const line = Math.round(Math.max(1, Math.min(2.5, lh / (size * 1.17))) * 240);
+      body.push(`<w:p><w:pPr>${brk}${tabs}<w:spacing w:before="${tw(Math.min(before, 48))}" w:after="0" w:line="${line}" w:lineRule="auto"/><w:ind w:left="${tw(indL)}"${first1 > 1 ? ` w:firstLine="${tw(first1)}"` : first1 < -1 ? ` w:hanging="${tw(-first1)}"` : ''}/><w:jc w:val="${jc}"/></w:pPr>${runs}</w:p>`);
+      lastBottom = L[L.length - 1].y + size * .3;
+    }
+    if (progress) progress(pn / pdf.numPages * .9);
+  }
+  if (!hasText && !media.length) throw new Error(T('docx.noText'));
+  const s0 = sect || { W: 595, H: 842, ml: 72, mr: 72, mt: 72 };
+  const sectPr = `<w:sectPr><w:pgSz w:w="${tw(s0.W)}" w:h="${tw(s0.H)}"${s0.W > s0.H ? ' w:orient="landscape"' : ''}/><w:pgMar w:top="${tw(s0.mt)}" w:right="${tw(s0.mr)}" w:bottom="${tw(36)}" w:left="${tw(s0.ml)}" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>`;
   const z = new JSZip();
-  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
+  z.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>');
   z.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
-  z.file('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
-  z.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="36"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="200" w:after="60"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style></w:styles>');
-  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${xml}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  z.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${rels.join('')}</Relationships>`);
+  z.file('word/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>');
+  media.forEach(m => z.file('word/media/' + m.name, m.blob));
+  z.file('word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${DOCX_NS}><w:body>${body.join('')}${sectPr}</w:body></w:document>`);
   const blob = await z.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   if (progress) progress(1);
   return [{ name: b + '.docx', blob, noteKey: 'docx.note' }];
