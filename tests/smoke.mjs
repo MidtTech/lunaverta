@@ -275,19 +275,6 @@ await test('Scan to PDF straightens a photo of paper and reads its text', async 
   await done(p);
 });
 
-await test('Remove background makes a transparent PNG', async () => {
-  const p = await page('/remove-background/');
-  const g = await browser.newPage({ viewport: { width: 600, height: 450 } });
-  await g.setContent('<body style="margin:0;background:#cfe8ff;display:grid;place-items:center;height:450px"><div style="width:220px;height:220px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb347,#c0392b)"></div></body>');
-  const pic = await g.screenshot({ type: 'jpeg', quality: 92 }); await g.close();
-  await p.setInputFiles('#fileInput', jpg('ball.jpg', pic));
-  const { name, buf } = await saveFirst(p);
-  assert(name === 'ball-no-background.png', 'name ' + name);
-  const share = await p.evaluate(async b64 => { const i = new Image(); i.src = 'data:image/png;base64,' + b64; await i.decode(); const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); const d = x.getImageData(0, 0, c.width, c.height).data; let t = 0; for (let k = 3; k < d.length; k += 4) if (d[k] < 30) t++; return t / (d.length / 4); }, buf.toString('base64'));
-  assert(share > 0.3 && share < 0.95, 'transparent share ' + share.toFixed(2));
-  await done(p);
-});
-
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

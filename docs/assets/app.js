@@ -18,8 +18,7 @@ const LIBS = {
   docx: 'docx-preview.min.js',
   h2c: 'html2canvas.min.js',
   qpdf: 'qpdf.js',
-  tesseract: 'tesseract/tesseract.min.js',
-  ort: 'ort/ort.wasm.min.js'
+  tesseract: 'tesseract/tesseract.min.js'
 };
 const loaded = {};
 function lib(name) {
@@ -35,7 +34,7 @@ function lib(name) {
 
 // ---------- formats ----------
 const KINDS = {
-  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','imgedit','nobg','clean'] },
+  image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','imgedit','clean'] },
   pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','docx','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
@@ -43,7 +42,7 @@ const KINDS = {
   video: { color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'] }
 };
 const OUT = {
-  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true }, imgedit: { k: '--c-image', tool: true }, nobg: { k: '--c-image', tool: true }, scan: { k: '--c-doc', tool: true },
+  png: { k: '--c-image' }, jpg: { k: '--c-image' }, webp: { k: '--c-image' }, gif: { k: '--c-image' }, ico: { k: '--c-image' }, bmp: { k: '--c-image' }, clean: { k: '--c-image', tool: true }, imgedit: { k: '--c-image', tool: true }, scan: { k: '--c-doc', tool: true },
   pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, extract: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' }, docx: { k: '--c-doc' }, compare: { k: '--c-doc', tool: true },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
@@ -51,7 +50,7 @@ const OUT = {
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['edit','redact','ocr','merge','split','extract','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','nobg','scan','clean'];
+const ORDER = ['edit','redact','ocr','merge','split','extract','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','scan','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -1343,7 +1342,6 @@ const IMG_MIME = { png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp' };
 async function convertImage(file, target, o, progress) {
   if (target === 'clean') return cleanImage(file, o);
   if (target === 'imgedit') return editImage(file, o.img);
-  if (target === 'nobg') return removeBackground(file, progress);
   if (target === 'ocr') return ocrImage(file, progress);
   const { img, w, h } = await decodeImage(file);
   const flat = target === 'jpg' || target === 'bmp' || target === 'pdf';
@@ -1485,50 +1483,6 @@ function askImage(files) {
     d.showModal(); sizePreview(); drawBox(); later();
     if (mode === 'crop' && one) setAspect('free');
   });
-}
-// ---------- Remove background: the U²-Net "silueta" model, run on this device with ONNX Runtime ----------
-// The model (44 MB) and the runtime (11 MB) are fetched the first time and then kept for offline use.
-let bgModel = null, bgNoted = false, bgQueue = Promise.resolve();
-function bgSession(progress) {
-  if (!bgModel) bgModel = (async () => {
-    await lib('ort');
-    ort.env.wasm.numThreads = 1; ort.env.wasm.wasmPaths = new URL(VENDOR + 'ort/', location.href).href;
-    const res = await fetch(VENDOR + 'ort/silueta.onnx');
-    if (!res.ok) throw new Error(T(navigator.onLine === false ? 'err.lib.offline' : 'err.lib.online'));
-    const total = +res.headers.get('content-length') || 44173029, reader = res.body.getReader(), parts = []; let got = 0;
-    for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; if (progress) progress(Math.min(.6, got / total * .6)); }
-    const buf = new Uint8Array(got); let o = 0; for (const p of parts) { buf.set(p, o); o += p.length; }
-    return ort.InferenceSession.create(buf, { executionProviders: ['wasm'] });
-  })().catch(e => { bgModel = null; throw e; });
-  return bgModel;
-}
-async function removeBackground(file, progress) {
-  if (!bgNoted && !bgModel) { bgNoted = true; toast(T('nobg.first')); }
-  const sess = await bgSession(progress);
-  const { img, w, h } = await decodeImage(file);
-  // the model looks at a 320 × 320 copy, normalised as it was trained
-  const S = 320, c = document.createElement('canvas'); c.width = S; c.height = S;
-  const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, S, S);
-  const d = x.getImageData(0, 0, S, S).data, f = new Float32Array(3 * S * S), mean = [.485, .456, .406], sd = [.229, .224, .225];
-  let mx = 1; for (let i = 0; i < d.length; i++) if ((i & 3) !== 3 && d[i] > mx) mx = d[i];
-  for (let i = 0; i < S * S; i++) for (let ch = 0; ch < 3; ch++) f[ch * S * S + i] = (d[i * 4 + ch] / mx - mean[ch]) / sd[ch];
-  progress(.7);
-  // one picture at a time through the model
-  const run = bgQueue.then(() => sess.run({ [sess.inputNames[0]]: new ort.Tensor('float32', f, [1, 3, S, S]) }));
-  bgQueue = run.catch(() => {});
-  const out = await run;
-  const m = out[sess.outputNames[0]].data; let lo = Infinity, hi = -Infinity;
-  for (const v of m) { if (v < lo) lo = v; if (v > hi) hi = v; }
-  progress(.9);
-  // the mask, scaled up smoothly to the photo's size, becomes its transparency
-  const mc = document.createElement('canvas'); mc.width = S; mc.height = S;
-  const mx2 = mc.getContext('2d'), md = mx2.createImageData(S, S);
-  for (let i = 0; i < S * S; i++) { const a = (m[i] - lo) / ((hi - lo) || 1); md.data[i * 4 + 3] = Math.max(0, Math.min(255, (a - .08) / .84 * 255)); }
-  mx2.putImageData(md, 0, 0);
-  const [ow, oh] = fit(w, h, 4096), r = document.createElement('canvas'); r.width = ow; r.height = oh;
-  const rx = r.getContext('2d'); rx.imageSmoothingQuality = 'high';
-  rx.drawImage(mc, 0, 0, ow, oh); rx.globalCompositeOperation = 'source-in'; rx.drawImage(img, 0, 0, ow, oh);
-  return [{ name: `${base(file.name)}-no-background.png`, blob: await canvasToBlob(r, 'image/png'), noteKey: 'nobg.done' }];
 }
 // ---------- Scan to PDF: photos of paper, straightened and cleaned up ----------
 // Finding the paper: the biggest bright area in a small copy of the photo; its corners are the points

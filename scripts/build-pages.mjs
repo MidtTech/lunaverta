@@ -75,7 +75,7 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
 // All tools, grouped by what they work on, so the list can be scanned.
 const TOOL_GROUPS = [
   ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'compare-pdf', 'pdf-to-word', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
-  ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'remove-background', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location']],
+  ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location']],
   ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'excel-to-csv', 'csv-to-excel']],
   ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['video-to-gif', 'video-to-mp3']]
 ];
