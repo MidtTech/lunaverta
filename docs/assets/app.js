@@ -2555,17 +2555,19 @@ document.addEventListener('click', e => {
 
 // ---------- "See how it works": the convert video in a small window ----------
 // Subtitles in every language; the video itself is the Danish or the English one.
+// bump when a video changes, so browsers fetch the new one instead of a kept copy
+const VIDEO_REV = '?v=20261102';
 const SUB_NAMES = { da: 'Dansk', en: 'English', sv: 'Svenska', no: 'Norsk', de: 'Deutsch' };
 function subTracks(key, page) {
   const order = [page, 'en', 'da', 'sv', 'no', 'de'].filter((l, i, a) => SUB_NAMES[l] && a.indexOf(l) === i);
-  return order.map((l, i) => `<track kind="subtitles" srclang="${l}" label="${SUB_NAMES[l]}" src="/videos/${key}.${l}.vtt"${i === 0 ? ' default' : ''}>`).join('');
+  return order.map((l, i) => `<track kind="subtitles" srclang="${l}" label="${SUB_NAMES[l]}" src="/videos/${key}.${l}.vtt${VIDEO_REV}"${i === 0 ? ' default' : ''}>`).join('');
 }
 function playVideo(key, title, page) {
   const L = page === 'da' ? 'da' : 'en';
   const d = document.createElement('dialog');
   d.className = 'pw-dialog howto-dialog';
   d.innerHTML = `<form method="dialog"><div class="howto-head"><h2>${esc(title)}</h2><button type="submit" class="ed-ico" aria-label="${esc(T('coffee.close'))}">×</button></div>
-    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/${key}-${L}.jpg"><source src="/videos/${key}-${L}.mp4" type="video/mp4">${subTracks(key, page)}</video>
+    <video controls playsinline autoplay preload="auto" width="1280" height="720" poster="/videos/${key}-${L}.jpg${VIDEO_REV}"><source src="/videos/${key}-${L}.mp4${VIDEO_REV}" type="video/mp4">${subTracks(key, page)}</video>
     <p class="howto-cap">${esc(T('howto.caption'))}</p></form>`;
   d.addEventListener('close', () => { const v = d.querySelector('video'); if (v) v.pause(); d.remove(); });
   document.body.appendChild(d); d.showModal();

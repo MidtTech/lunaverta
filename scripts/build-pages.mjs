@@ -117,12 +117,14 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
 }
 // Short how-to videos (English voice, subtitles in every language), shown on their tool pages.
 const VIDEO_FOR = { 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
+// a short fingerprint of each video file, so a changed video is fetched afresh instead of an old copy kept in the browser
+const vv = f => { try { return '?v=' + createHash('sha1').update(readFileSync('docs/videos/' + f)).digest('hex').slice(0, 8); } catch (e) { return ''; } };
 function videoFigure(lang, key, caption) {
   const vl = lang === 'da' ? 'da' : 'en'; // the videos exist in Danish and English; other languages get the English one
   // subtitles in every language, the page's own first and on by default
   const tracks = [lang, ...LANGS.filter(L => L !== lang)]
-    .map((L, i) => `<track kind="subtitles" srclang="${L}" label="${META[L].name}" src="/videos/${key}.${L}.vtt"${i === 0 ? ' default' : ''}>`).join('');
-  return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${vl}.jpg"><source src="/videos/${key}-${vl}.mp4" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
+    .map((L, i) => `<track kind="subtitles" srclang="${L}" label="${META[L].name}" src="/videos/${key}.${L}.vtt${vv(`${key}.${L}.vtt`)}"${i === 0 ? ' default' : ''}>`).join('');
+  return `<figure class="howto-video"><video controls playsinline preload="none" width="1280" height="720" poster="/videos/${key}-${vl}.jpg${vv(`${key}-${vl}.jpg`)}"><source src="/videos/${key}-${vl}.mp4${vv(`${key}-${vl}.mp4`)}" type="video/mp4">${tracks}</video>${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure>`;
 }
 function howtoSection(lang, tool) {
   const d = tool[lang], key = VIDEO_FOR[tool.id];
