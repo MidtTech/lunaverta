@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import vm from 'node:vm';
 import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-content.mjs';
+import { GUIDES, GUIDE_INDEX } from './guides.mjs';
 
 // Extra languages: page texts in scripts/lang/<code>.mjs, interface texts in docs/assets/strings-<code>.js
 const EXTRA = [];
@@ -133,7 +134,7 @@ function howtoSection(lang, tool) {
     ${key ? videoFigure(lang, key, t(lang, 'howto.caption')) : ''}
     <ol>
 ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
-    </ol>
+    </ol>${(lang === 'en' || lang === 'da') ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}: <a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
   </section>`;
 }
 
@@ -180,20 +181,20 @@ function jsonLd(lang, page, faqItems) {
 const template = readFileSync('src/template.html', 'utf8');
 // The language menu: real links to the same page in each language
 function langMenu(lang, page) {
-  return `<details class="lang-menu"><summary data-i18n-attr="aria-label:lang.label" aria-label="Language"><span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
+  return `<details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Language</span> <span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
           <ul>${LANGS.map(L => `<li><a href="${new URL(page.alts[L]).pathname}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`;
 }
 function render(lang, page) {
   const faq = faqSection(lang, page.tool && page.tool[lang].faq, page.tool && page.tool[lang].name);
   const L = LABELS[lang];
   const hero = page.tool
-    ? `  <section class="hero">
+    ? `  <section class="hero" aria-labelledby="h-page">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(L.home)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(page.tool[lang].name)}</span></nav>
-    <h1>${esc(page.tool[lang].h1)}</h1>
+    <h1 id="h-page">${esc(page.tool[lang].h1)}</h1>
     <p class="lead">${esc(page.tool[lang].lead)}</p>
   </section>`
-    : `  <section class="hero">
-    <h1>${esc(HOME[lang].h1)}</h1>
+    : `  <section class="hero" aria-labelledby="h-page">
+    <h1 id="h-page">${esc(HOME[lang].h1)}</h1>
     <p class="lead">${esc(HOME[lang].lead)}</p>
   </section>`;
   const preset = page.tool ? page.tool.preset : '';
@@ -212,7 +213,7 @@ function render(lang, page) {
     POPULAR: page.tool ? '' : popularSection(lang),
     REFSUM: esc(t(lang, 'ref.sum', { n: new Set(Object.values(KINDS).flatMap(k => k.exts)).size, m: new Set(Object.values(KINDS).flatMap(k => k.targets)).size })),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
-    NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
+    GUIDES_URL: lang === 'da' ? '/da/guide/' : '/guide/', NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };
   let html = template.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m));
   return fillTexts(html, lang);
@@ -225,12 +226,65 @@ for (const lang of LANGS) {
 }
 for (const p of pages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, render(p.lang, p)); }
 
+// ---------- guides (English and Danish): short how-tos for everyday jobs, each pointing to its tool ----------
+const GLANGS = ['en', 'da'];
+const toolUrl = (lang, id) => { const tl = TOOLS.find(x => x.id === id); return path(lang, tl.slug[lang]); };
+const gPath = (lang, slug) => path(lang, GUIDE_INDEX[lang].slug + (slug ? '/' + slug : ''));
+const headPart = template.slice(0, template.indexOf('<body>'));
+const headerPart = template.slice(template.indexOf('<div class="wrap">'), template.indexOf('</header>') + '</header>'.length)
+  .replace(/<nav class="head-nav"[\s\S]*?<\/nav>/, `<nav class="head-nav" aria-label="Sections"><a href="{{HOME}}#h-tools" data-i18n="nav.tools">All tools</a><a href="{{GUIDES}}">{{GUIDES_LABEL}}</a></nav>`);
+const footerPart = template.slice(template.indexOf('  <footer>'), template.indexOf('</footer>') + '</footer>'.length);
+function guideHtml(lang, g, main, ld) {
+  const alts = g.alts;
+  const vals = {
+    LANG: lang, TITLE: esc(g.title), DESC: esc(g.desc), CANONICAL: SITE + g.path, HOME: path(lang), GUIDES: gPath(lang), GUIDES_LABEL: esc(GUIDE_INDEX[lang].guides),
+    ALTERNATES: [...GLANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${SITE + alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${SITE + alts.en}">`].join('\n'),
+    OG_IMAGE: SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2', OG_LOCALE: META[lang].og, OG_LOCALE_ALT: META[lang === 'da' ? 'en' : 'da'].og,
+    LANG_MENU: `<details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Language</span> <span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
+          <ul>${GLANGS.map(L => `<li><a href="${alts[L]}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`,
+    JSONLD: JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, ...ld] }).replace(/</g, '\\u003c'),
+    COFFEE: '', GUIDES_URL: gPath(lang), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
+  };
+  const html = `${headPart}<body>\n<a class="skip" href="#main" data-i18n="skip">Skip to content</a>\n${headerPart}\n  <main class="prose guide" id="main" tabindex="-1">\n${main}\n  </main>\n${footerPart}\n</div>\n<script src="/assets/strings.js"></script>\n<script src="/assets/i18n.js"></script>\n</body>\n</html>\n`;
+  return fillTexts(html.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m)), lang);
+}
+const guidePages = [];
+for (const lang of GLANGS) {
+  const I = GUIDE_INDEX[lang], links = { merge: toolUrl(lang, 'merge-pdf'), compress: toolUrl(lang, 'compress-pdf') };
+  const crumbs = extra => `    <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(LABELS[lang].home)}</a> <span aria-hidden="true">›</span> ${extra}</nav>`;
+  for (const g of GUIDES) {
+    const d = g[lang], tool = toolUrl(lang, g.tool), fill = x => x.replace(/\{(tool|merge|compress)\}/g, (m, k) => (k === 'tool' ? tool : links[k]));
+    const body = d.body.map(b => typeof b === 'string' ? `    <p>${fill(b)}</p>` : b.h ? `    <h2>${esc(b.h)}</h2>` : b.ol ? `    <ol>${b.ol.map(x => `<li>${fill(x)}</li>`).join('')}</ol>` : `    <ul>${b.ul.map(x => `<li>${fill(x)}</li>`).join('')}</ul>`).join('\n');
+    const others = GUIDES.filter(o => o !== g).map(o => `<li><a href="${gPath(lang, o[lang].slug)}">${esc(o[lang].h1)}</a></li>`).join('');
+    const main = `${crumbs(`<a href="${gPath(lang)}">${esc(I.guides)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(d.h1)}</span>`)}
+    <h1>${esc(d.h1)}</h1>
+    <p class="lead">${esc(d.lead)}</p>
+${body}
+    <p><a class="btn primary" href="${tool}">${esc(I.open)}: ${esc(TOOLS.find(x => x.id === g.tool)[lang].name)}</a></p>
+    <h2>${esc(I.all)}</h2>
+    <ul>${others}</ul>`;
+    const steps = (d.body.find(b => b.ol) || { ol: [] }).ol.map((x, i) => ({ '@type': 'HowToStep', position: i + 1, text: x.replace(/<[^>]+>/g, '') }));
+    const pg = { path: gPath(lang, d.slug), title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L, g[L].slug)])) };
+    const ld = [{ '@type': 'HowTo', name: d.h1, description: d.desc, inLanguage: lang, step: steps },
+      { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: LABELS[lang].home, item: url(lang) }, { '@type': 'ListItem', position: 2, name: I.guides, item: SITE + gPath(lang) }, { '@type': 'ListItem', position: 3, name: d.h1, item: SITE + pg.path }] }];
+    guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });
+  }
+  const idx = { path: gPath(lang), title: I.title, desc: I.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L)])) };
+  const main = `${crumbs(`<span aria-current="page">${esc(I.guides)}</span>`)}
+    <h1>${esc(I.h1)}</h1>
+    <p class="lead">${esc(I.lead)}</p>
+    <ul class="guide-list">${GUIDES.map(g => `<li><a href="${gPath(lang, g[lang].slug)}"><b>${esc(g[lang].h1)}</b><span>${esc(g[lang].lead)}</span></a></li>`).join('')}</ul>`;
+  guidePages.push({ file: `docs${idx.path}index.html`, html: guideHtml(lang, idx, main, [{ '@type': 'CollectionPage', name: I.h1, inLanguage: lang, url: SITE + idx.path }]), url: SITE + idx.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + idx.alts[L]])) });
+}
+for (const p of guidePages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, p.html); }
+
 // ---------- sitemap.xml (with language alternates) ----------
 const today = new Date().toISOString().slice(0, 10);
 const staticPages = [{ loc: SITE + '/no-upload.html' }, { loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
 writeFileSync('docs/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${pages.map(p => `  <url><loc>${p.url}</loc><lastmod>${today}</lastmod>${LANGS.map(L => `<xhtml:link rel="alternate" hreflang="${L}" href="${p.alts[L]}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${p.alts.en}"/></url>`).join('\n')}
+${guidePages.map(p => `  <url><loc>${p.url}</loc><lastmod>${today}</lastmod>${GLANGS.map(L => `<xhtml:link rel="alternate" hreflang="${L}" href="${p.alts[L]}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${p.alts.en}"/></url>`).join('\n')}
 ${staticPages.map(e => `  <url><loc>${e.loc}</loc><lastmod>${today}</lastmod></url>`).join('\n')}
 </urlset>
 `);
@@ -256,6 +310,9 @@ ${EXTRA.map(x => `
 ## ${x.toolsHeading}
 ${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl[x.code].desc}`).join('\n')}
 `).join('')}
+## Guides
+${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)}) · [${g.da.h1}](${SITE}${gPath('da', g.da.slug)})`).join('\n')}
+
 ## About
 - [Why nothing is uploaded](${SITE}/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
@@ -281,7 +338,7 @@ for (const [from, to] of Object.entries(MOVED)) {
   mkdirSync(`docs/${from}`, { recursive: true });
   writeFileSync(`docs/${from}/index.html`, `<!doctype html><html lang="da"><head><meta charset="utf-8"><title>LunaVerta</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"></head><body><p><a href="${to}">${SITE}${to}</a></p></body></html>\n`);
 }
-for (const p of pages) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
+for (const p of [...pages, ...guidePages]) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
 for (const f of ['docs/privacy.html', 'docs/licenses.html', 'docs/no-upload.html', 'docs/404.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
 writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`));
 console.log(`Wrote ${pages.length} pages, sitemap.xml and llms.txt · ${label7}`);

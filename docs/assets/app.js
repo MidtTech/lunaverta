@@ -2648,7 +2648,7 @@ document.addEventListener('click', e => {
   const L = document.documentElement.lang === 'da' ? 'da' : 'en';
   const card = document.createElement('div');
   card.className = 'welcome-card'; card.setAttribute('role', 'region'); card.setAttribute('aria-label', T('welcome.title'));
-  card.innerHTML = `<img src="/videos/welcome-${L}.jpg" alt="" width="96" height="54"><div><b>${esc(T('welcome.ask'))}</b><button type="button" class="linkish" data-w="play">▶ ${esc(T('welcome.watch'))}</button></div><button type="button" class="ed-ico" data-w="close" aria-label="${esc(T('welcome.close'))}" title="${esc(T('welcome.close'))}">×</button>`;
+  card.innerHTML = `<img src="/videos/welcome-${L}-thumb.jpg" alt="" width="96" height="54"><div><b>${esc(T('welcome.ask'))}</b><button type="button" class="linkish" data-w="play">▶ ${esc(T('welcome.watch'))}</button></div><button type="button" class="ed-ico" data-w="close" aria-label="${esc(T('welcome.close'))}" title="${esc(T('welcome.close'))}">×</button>`;
   const done = () => { try { localStorage.setItem(KEY, '1'); } catch (e) {} card.remove(); };
   card.querySelector('[data-w="close"]').onclick = done;
   card.querySelector('[data-w="play"]').onclick = () => { done(); playVideo('welcome', T('welcome.title'), document.documentElement.lang); };
@@ -2686,7 +2686,20 @@ if ('launchQueue' in window) {
   });
 }
 
-addEventListener('appinstalled', () => { toast(T('toast.installed')); });
+// "Install as an app": offered only when the browser can install it, as a small button in the footer.
+// Once installed, files can be opened from the computer (above) and it works offline.
+let installEvt = null;
+addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installEvt = e;
+  if ($('installApp')) return;
+  const foot = document.querySelector('footer'); if (!foot) return;
+  const b = document.createElement('button'); b.type = 'button'; b.id = 'installApp'; b.className = 'install-app';
+  b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg><span data-i18n="install.btn">${esc(T('install.btn'))}</span>`;
+  b.title = T('install.hint'); b.setAttribute('data-i18n-attr', 'title:install.hint');
+  b.addEventListener('click', async () => { if (!installEvt) return; installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r && r.outcome === 'accepted') b.remove(); installEvt = null; });
+  foot.insertBefore(b, foot.querySelector('.foot-promise'));
+});
+addEventListener('appinstalled', () => { toast(T('toast.installed')); const b = $('installApp'); if (b) b.remove(); });
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

@@ -204,6 +204,12 @@ Key facts:
 - [Skanna till PDF](https://lunaverta.com/sv/skanna-till-pdf/): Fota papper med mobilen och få en snygg, rak PDF, gärna med sökbar text. Gratis och privat: fotona lämnar aldrig din enhet.
 - [PDF till text](https://lunaverta.com/sv/pdf-till-text/): Ta ut all text ur en PDF till en vanlig textfil i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
 
+## Guides
+- [Remove a CPR number from a PDF](https://lunaverta.com/guide/remove-cpr-number-from-pdf/) · [Fjern et CPR-nummer fra en PDF](https://lunaverta.com/da/guide/fjern-cpr-nummer-fra-pdf/)
+- [Share a payslip safely](https://lunaverta.com/guide/share-payslip-safely/) · [Send en lønseddel sikkert](https://lunaverta.com/da/guide/send-loenseddel-sikkert/)
+- [Sign a rental contract without printing](https://lunaverta.com/guide/sign-lease-without-printing/) · [Underskriv en lejekontrakt uden at printe](https://lunaverta.com/da/guide/underskriv-lejekontrakt-uden-at-printe/)
+- [Collect receipts in one PDF](https://lunaverta.com/guide/combine-receipts-into-one-pdf/) · [Saml kvitteringer i én PDF](https://lunaverta.com/da/guide/saml-kvitteringer-i-en-pdf/)
+
 ## About
 - [Why nothing is uploaded](https://lunaverta.com/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta
