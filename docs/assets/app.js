@@ -2056,13 +2056,29 @@ function addFiles(list, opts = {}) {
 }
 // Tool pages (e.g. /heic-to-jpg/) name the format they convert to.
 const PRESET = (document.querySelector('main[data-preset]') || {}).dataset?.preset || '';
+// The PDF editor is big, so it is fetched only when a page needs it: right away (when idle) on the PDF editing pages,
+// otherwise the moment a PDF is sent to it. The version tag of app.js is reused so a new editor is never mixed with an old app.
+const ASSET_V = ((document.currentScript && document.currentScript.src) || '').split('?')[1] || '';
+let editorLoading = null;
+function loadEditor() {
+  if (window.LVEditor && window.LVPdfText) return Promise.resolve(window.LVEditor);
+  if (!editorLoading) {
+    const add = name => new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `/assets/${name}.js${ASSET_V ? '?' + ASSET_V : ''}`; sc.onload = ok; sc.onerror = () => no(new Error('Could not load ' + name)); document.head.appendChild(sc); });
+    editorLoading = Promise.all([add('pdf-text'), add('editor')]).then(() => window.LVEditor).catch(e => { editorLoading = null; throw e; });
+  }
+  return editorLoading;
+}
+window.LVLoadEditor = loadEditor;
+if (['edit', 'redact', 'prices'].includes(PRESET)) {
+  (window.requestIdleCallback || (f => setTimeout(f, 1200)))(() => loadEditor().catch(() => {}));
+}
 // On a tool page, new files go straight to that page's format when they can;
 // otherwise the ring opens as usual.
 function afterAdd(added, x, y) {
   if (!added.length) return;
   const files = added.map(a => a.file), targets = fileTargets(files);
   // Prices is not in the ring; it lives in the editor. Its page opens the editor with prices marked.
-  if (PRESET === 'prices') { const pdfs = files.filter(f => kindOf(f) === 'pdf'); if (pdfs.length && window.LVEditor) { window.LVEditor.open(pdfs, { find: true, preset: 'prices' }); return; } }
+  if (PRESET === 'prices') { const pdfs = files.filter(f => kindOf(f) === 'pdf'); if (pdfs.length) { loadEditor().then(E => E.open(pdfs, { find: true, preset: 'prices' })).catch(e => toast(e.message)); return; } }
   // Compare PDFs: as soon as two PDFs are in, they are compared
   if (PRESET === 'compare') { const pdfs = tray.filter(t => t.kind === 'pdf').map(t => t.file); if (pdfs.length >= 2) openCompare(pdfs[pdfs.length - 2], pdfs[pdfs.length - 1]); else toast(T('cmp.need2')); return; }
   if (PRESET && PRESET !== 'merge' && targets.includes(PRESET)) { runBatch(files, PRESET); return; }
@@ -2153,6 +2169,7 @@ async function finishJob(j, outs) {
 function failJob(j, err) {
   j.status = 'err'; j.error = (err && err.message) || T('job.failed');
   console.error(err); renderJob(j); updateFoot();
+  reportError(err, j.target || '');
 }
 async function runBatch(files, target) {
   closeRing();
@@ -2175,13 +2192,13 @@ async function runBatch(files, target) {
   const skipped = items.length - ok.length;
   if (target === 'redact' || target === 'prices') { // the editor with the suggestions for sensitive text
     const pdfs = ok.filter(x => x.kind === 'pdf').map(x => x.f);
-    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs, { find: true, preset: target === 'prices' ? 'prices' : null });
+    if (pdfs.length) (await loadEditor()).open(pdfs, { find: true, preset: target === 'prices' ? 'prices' : null });
     return;
   }
   if (target === 'edit') { // opens the PDF editor with every selected PDF
     const pdfs = ok.filter(x => x.kind === 'pdf').map(x => x.f);
     const mode = (document.querySelector('main[data-mode]') || {}).dataset?.mode || '';
-    if (pdfs.length && window.LVEditor) window.LVEditor.open(pdfs, { redact: mode === 'redact', action: mode });
+    if (pdfs.length) (await loadEditor()).open(pdfs, { redact: mode === 'redact', action: mode });
     return;
   }
   if (target === 'merge') {
@@ -2513,9 +2530,56 @@ function toast(msg, ok, blob) {
   toastT = setTimeout(() => t.classList.remove('show'), t.classList.contains('has-action') ? 7000 : 3200);
 }
 
+// ---------- "Something went wrong? Send us the error" ----------
+// When something fails, a small note offers to show what went wrong. Nothing is ever sent by itself:
+// the person sees the text (no file contents), can edit it, and copies it or opens their own email with it.
+const ERRS = [];
+let errPillT;
+function reportError(err, where) {
+  const e = err instanceof Error ? err : new Error(String((err && err.message) || err || 'Unknown error'));
+  if (/^(AbortError|NotAllowedError)$/.test(e.name)) return; // a closed Save as window is not an error
+  ERRS.push({ when: new Date().toISOString(), where: where || '', msg: e.message, stack: String(e.stack || '').split('\n').slice(0, 6).join('\n') });
+  if (ERRS.length > 5) ERRS.shift();
+  let pill = $('errPill');
+  if (!pill) {
+    pill = document.createElement('button'); pill.type = 'button'; pill.id = 'errPill'; pill.className = 'err-pill';
+    pill.addEventListener('click', () => { pill.classList.remove('show'); openErrorReport(); });
+    document.body.appendChild(pill);
+  }
+  pill.textContent = T('err.pill'); pill.classList.add('show');
+  clearTimeout(errPillT); errPillT = setTimeout(() => pill.classList.remove('show'), 15000);
+}
+function errorText(note) {
+  const v = ($('buildVer') && $('buildVer').title) || '';
+  return [note ? note + '\n' : '', ...ERRS.map(x => `${x.when}${x.where ? ' · ' + x.where : ''}\n${x.msg}\n${x.stack}`),
+    '---', 'Page: ' + location.pathname, 'Tool: ' + (PRESET || 'home') + ((document.querySelector('main[data-mode]') || {}).dataset?.mode ? ' / ' + document.querySelector('main').dataset.mode : ''),
+    'Browser: ' + navigator.userAgent, v, 'Language: ' + document.documentElement.lang].filter(x => x !== '').join('\n');
+}
+function openErrorReport() {
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog err-dialog';
+  d.innerHTML = `<form method="dialog"><h2>${esc(T('err.title'))}</h2><p class="pw-note">${esc(T('err.text'))}</p>
+    <label>${esc(T('err.what'))}<input type="text" name="note" autocomplete="off"></label>
+    <textarea name="txt" rows="8" spellcheck="false"></textarea>
+    <div class="pw-btns"><button type="submit" class="btn sm">${esc(T('err.close'))}</button><button type="button" class="btn sm" data-a="copy">${esc(T('err.copy'))}</button><a class="btn sm primary" data-a="mail" href="#">${esc(T('err.mail'))}</a></div></form>`;
+  const ta = d.querySelector('textarea'), note = d.querySelector('input'), mail = d.querySelector('[data-a="mail"]');
+  ta.value = errorText('');
+  const link = () => { mail.href = 'mailto:lee@midttech.com?subject=' + encodeURIComponent(T('report.subject')) + '&body=' + encodeURIComponent(((note.value ? note.value + '\n\n' : '') + ta.value).slice(0, 1500)); };
+  link(); note.addEventListener('input', link); ta.addEventListener('input', link);
+  d.querySelector('[data-a="copy"]').addEventListener('click', async ev => {
+    const txt = (note.value ? note.value + '\n\n' : '') + ta.value;
+    try { await navigator.clipboard.writeText(txt); } catch (e) { ta.select(); document.execCommand('copy'); }
+    ev.target.textContent = T('err.copied');
+  });
+  d.addEventListener('close', () => d.remove());
+  document.body.appendChild(d); d.showModal();
+}
+window.addEventListener('error', e => { if (e.error) reportError(e.error, 'page'); });
+window.addEventListener('unhandledrejection', e => reportError(e.reason, 'page'));
+
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: (m, ok, blob) => toast(m, ok, blob), qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: (m, ok, blob) => toast(m, ok, blob), reportError, qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
   addResult(srcName, target, outs, saved) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; j.saved = !!saved; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }

@@ -350,6 +350,25 @@ await test('Rewritten text keeps the PDF\'s own font and size', async () => {
   await done(p);
 });
 
+await test('the PDF editor is fetched only when needed, and still opens from the home page', async () => {
+  const p = await page('/'); const got = []; p.on('request', r => { if (/assets\/(editor|pdf-text)\.js/.test(r.url())) got.push(r.url()); });
+  await p.waitForTimeout(1500); assert(!got.length, 'editor loaded on the home page: ' + got.join(', '));
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica); d.addPage([595, 842]).drawText('Hello', { x: 60, y: 780, size: 20, font: f });
+  await p.setInputFiles('#fileInput', file('hello.pdf', Buffer.from(await d.save()))); await p.waitForSelector('#ring.open'); await p.click('.slice[data-t="edit"]');
+  await p.waitForSelector('.ed-card', { timeout: 20000 }); assert(got.length === 2, 'editor files fetched: ' + got.length);
+  await done(p);
+});
+
+await test('an error offers a report to copy or email, and sends nothing by itself', async () => {
+  const p = await page('/'); const out = []; p.on('request', r => { if (!r.url().startsWith(BASE)) out.push(r.url()); });
+  await p.evaluate(() => setTimeout(() => { throw new Error('Smoke test error'); }, 0)); await p.waitForSelector('#errPill.show');
+  p.errors = []; await p.click('#errPill'); await p.waitForSelector('.err-dialog textarea');
+  const txt = await p.inputValue('.err-dialog textarea'); assert(txt.includes('Smoke test error') && txt.includes('Page: /'), 'report text: ' + txt.slice(0, 120));
+  const href = await p.getAttribute('.err-dialog [data-a="mail"]', 'href'); assert(href.startsWith('mailto:') && href.includes('Smoke%20test%20error'), 'mail link: ' + href.slice(0, 80));
+  assert(!out.length, 'requests to other hosts: ' + out.join(', '));
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

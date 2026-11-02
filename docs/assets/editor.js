@@ -2205,7 +2205,7 @@ async function save(opt) {
     S.dirty = false; close();
     app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }), true, blob);
   } catch (e) {
-    console.error(e); app().toast(e.message || T('job.failed'));
+    console.error(e); app().toast(e.message || T('job.failed')); if (app().reportError) app().reportError(e, 'editor save');
     // The Save as window has already made an empty file: take it away again.
     if (handle && handle.remove) handle.remove().catch(() => {});
     btn.disabled = false; btn.textContent = T('ed.save');

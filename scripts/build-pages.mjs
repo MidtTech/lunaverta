@@ -116,7 +116,7 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
   </section>`;
 }
 // Short how-to videos (English voice, subtitles in every language), shown on their tool pages.
-const VIDEO_FOR = { 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
+const VIDEO_FOR = { 'extract-pages': 'extract', 'crop-image': 'crop', 'scan-to-pdf': 'scan', 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
 // a short fingerprint of each video file, so a changed video is fetched afresh instead of an old copy kept in the browser
 const vv = f => { try { return '?v=' + createHash('sha1').update(readFileSync('docs/videos/' + f)).digest('hex').slice(0, 8); } catch (e) { return ''; } };
 function videoFigure(lang, key, caption) {
@@ -227,7 +227,7 @@ for (const p of pages) { mkdirSync(dirname(p.file), { recursive: true }); writeF
 
 // ---------- sitemap.xml (with language alternates) ----------
 const today = new Date().toISOString().slice(0, 10);
-const staticPages = [{ loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
+const staticPages = [{ loc: SITE + '/no-upload.html' }, { loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
 writeFileSync('docs/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${pages.map(p => `  <url><loc>${p.url}</loc><lastmod>${today}</lastmod>${LANGS.map(L => `<xhtml:link rel="alternate" hreflang="${L}" href="${p.alts[L]}"/>`).join('')}<xhtml:link rel="alternate" hreflang="x-default" href="${p.alts.en}"/></url>`).join('\n')}
@@ -257,6 +257,7 @@ ${EXTRA.map(x => `
 ${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl[x.code].desc}`).join('\n')}
 `).join('')}
 ## About
+- [Why nothing is uploaded](${SITE}/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](${SITE}/licenses.html)
 - Publisher: ${COMPANY.name}, ${COMPANY.city}, Denmark, CVR ${COMPANY.cvr}, ${COMPANY.email}
@@ -281,6 +282,6 @@ for (const [from, to] of Object.entries(MOVED)) {
   writeFileSync(`docs/${from}/index.html`, `<!doctype html><html lang="da"><head><meta charset="utf-8"><title>LunaVerta</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"></head><body><p><a href="${to}">${SITE}${to}</a></p></body></html>\n`);
 }
 for (const p of pages) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
-for (const f of ['docs/privacy.html', 'docs/licenses.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
+for (const f of ['docs/privacy.html', 'docs/licenses.html', 'docs/no-upload.html', 'docs/404.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
 writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`));
 console.log(`Wrote ${pages.length} pages, sitemap.xml and llms.txt · ${label7}`);

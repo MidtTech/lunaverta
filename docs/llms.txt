@@ -205,6 +205,7 @@ Key facts:
 - [PDF till text](https://lunaverta.com/sv/pdf-till-text/): Ta ut all text ur en PDF till en vanlig textfil i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
 
 ## About
+- [Why nothing is uploaded](https://lunaverta.com/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](https://lunaverta.com/licenses.html)
 - Publisher: Midt-Tech, Aarhus, Denmark, CVR 34256276, lee@midttech.com

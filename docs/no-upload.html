@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title data-i18n-title="nav.noUpload">Why nothing is uploaded · LunaVerta</title>
+<meta name="description" content="LunaVerta works in your browser, on your device. Your files are never uploaded. Here is how it works, and how to check it yourself.">
+<link rel="canonical" href="https://lunaverta.com/no-upload.html">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="assets/app.css?v=cda3df4ef0">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/" aria-label="LunaVerta">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><mask id="lm"><rect width="64" height="64" fill="#fff"/><circle cx="37" cy="27.5" r="9.5" fill="#000"/></mask></defs><circle cx="32" cy="32" r="24" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="14 4.8" transform="rotate(-80 32 32)"/><circle cx="32" cy="32" r="12" fill="var(--moon)" mask="url(#lm)"/></svg>
+      <span class="brand-name">LunaVerta</span>
+    </a>
+    <a class="maker-head" href="https://midttech.com/" target="_blank" rel="noopener"><span data-i18n="maker.head">by Midt-Tech</span></a>
+    <div class="head-actions">
+      <a class="btn sm" href="/" data-i18n="nav.converter">Converter</a>
+      <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.label" aria-label="Language">
+        <button type="button" data-set-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="false" lang="da">DA</button><button type="button" data-set-lang="sv" aria-pressed="false" lang="sv">SV</button><button type="button" data-set-lang="no" aria-pressed="false" lang="no">NO</button><button type="button" data-set-lang="de" aria-pressed="false" lang="de">DE</button>
+      </div>
+    </div>
+  </header>
+  <main class="prose">
+    <div data-lang="en" lang="en">
+<h1>Why nothing is uploaded</h1>
+<p class="lead">Most online converters send your file to their server, work on it there and send it back. LunaVerta doesn't. The work happens in your own browser, on your own device, so your file never leaves it.</p>
+<h2>How it works</h2>
+<p>When you open LunaVerta, your browser downloads the app itself: the page, its scripts and a few helper libraries. These are the same for everyone and contain nothing about you. When you open a file, your browser reads it into its own memory, the conversion runs on your device's processor, and the result is saved straight to your device.</p>
+<p>There is nowhere for a file to go. LunaVerta is a set of plain files on a web host. There is no server of ours that receives, stores or processes files, and no account to send them to.</p>
+<h2>Check it yourself</h2>
+<p>You don't have to take our word for it.</p>
+<ol>
+<li><b>Go offline.</b> Open LunaVerta, then turn off Wi-Fi or switch on flight mode. Convert or edit a file. It still works, because nothing needs to be sent anywhere. (Some tools fetch a helper library the first time they are used, so try each tool once while online.)</li>
+<li><b>Watch the network.</b> On a computer, press F12 to open the developer tools and choose the Network tab. Now convert a file. You will see LunaVerta's own files being fetched, and never your file being sent.</li>
+<li><b>Read the rules the page sets.</b> Every page tells the browser that it may only load things from LunaVerta's own address and may not send forms anywhere. You can see this as the Content-Security-Policy in the page source.</li>
+</ol>
+<h2>Why it matters</h2>
+<p>Contracts, payslips, ID cards, medical letters and quotes with prices are exactly the files people convert, and exactly the files that should not sit on a stranger's server. When the file never leaves your device, there is nothing to leak, nothing to delete "after one hour" and no terms to trust.</p>
+<h2>The honest limits</h2>
+<ul>
+<li>Your device does the work, so very large files depend on how much memory it has. An older phone may struggle with a 500-page PDF that a laptop handles easily.</li>
+<li>Some tools download a helper the first time you use them, for example the text recognition for a language. That is a download to you, not an upload from you, and it is kept for next time.</li>
+<li>Like any website, the web host sees that your browser asked for LunaVerta's pages. It never sees your files. More in our <a href="/privacy.html">privacy page</a>.</li>
+</ul>
+<p><a class="btn primary" href="/">Try it with a file</a></p>
+    </div>
+    <div data-lang="da" lang="da" hidden>
+<h1>Hvorfor intet uploades</h1>
+<p class="lead">De fleste online konvertere sender din fil til deres server, arbejder på den der og sender den tilbage. Det gør LunaVerta ikke. Arbejdet foregår i din egen browser på din egen enhed, så din fil forlader den aldrig.</p>
+<h2>Sådan virker det</h2>
+<p>Når du åbner LunaVerta, henter din browser selve appen: siden, dens scripts og nogle få hjælpebiblioteker. De er ens for alle og indeholder intet om dig. Når du åbner en fil, læser din browser den ind i sin egen hukommelse, konverteringen kører på din enheds processor, og resultatet gemmes direkte på din enhed.</p>
+<p>Der er ingen steder, en fil kan sendes hen. LunaVerta er en samling almindelige filer på et webhotel. Vi har ingen server, der modtager, gemmer eller behandler filer, og ingen konto at sende dem til.</p>
+<h2>Tjek det selv</h2>
+<p>Du behøver ikke tage vores ord for det.</p>
+<ol>
+<li><b>Gå offline.</b> Åbn LunaVerta, og slå derefter wi-fi fra eller sæt flytilstand til. Konvertér eller redigér en fil. Det virker stadig, for intet skal sendes nogen steder hen. (Nogle værktøjer henter et hjælpebibliotek første gang, de bruges, så prøv hvert værktøj én gang, mens du er online.)</li>
+<li><b>Hold øje med netværket.</b> På en computer kan du trykke F12 for at åbne udviklerværktøjerne og vælge fanen Netværk. Konvertér nu en fil. Du vil se LunaVertas egne filer blive hentet, men aldrig din fil blive sendt.</li>
+<li><b>Læs de regler, siden sætter.</b> Hver side fortæller browseren, at den kun må hente ting fra LunaVertas egen adresse og ikke må sende formularer nogen steder hen. Du kan se det som Content-Security-Policy i sidens kildekode.</li>
+</ol>
+<h2>Hvorfor det betyder noget</h2>
+<p>Kontrakter, lønsedler, ID-kort, lægebreve og tilbud med priser er netop de filer, folk konverterer, og netop de filer, der ikke bør ligge på en fremmeds server. Når filen aldrig forlader din enhed, er der intet, der kan lække, intet, der skal slettes "efter en time", og ingen vilkår, du skal stole på.</p>
+<h2>De ærlige begrænsninger</h2>
+<ul>
+<li>Din enhed udfører arbejdet, så meget store filer afhænger af, hvor meget hukommelse den har. En ældre telefon kan have svært ved en PDF på 500 sider, som en bærbar klarer let.</li>
+<li>Nogle værktøjer henter en hjælper første gang, du bruger dem, fx tekstgenkendelsen for et sprog. Det er en download til dig, ikke en upload fra dig, og den gemmes til næste gang.</li>
+<li>Som ved enhver hjemmeside kan webhotellet se, at din browser har bedt om LunaVertas sider. Det ser aldrig dine filer. Læs mere på vores <a href="/privacy.html">side om privatliv</a>.</li>
+</ul>
+<p><a class="btn primary" href="/da/">Prøv med en fil</a></p>
+    </div>
+    <div data-lang="sv" lang="sv" hidden>
+<h1>Varför inget laddas upp</h1>
+<p class="lead">De flesta onlinekonverterare skickar din fil till sin server, bearbetar den där och skickar tillbaka den. Det gör inte LunaVerta. Arbetet sker i din egen webbläsare på din egen enhet, så din fil lämnar den aldrig.</p>
+<h2>Så fungerar det</h2>
+<p>När du öppnar LunaVerta hämtar din webbläsare själva appen: sidan, dess skript och några hjälpbibliotek. De är likadana för alla och innehåller inget om dig. När du öppnar en fil läser webbläsaren in den i sitt eget minne, konverteringen körs på enhetens processor och resultatet sparas direkt på din enhet.</p>
+<p>Det finns ingenstans för en fil att ta vägen. LunaVerta är en samling vanliga filer på ett webbhotell. Vi har ingen server som tar emot, sparar eller bearbetar filer, och inget konto att skicka dem till.</p>
+<h2>Kontrollera själv</h2>
+<p>Du behöver inte lita på vårt ord.</p>
+<ol>
+<li><b>Gå offline.</b> Öppna LunaVerta och stäng sedan av wifi eller slå på flygläge. Konvertera eller redigera en fil. Det fungerar ändå, eftersom inget behöver skickas någonstans. (Vissa verktyg hämtar ett hjälpbibliotek första gången de används, så prova varje verktyg en gång medan du är online.)</li>
+<li><b>Håll koll på nätverket.</b> På en dator trycker du F12 för att öppna utvecklarverktygen och väljer fliken Nätverk. Konvertera sedan en fil. Du ser LunaVertas egna filer hämtas, men aldrig att din fil skickas.</li>
+<li><b>Läs reglerna som sidan sätter.</b> Varje sida talar om för webbläsaren att den bara får hämta saker från LunaVertas egen adress och inte får skicka formulär någonstans. Du ser det som Content-Security-Policy i sidans källkod.</li>
+</ol>
+<h2>Varför det spelar roll</h2>
+<p>Avtal, lönebesked, id-kort, läkarintyg och offerter med priser är precis de filer folk konverterar, och precis de filer som inte bör ligga på en främlings server. När filen aldrig lämnar din enhet finns det inget som kan läcka, inget som ska raderas "efter en timme" och inga villkor du måste lita på.</p>
+<h2>De ärliga begränsningarna</h2>
+<ul>
+<li>Din enhet gör jobbet, så mycket stora filer beror på hur mycket minne den har. En äldre telefon kan ha svårt med en PDF på 500 sidor som en bärbar dator klarar lätt.</li>
+<li>Vissa verktyg hämtar en hjälpare första gången du använder dem, till exempel textigenkänningen för ett språk. Det är en nedladdning till dig, inte en uppladdning från dig, och den sparas till nästa gång.</li>
+<li>Som för alla webbplatser ser webbhotellet att din webbläsare bad om LunaVertas sidor. Det ser aldrig dina filer. Läs mer på vår <a href="/privacy.html">integritetssida</a>.</li>
+</ul>
+<p><a class="btn primary" href="/sv/">Prova med en fil</a></p>
+    </div>
+    <div data-lang="no" lang="no" hidden>
+<h1>Hvorfor ingenting lastes opp</h1>
+<p class="lead">De fleste nettbaserte konverterere sender filen din til serveren sin, behandler den der og sender den tilbake. Det gjør ikke LunaVerta. Arbeidet skjer i din egen nettleser på din egen enhet, så filen din forlater den aldri.</p>
+<h2>Slik fungerer det</h2>
+<p>Når du åpner LunaVerta, laster nettleseren ned selve appen: siden, skriptene og noen få hjelpebiblioteker. De er like for alle og inneholder ingenting om deg. Når du åpner en fil, leser nettleseren den inn i sitt eget minne, konverteringen kjører på enhetens prosessor, og resultatet lagres rett på enheten din.</p>
+<p>Det finnes ikke noe sted en fil kan sendes. LunaVerta er en samling vanlige filer hos et webhotell. Vi har ingen server som tar imot, lagrer eller behandler filer, og ingen konto å sende dem til.</p>
+<h2>Sjekk det selv</h2>
+<p>Du trenger ikke ta oss på ordet.</p>
+<ol>
+<li><b>Gå frakoblet.</b> Åpne LunaVerta, og slå deretter av wifi eller sett på flymodus. Konverter eller rediger en fil. Det virker fortsatt, fordi ingenting trenger å sendes noe sted. (Noen verktøy henter et hjelpebibliotek første gang de brukes, så prøv hvert verktøy én gang mens du er tilkoblet.)</li>
+<li><b>Følg med på nettverket.</b> På en datamaskin trykker du F12 for å åpne utviklerverktøyene og velger fanen Nettverk. Konverter så en fil. Du ser LunaVertas egne filer bli hentet, men aldri at filen din blir sendt.</li>
+<li><b>Les reglene siden setter.</b> Hver side forteller nettleseren at den bare kan hente ting fra LunaVertas egen adresse og ikke kan sende skjemaer noe sted. Du ser dette som Content-Security-Policy i sidens kildekode.</li>
+</ol>
+<h2>Hvorfor det betyr noe</h2>
+<p>Kontrakter, lønnsslipper, ID-kort, legebrev og tilbud med priser er nettopp filene folk konverterer, og nettopp filene som ikke bør ligge på en fremmeds server. Når filen aldri forlater enheten din, finnes det ingenting som kan lekke, ingenting som må slettes «etter en time» og ingen vilkår du må stole på.</p>
+<h2>De ærlige begrensningene</h2>
+<ul>
+<li>Enheten din gjør jobben, så svært store filer avhenger av hvor mye minne den har. En eldre telefon kan slite med en PDF på 500 sider som en bærbar PC klarer lett.</li>
+<li>Noen verktøy laster ned en hjelper første gang du bruker dem, for eksempel tekstgjenkjenningen for et språk. Det er en nedlasting til deg, ikke en opplasting fra deg, og den lagres til neste gang.</li>
+<li>Som for alle nettsteder ser webhotellet at nettleseren din ba om LunaVertas sider. Det ser aldri filene dine. Les mer på vår <a href="/privacy.html">personvernside</a>.</li>
+</ul>
+<p><a class="btn primary" href="/no/">Prøv med en fil</a></p>
+    </div>
+    <div data-lang="de" lang="de" hidden>
+<h1>Warum nichts hochgeladen wird</h1>
+<p class="lead">Die meisten Online-Konverter schicken deine Datei an ihren Server, bearbeiten sie dort und schicken sie zurück. LunaVerta nicht. Die Arbeit passiert in deinem eigenen Browser auf deinem eigenen Gerät, deine Datei verlässt es also nie.</p>
+<h2>So funktioniert es</h2>
+<p>Wenn du LunaVerta öffnest, lädt dein Browser die App selbst: die Seite, ihre Skripte und ein paar Hilfsbibliotheken. Sie sind für alle gleich und enthalten nichts über dich. Wenn du eine Datei öffnest, liest dein Browser sie in seinen eigenen Speicher, die Umwandlung läuft auf dem Prozessor deines Geräts, und das Ergebnis wird direkt auf deinem Gerät gespeichert.</p>
+<p>Es gibt keinen Ort, an den eine Datei gehen könnte. LunaVerta besteht aus einfachen Dateien bei einem Webhoster. Wir haben keinen Server, der Dateien empfängt, speichert oder verarbeitet, und kein Konto, an das man sie schicken könnte.</p>
+<h2>Prüf es selbst</h2>
+<p>Du musst uns nicht einfach glauben.</p>
+<ol>
+<li><b>Geh offline.</b> Öffne LunaVerta und schalte dann WLAN aus oder den Flugmodus ein. Wandle eine Datei um oder bearbeite sie. Es funktioniert weiterhin, weil nichts irgendwohin geschickt werden muss. (Einige Werkzeuge laden beim ersten Gebrauch eine Hilfsbibliothek, probiere also jedes Werkzeug einmal online aus.)</li>
+<li><b>Beobachte das Netzwerk.</b> Drücke am Computer F12, um die Entwicklertools zu öffnen, und wähle den Tab Netzwerk. Wandle nun eine Datei um. Du siehst, wie LunaVertas eigene Dateien geladen werden, aber nie, dass deine Datei gesendet wird.</li>
+<li><b>Lies die Regeln, die die Seite setzt.</b> Jede Seite teilt dem Browser mit, dass er nur Dinge von LunaVertas eigener Adresse laden und nirgendwohin Formulare senden darf. Du siehst das als Content-Security-Policy im Quelltext der Seite.</li>
+</ol>
+<h2>Warum das wichtig ist</h2>
+<p>Verträge, Gehaltsabrechnungen, Ausweise, Arztbriefe und Angebote mit Preisen sind genau die Dateien, die Menschen umwandeln, und genau die Dateien, die nicht auf dem Server eines Fremden liegen sollten. Wenn die Datei dein Gerät nie verlässt, kann nichts durchsickern, nichts muss „nach einer Stunde“ gelöscht werden, und du musst keinen Bedingungen vertrauen.</p>
+<h2>Die ehrlichen Grenzen</h2>
+<ul>
+<li>Dein Gerät erledigt die Arbeit, sehr große Dateien hängen also davon ab, wie viel Speicher es hat. Ein älteres Handy kann mit einem 500-seitigen PDF Mühe haben, das ein Laptop leicht schafft.</li>
+<li>Einige Werkzeuge laden beim ersten Gebrauch einen Helfer, zum Beispiel die Texterkennung für eine Sprache. Das ist ein Download zu dir, kein Upload von dir, und er wird für das nächste Mal behalten.</li>
+<li>Wie bei jeder Website sieht der Webhoster, dass dein Browser LunaVertas Seiten angefordert hat. Deine Dateien sieht er nie. Mehr dazu auf unserer <a href="/privacy.html">Datenschutzseite</a>.</li>
+</ul>
+<p><a class="btn primary" href="/de/">Mit einer Datei ausprobieren</a></p>
+    </div>
+  </main>
+  <footer>
+    <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">A product by</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Denmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
+    <span class="foot-promise" data-i18n="foot.promise">No cookies · no account · no ads</span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Free, private file conversion</span> · CVR 34256276</span>
+    <nav aria-label="Site"><a href="/" data-i18n="nav.converter">Converter</a><a href="mailto:lee@midttech.com?subject=LunaVerta" data-report data-i18n="report.link">Report a problem</a><a href="/no-upload.html" data-i18n="nav.noUpload">Why nothing is uploaded</a><a href="/privacy.html" data-i18n="nav.privacy">Privacy</a><a href="/licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav>
+  </footer>
+</div>
+<script src="assets/strings.js?v=cda3df4ef0"></script>
+<script src="assets/strings-sv.js?v=cda3df4ef0"></script>
+<script src="assets/strings-no.js?v=cda3df4ef0"></script>
+<script src="assets/strings-de.js?v=cda3df4ef0"></script>
+<script src="assets/i18n.js?v=cda3df4ef0"></script>
+</body>
+</html>
