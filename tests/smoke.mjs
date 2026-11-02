@@ -351,7 +351,7 @@ await test('Rewritten text keeps the PDF\'s own font and size', async () => {
 });
 
 await test('the PDF editor is fetched only when needed, and still opens from the home page', async () => {
-  const p = await page('/'); const got = []; p.on('request', r => { if (/assets\/(editor|pdf-text)\.js/.test(r.url())) got.push(r.url()); });
+  const p = await page('/'); const got = []; p.on('request', r => { if (/assets\/(editor|pdf-text)(\.min)?\.js/.test(r.url())) got.push(r.url()); });
   await p.waitForTimeout(1500); assert(!got.length, 'editor loaded on the home page: ' + got.join(', '));
   const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica); d.addPage([595, 842]).drawText('Hello', { x: 60, y: 780, size: 20, font: f });
   await p.setInputFiles('#fileInput', file('hello.pdf', Buffer.from(await d.save()))); await p.waitForSelector('#ring.open'); await p.click('.slice[data-t="edit"]');
@@ -378,6 +378,24 @@ await test('a 200-page PDF with thousands of amounts is searched without freezin
   await p.waitForSelector('#edFindSave:not([disabled])', { timeout: 60000 }); await p.waitForTimeout(1500);
   const lt = await p.evaluate(() => window.__lt); assert(lt < 1500, `page froze for ${Math.round(lt)} ms`);
   const cpr = await p.$eval('.ed-cat[data-k="cpr"] .ed-cat-n', e => e.textContent); assert(cpr === '8000', 'CPR hits: ' + cpr);
+  await done(p);
+});
+
+await test('Excel to PDF lays the sheet out as a table with real text, and PDF to Excel brings it back as numbers', async () => {
+  const XLSX = (await import('xlsx')).default;
+  const rows = [['Dato', 'Kunde', 'Antal', 'Beløb']]; for (let i = 1; i <= 60; i++) rows.push([`0${(i % 9) + 1}.11.2026`, 'Ærø Køkken ApS', i, 100 + i / 2]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Salg');
+  let p = await page('/excel-to-pdf/');
+  await p.setInputFiles('#fileInput', file('salg.xlsx', Buffer.from(XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }))));
+  const pdf = await saveFirst(p); assert(pdf.name === 'salg.pdf', 'name ' + pdf.name);
+  const text = await pdfText(pdf.buf); assert(/Ærø Køkken ApS/.test(text) && /Beløb/.test(text), 'PDF text: ' + text.slice(0, 120));
+  await done(p);
+  p = await page('/pdf-to-excel/');
+  await p.setInputFiles('#fileInput', file('salg.pdf', pdf.buf));
+  const xl = await saveFirst(p); assert(xl.name === 'salg.xlsx', 'name ' + xl.name);
+  const back = XLSX.utils.sheet_to_json(XLSX.read(xl.buf).Sheets.PDF, { header: 1, raw: true });
+  const head = back.findIndex(r => r.includes('Dato')); assert(head >= 0, 'no heading row: ' + JSON.stringify(back.slice(0, 3)));
+  const first = back[head + 1]; assert(first[0] === '02.11.2026' && first[1] === 'Ærø Køkken ApS' && first[2] === 1 && first[3] === 100.5, 'first row: ' + JSON.stringify(first));
   await done(p);
 });
 

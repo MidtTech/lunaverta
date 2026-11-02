@@ -1388,7 +1388,8 @@ const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
   priceText: null, // found by findPriceText: labels, terms and notes about money
   // Danish CPR (ddmmyy-xxxx), Norwegian fødselsnummer (ddmmyy xxxxx) and Swedish personnummer ((yy)yymmdd-xxxx)
-  cpr: /\b(?:(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4,5}|(?:19|20)?\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[-+]\d{4})\b/g,
+  // … plus German Sozialversicherungsnummer (12 345678 A 123) and Steuer-ID (12 345 678 901, or 11 digits after "Steuer-ID"/"IdNr")
+  cpr: /\b(?:(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4,5}|(?:19|20)?\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[-+]\d{4}|\d{2}\s?(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}\s?[A-Z]\s?\d{3}|[1-9]\d\s\d{3}\s\d{3}\s\d{3})\b|(?<=(?:Steuer-?ID|Steuer-?Identifikationsnummer|Identifikationsnummer|IdNr\.?)\s*:?\s*)[1-9]\d{10}\b/gi,
   accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
   phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)/g,

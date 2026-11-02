@@ -23,6 +23,7 @@
     "@tesseract.js-data/nor": "^1.0.0",
     "@tesseract.js-data/swe": "^1.0.0",
     "docx-preview": "0.4.1",
+    "esbuild": "^0.24.0",
     "html2canvas": "1.4.1",
     "jspdf": "2.5.1",
     "jszip": "3.10.1",

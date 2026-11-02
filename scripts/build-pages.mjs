@@ -9,6 +9,9 @@ import { join, dirname } from 'node:path';
 import vm from 'node:vm';
 import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-content.mjs';
 import { GUIDES, GUIDE_INDEX } from './guides.mjs';
+import { GUIDE_TEXT, GUIDE_INDEX_EXTRA } from './guides-extra.mjs';
+Object.assign(GUIDE_INDEX, GUIDE_INDEX_EXTRA);
+for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) { if (!texts[g.id]) throw new Error(`${L}: no guide ${g.id}`); g[L] = texts[g.id]; }
 
 // Extra languages: page texts in scripts/lang/<code>.mjs, interface texts in docs/assets/strings-<code>.js
 const EXTRA = [];
@@ -75,9 +78,9 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
 }
 // All tools, grouped by what they work on, so the list can be scanned.
 const TOOL_GROUPS = [
-  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'compare-pdf', 'pdf-to-word', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
+  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'compare-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
   ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location']],
-  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'excel-to-csv', 'csv-to-excel']],
+  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
   ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['video-to-gif', 'video-to-mp3']]
 ];
 function toolsSection(lang, currentId) {
@@ -136,7 +139,7 @@ function howtoSection(lang, tool) {
     ${key ? videoFigure(lang, key, t(lang, 'howto.caption')) : ''}
     <ol>
 ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
-    </ol>${(lang === 'en' || lang === 'da') ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}: <a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
+    </ol>${GUIDE_INDEX[lang] && GUIDES[0][lang] ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}: <a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
   </section>`;
 }
 
@@ -215,7 +218,7 @@ function render(lang, page) {
     POPULAR: page.tool ? '' : popularSection(lang),
     REFSUM: esc(t(lang, 'ref.sum', { n: new Set(Object.values(KINDS).flatMap(k => k.exts)).size, m: new Set(Object.values(KINDS).flatMap(k => k.targets)).size })),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
-    GUIDES_URL: lang === 'da' ? '/da/guide/' : '/guide/', NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
+    GUIDES_URL: path(lang, GUIDE_INDEX[lang].slug), NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };
   let html = template.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m));
   return fillTexts(html, lang);
@@ -229,7 +232,7 @@ for (const lang of LANGS) {
 for (const p of pages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, render(p.lang, p)); }
 
 // ---------- guides (English and Danish): short how-tos for everyday jobs, each pointing to its tool ----------
-const GLANGS = ['en', 'da'];
+const GLANGS = Object.keys(GUIDE_INDEX); // every language with guides
 const toolUrl = (lang, id) => { const tl = TOOLS.find(x => x.id === id); return path(lang, tl.slug[lang]); };
 const gPath = (lang, slug) => path(lang, GUIDE_INDEX[lang].slug + (slug ? '/' + slug : ''));
 const headPart = template.slice(0, template.indexOf('<body>'));
@@ -241,13 +244,13 @@ function guideHtml(lang, g, main, ld) {
   const vals = {
     LANG: lang, TITLE: esc(g.title), DESC: esc(g.desc), CANONICAL: SITE + g.path, HOME: path(lang), GUIDES: gPath(lang), GUIDES_LABEL: esc(GUIDE_INDEX[lang].guides),
     ALTERNATES: [...GLANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${SITE + alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${SITE + alts.en}">`].join('\n'),
-    OG_IMAGE: g.og ? ogFor(lang, g.og) : SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2', OG_LOCALE: META[lang].og, OG_LOCALE_ALT: META[lang === 'da' ? 'en' : 'da'].og,
+    OG_IMAGE: g.og ? ogFor(lang, g.og) : SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2', OG_LOCALE: META[lang].og, OG_LOCALE_ALT: GLANGS.filter(L => L !== lang).map(L => META[L].og).join('">\n<meta property="og:locale:alternate" content="'),
     LANG_MENU: `<details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Language</span> <span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
           <ul>${GLANGS.map(L => `<li><a href="${alts[L]}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`,
     JSONLD: JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, ...ld] }).replace(/</g, '\\u003c'),
     COFFEE: '', GUIDES_URL: gPath(lang), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };
-  const html = `${headPart}<body>\n<a class="skip" href="#main" data-i18n="skip">Skip to content</a>\n${headerPart}\n  <main class="prose guide" id="main" tabindex="-1">\n${main}\n  </main>\n${footerPart}\n</div>\n<script src="/assets/strings.js"></script>\n<script src="/assets/i18n.js"></script>\n</body>\n</html>\n`;
+  const html = `${headPart}<body>\n<a class="skip" href="#main" data-i18n="skip">Skip to content</a>\n${headerPart}\n  <main class="prose guide" id="main" tabindex="-1">\n${main}\n  </main>\n${footerPart}\n</div>\n<script src="/assets/strings.js"></script>${extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : ''}\n<script src="/assets/i18n.js"></script>\n</body>\n</html>\n`;
   return fillTexts(html.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m)), lang);
 }
 const guidePages = [];
@@ -326,14 +329,27 @@ ${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)}) · [${g.da.h
 const files = [];
 (function walk(d) { for (const f of readdirSync(d)) { const p = join(d, f); statSync(p).isDirectory() ? walk(p) : files.push(p); } })('docs');
 const h = createHash('sha256');
-for (const f of files.sort()) if (!/\.html$|sw\.js$|sitemap\.xml$/.test(f)) h.update(f).update(readFileSync(f));
+for (const f of files.sort()) if (!/\.html$|sw\.js$|sitemap\.xml$|\.min\.(js|css)$/.test(f)) h.update(f).update(readFileSync(f));
 h.update(readFileSync('src/template.html')).update(readFileSync('scripts/site-content.mjs'));
 const version = h.digest('hex').slice(0, 10);
 const pkgVersion = JSON.parse(readFileSync('package.json', 'utf8')).version;
 const label7 = `v${pkgVersion}+${version.slice(0, 7)}`;
 // Asset addresses carry the version, so a new page never runs with old CSS or
 // scripts from a browser or offline cache.
-const bust = html => html.replace(/((?:\/|")assets\/[\w.-]+\.(?:css|js))(?:\?v=\w+)?"/g, `$1?v=${version}"`);
+// Compact copies of the scripts and styles (name.min.js / name.min.css next to the originals, which stay readable).
+// Whitespace and syntax only: function names are kept, so error reports still say where something went wrong.
+// Without esbuild installed, the pages simply use the originals.
+let MIN = new Set();
+try {
+  const { transformSync } = await import('esbuild');
+  for (const f of readdirSync('docs/assets').filter(f => /\.(js|css)$/.test(f) && !/\.min\./.test(f))) {
+    const src = readFileSync('docs/assets/' + f, 'utf8'), loader = f.endsWith('.css') ? 'css' : 'js';
+    const out = transformSync(src, { loader, minifyWhitespace: true, minifySyntax: true, legalComments: 'none', target: loader === 'js' ? 'es2020' : undefined }).code;
+    writeFileSync('docs/assets/' + f.replace(/\.(js|css)$/, '.min.$1'), out); MIN.add(f);
+  }
+} catch (e) { console.warn('No esbuild: pages use the full scripts (' + e.message.split('\n')[0] + ')'); MIN = new Set(); }
+const minName = f => (MIN.has(f.split('/').pop()) ? f.replace(/\.(js|css)$/, '.min.$1') : f);
+const bust = html => html.replace(/((?:\/|")assets\/[\w.-]+\.(?:css|js))(?:\?v=\w+)?"/g, (m, a) => `${minName(a.replace(/\.min\.(js|css)$/, '.$1'))}?v=${version}"`);
 // Old addresses that moved: a tiny page that sends visitors (and search engines) to the new one.
 const MOVED = { 'da/overstreg-pdf': '/da/anonymiser-pdf/' };
 for (const [from, to] of Object.entries(MOVED)) {
@@ -342,5 +358,6 @@ for (const [from, to] of Object.entries(MOVED)) {
 }
 for (const p of [...pages, ...guidePages]) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
 for (const f of ['docs/privacy.html', 'docs/licenses.html', 'docs/no-upload.html', 'docs/404.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
-writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`));
+writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`)
+  .replace(/'assets\/([\w-]+)(?:\.min)?\.(js|css)'/g, (m, n, x) => `'assets/${minName(n + '.' + x)}'`));
 console.log(`Wrote ${pages.length} pages, sitemap.xml and llms.txt · ${label7}`);

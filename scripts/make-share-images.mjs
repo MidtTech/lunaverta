@@ -6,6 +6,8 @@ import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { TOOLS } from './site-content.mjs';
 import { GUIDES } from './guides.mjs';
+import { GUIDE_TEXT } from './guides-extra.mjs';
+for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) g[L] = texts[g.id];
 const { chromium } = createRequire(import.meta.url)('playwright');
 for (const L of ['sv', 'no', 'de']) { const x = (await import(`./lang/${L}.mjs`)).default; for (const tl of TOOLS) { const { slug, ...rest } = x.tools[tl.id]; tl.slug[L] = slug; tl[L] = rest; } }
 
@@ -15,7 +17,7 @@ vm.runInNewContext(readFileSync(ROOT + 'assets/strings.js', 'utf8'), ctx);
 for (const L of ['sv', 'no', 'de']) vm.runInNewContext(readFileSync(ROOT + `assets/strings-${L}.js`, 'utf8'), ctx);
 const STR = ctx.window.LV_STR, t = (L, k) => STR[L][k] ?? STR.en[k];
 const LANGS = ['en', 'da', 'sv', 'no', 'de'];
-const GUIDE_WORD = { en: 'Guide', da: 'Vejledning' };
+const GUIDE_WORD = { en: 'Guide', da: 'Vejledning', sv: 'Guide', no: 'Veiledning', de: 'Anleitung' };
 const MAKER = { en: 'A product by', da: 'Et produkt fra', sv: 'En produkt från', no: 'Et produkt fra', de: 'Ein Produkt von' };
 const WHERE = { en: 'Aarhus, Denmark', da: 'Aarhus, Danmark', sv: 'Aarhus, Danmark', no: 'Aarhus, Danmark', de: 'Aarhus, Dänemark' };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -44,7 +46,7 @@ const page = (L, h1, sub, chip) => `<!doctype html><meta charset="utf-8"><style>
 
 const jobs = [];
 for (const L of LANGS) for (const tl of TOOLS) jobs.push({ L, file: `${ROOT}og/${L}/${tl.slug[L]}.jpg`, html: page(L, tl[L].h1, firstSentence(tl[L].desc), tl[L].name) });
-for (const L of ['en', 'da']) for (const g of GUIDES) jobs.push({ L, file: `${ROOT}og/${L}/guide-${g[L].slug}.jpg`, html: page(L, g[L].h1, firstSentence(g[L].lead), GUIDE_WORD[L]) });
+for (const L of LANGS) for (const g of GUIDES) jobs.push({ L, file: `${ROOT}og/${L}/guide-${g[L].slug}.jpg`, html: page(L, g[L].h1, firstSentence(g[L].lead), GUIDE_WORD[L]) });
 
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1200, height: 630 } });

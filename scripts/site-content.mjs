@@ -311,6 +311,26 @@ export const TOOLS = [
       steps: ['Vælg din CSV-, TSV- eller JSON-fil, eller slip den på siden.', 'LunaVerta laver en Excel-projektmappe.', 'Gem .xlsx-filen.'],
       faq: [['Virker semikolon som skilletegn?', 'Ja. Både komma- og semikolonseparerede filer genkendes.'], ['Kan JSON blive til flere ark?', 'Ja. Et JSON-objekt med lister bliver til ét ark pr. liste.']] } },
 
+  { id: 'excel-to-pdf', preset: 'pdf', slug: { en: 'excel-to-pdf', da: 'excel-til-pdf' },
+    en: { name: 'Excel to PDF', title: 'Excel to PDF converter · Free, private, no upload', desc: 'Turn Excel, CSV and ODS spreadsheets into a tidy PDF with real, selectable text. Free and private: nothing is uploaded.',
+      h1: 'Convert Excel to PDF', lead: 'Turn a spreadsheet into a neat PDF table: headings repeated on every page, amounts lined up, wide sheets turned sideways. The text stays real and selectable. Nothing is uploaded.',
+      steps: ['Choose your Excel, CSV or ODS file, or drop it on the page.', 'LunaVerta lays out each sheet as a table on A4 pages.', 'Save the PDF.'],
+      faq: [['What happens with wide sheets?', 'The page turns sideways, and the text gets smaller until every column fits.'], ['Are all sheets included?', 'Yes. Each sheet starts on a new page with its name at the top.']] },
+    da: { name: 'Excel til PDF', title: 'Excel til PDF · Gratis og privat, uden upload', desc: 'Lav Excel-, CSV- og ODS-regneark om til en pæn PDF med rigtig, markérbar tekst. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér Excel til PDF', lead: 'Lav et regneark om til en pæn PDF-tabel: overskrifter gentaget på hver side, beløb på linje og brede ark vendt på tværs. Teksten forbliver rigtig og kan markeres. Intet bliver uploadet.',
+      steps: ['Vælg din Excel-, CSV- eller ODS-fil, eller slip den på siden.', 'LunaVerta sætter hvert ark op som en tabel på A4-sider.', 'Gem PDF\'en.'],
+      faq: [['Hvad sker der med brede ark?', 'Siden vendes på tværs, og teksten bliver mindre, til alle kolonner er med.'], ['Kommer alle ark med?', 'Ja. Hvert ark starter på en ny side med navnet øverst.']] } },
+
+  { id: 'pdf-to-excel', preset: 'xlsx', slug: { en: 'pdf-to-excel', da: 'pdf-til-excel' },
+    en: { name: 'PDF to Excel', title: 'PDF to Excel converter · Tables to XLSX, no upload', desc: 'Pull the tables out of a PDF into an Excel workbook, with amounts as real numbers. Free and private: the PDF never leaves your device.',
+      h1: 'Convert PDF to Excel', lead: 'Get the tables out of invoices, statements and reports into Excel. Rows and columns are rebuilt from the page, and amounts become numbers you can add up. Nothing is uploaded.',
+      steps: ['Choose a PDF, or drop it on the page.', 'LunaVerta reads the text on each page and rebuilds the rows and columns.', 'Save the .xlsx file and open it in Excel, Numbers, LibreOffice or Google Sheets.'],
+      faq: [['Are amounts real numbers?', 'Yes. Amounts like 1.234,50 or 1,234.50 become numbers, so you can sum and sort them.'], ['Does it work on scans?', 'A scan is a picture with no text. Run OCR: make a PDF searchable first, then convert the result.']] },
+    da: { name: 'PDF til Excel', title: 'PDF til Excel · Tabeller til XLSX, uden upload', desc: 'Få tabellerne ud af en PDF og ind i en Excel-projektmappe, med beløb som rigtige tal. Gratis og privat: PDF\'en forlader aldrig din enhed.',
+      h1: 'Konvertér PDF til Excel', lead: 'Få tabellerne ud af fakturaer, kontoudtog og rapporter og ind i Excel. Rækker og kolonner genskabes fra siden, og beløb bliver til tal, du kan lægge sammen. Intet bliver uploadet.',
+      steps: ['Vælg en PDF, eller slip den på siden.', 'LunaVerta læser teksten på hver side og genskaber rækker og kolonner.', 'Gem .xlsx-filen, og åbn den i Excel, Numbers, LibreOffice eller Google Sheets.'],
+      faq: [['Bliver beløb til rigtige tal?', 'Ja. Beløb som 1.234,50 eller 1,234.50 bliver til tal, så du kan lægge sammen og sortere.'], ['Virker det på scanninger?', 'En scanning er et billede uden tekst. Kør først OCR: gør en PDF søgbar, og konvertér derefter resultatet.']] } },
+
   { id: 'video-to-gif', preset: 'gif', slug: { en: 'video-to-gif', da: 'video-til-gif' },
     en: { name: 'Video to GIF', title: 'Video to GIF maker · MP4 to GIF, no upload', desc: 'Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.',
       h1: 'Make a GIF from a video', lead: 'Turn the opening seconds of an MP4, WebM or MOV video into an animated GIF. Choose 3, 5 or 10 seconds. Nothing is uploaded.',
@@ -379,9 +399,9 @@ export const TOOLS = [
 // written into the HTML (search engines and AI crawlers often don't run JavaScript).
 export const KINDS = {
   image: { color: '--c-image', exts: ['png', 'jpg', 'webp', 'gif', 'bmp', 'avif', 'svg', 'ico', 'heic', 'heif'], targets: ['png', 'jpg', 'webp', 'gif', 'pdf', 'ocr', 'ico', 'bmp', 'imgedit', 'clean'] },
-  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'ocr', 'merge', 'split', 'protect', 'unlock', 'docx', 'png', 'jpg'] },
+  pdf: { color: '--c-doc', exts: ['pdf'], targets: ['edit', 'redact', 'ocr', 'merge', 'split', 'protect', 'unlock', 'docx', 'xlsx', 'png', 'jpg'] },
   doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
-  data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'html', 'md'] },
+  data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'pdf', 'html', 'md'] },
   audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
   video: { color: '--c-video', exts: ['mp4', 'webm', 'mov', 'm4v', 'mkv'], targets: ['gif', 'mp3', 'wav', 'png', 'jpg'] }
 };

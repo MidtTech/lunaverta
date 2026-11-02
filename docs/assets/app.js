@@ -35,9 +35,9 @@ function lib(name) {
 // ---------- formats ----------
 const KINDS = {
   image: { color: '--c-image', exts: ['png','jpg','jpeg','webp','gif','bmp','avif','svg','ico','heic','heif'], targets: ['png','jpg','webp','gif','pdf','ocr','ico','bmp','imgedit','clean'] },
-  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','docx','png','jpg'] },
+  pdf:   { color: '--c-doc', exts: ['pdf'], targets: ['edit','redact','ocr','merge','split','protect','unlock','docx','xlsx','png','jpg'] },
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
-  data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','html','md'] },
+  data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','pdf','html','md'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
   video: { color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['gif','mp3','wav','png','jpg'] }
 };
@@ -924,6 +924,165 @@ async function convertData(file, target) {
   }
   if (target === 'md') return [{ name: title + '.md', blob: new Blob([names.map(n => (multi ? `## ${n}\n\n` : '') + mdTable(sheetRows(wb.Sheets[n]))).join('\n')], { type: 'text/markdown' }) }];
   if (target === 'html') return [{ name: title + '.html', blob: new Blob([standaloneHTML(title, names.map(n => (multi ? `<h2>${esc(n)}</h2>\n` : '') + htmlTable(sheetRows(wb.Sheets[n]))).join('\n'))], { type: 'text/html' }) }];
+  if (target === 'pdf') return [{ name: title + '.pdf', blob: await sheetsToPDF(wb, title) }];
+}
+
+// ---------- Excel (and CSV, ODS, JSON) to PDF ----------
+// Each sheet becomes a table with real, selectable text: the first row as a heading repeated on every page,
+// numbers right-aligned, light grid lines. Wide sheets turn the page sideways and shrink the text to fit.
+async function sheetsToPDF(wb, title) {
+  await lib('jspdf');
+  let doc = null;
+  const names = wb.SheetNames.filter(n => wb.Sheets[n] && wb.Sheets[n]['!ref']);
+  for (const name of names) {
+    let rows = sheetRows(wb.Sheets[name]).map(r => r.map(v => String(v ?? '').replace(WIN_ANSI, '?')));
+    while (rows.length && rows[rows.length - 1].every(v => !v.trim())) rows.pop();
+    if (!rows.length) continue;
+    let cols = Math.max(...rows.map(r => r.length));
+    while (cols > 1 && rows.every(r => !(r[cols - 1] || '').trim())) cols--;
+    rows = rows.map(r => Array.from({ length: cols }, (_, i) => r[i] || ''));
+    const isNum = v => /^[-+(]?[\d\s.,]+%?\)?(\s?(kr\.?|DKK|EUR|SEK|NOK|USD|€|\$|£))?$/i.test(v.trim()) && /\d/.test(v) && !/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(v.trim());
+    // natural column widths at 10 pt, then fit to the page
+    const probe = await newPDF('a4', 'p');
+    const natural = Array.from({ length: cols }, (_, c) => Math.min(220, Math.max(28, ...rows.slice(0, 400).map((r, i) => { probe.setFont('helvetica', i ? 'normal' : 'bold'); return probe.getStringUnitWidth(r[c]) * 10 + 10; }))));
+    const total = natural.reduce((a, b) => a + b, 0), M = 36;
+    const orient = total > 595 - 2 * M ? 'l' : 'p', PW = orient === 'l' ? 842 : 595, PH = orient === 'l' ? 595 : 842, usable = PW - 2 * M;
+    const k = Math.min(1, usable / total), size = Math.max(5.5, 10 * k), widths = natural.map(w => w * k);
+    const lineH = size * 1.25, pad = 3 * Math.max(k, .6);
+    if (!doc) doc = await newPDF('a4', orient); else doc.addPage('a4', orient);
+    let y = M;
+    const heading = names.length > 1;
+    const cellLines = (txt, w) => doc.splitTextToSize(txt, Math.max(4, w - 2 * pad));
+    const drawRow = (r, bold) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+      const parts = r.map((v, c) => cellLines(v, widths[c])), h = Math.max(1, ...parts.map(p => p.length)) * lineH + pad * 1.4;
+      if (y + h > PH - M - 14) return false;
+      let x = M;
+      if (bold) { doc.setFillColor(236, 239, 245); doc.rect(M, y, widths.reduce((a, b) => a + b, 0), h, 'F'); }
+      parts.forEach((p, c) => {
+        const right = !bold && isNum(r[c]);
+        p.forEach((ln, i) => doc.text(ln, right ? x + widths[c] - pad : x + pad, y + pad + size * .9 + i * lineH, right ? { align: 'right' } : undefined));
+        doc.setDrawColor(205, 210, 220); doc.setLineWidth(.4); doc.rect(x, y, widths[c], h);
+        x += widths[c];
+      });
+      y += h; return true;
+    };
+    const startPage = () => { y = M; if (heading) { doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(String(name).replace(WIN_ANSI, '?'), M, y + 10); y += 22; } drawRow(rows[0], true); };
+    startPage();
+    for (const r of rows.slice(1)) {
+      if (!drawRow(r, false)) { doc.addPage('a4', orient); startPage(); drawRow(r, false); }
+    }
+  }
+  if (!doc) throw new Error(T('err.sheet.empty'));
+  const n = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(120); const { width, height } = doc.internal.pageSize; doc.text(`${title.replace(WIN_ANSI, '?')} · ${i} / ${n}`, width - 36, height - 20, { align: 'right' }); doc.setTextColor(0); }
+  return doc.output('blob');
+}
+
+// ---------- PDF to Excel ----------
+// Reads the text on each page and rebuilds the table: words on the same line form a row, and the
+// gaps that run down the page split it into columns (so right-aligned amounts land in the right column).
+// Amounts written as numbers (1.234,50 or 1,234.50) become real numbers that Excel can add up.
+function toNumber(v) {
+  const t = v.trim().replace(/\s?(kr\.?|DKK|EUR|SEK|NOK|USD|€|\$|£)$/i, '').replace(/^(kr\.?|DKK|EUR|€|\$|£)\s?/i, '').trim();
+  if (!/^[-+]?(\d{1,3}([.,  ]\d{3})+|\d+)([.,]\d+)?$/.test(t) || /^0\d/.test(t)) return v;
+  let s = t.replace(/[  ]/g, '');
+  const lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(',');
+  if (lastComma > lastDot) s = s.replace(/\./g, '').replace(',', '.');           // 1.234,50
+  else if (lastDot > lastComma && lastComma >= 0) s = s.replace(/,/g, '');        // 1,234.50
+  else if (lastComma >= 0) s = /,\d{3}$/.test(s) && s.split(',').length > 2 ? s.replace(/,/g, '') : s.replace(',', '.');
+  else if (/\.\d{3}$/.test(s) && (s.match(/\./g) || []).length > 1) s = s.replace(/\./g, '');
+  const n = Number(s); return Number.isFinite(n) ? n : v;
+}
+// Letter positions straight from the page's drawing instructions (pdf-text.js), so two cells close together
+// are never glued into one, as pdf.js's own text reading sometimes does. Letters become words; null if unreadable.
+async function pageWords(doc, index) {
+  try {
+    const page = doc.getPage(index), rd = await window.LVPdfText.readPage(doc, page);
+    if (!rd || rd.unknown) return null;
+    const H = page.getHeight(), gl = rd.glyphs.filter(g => g.upright && !g.hidden && g.ch).sort((a, b) => (b.y0 - a.y0) || a.xL - b.xL);
+    const words = [];
+    for (const g of gl) {
+      const w = words[words.length - 1], y = H - g.y0, h = g.size || 10;
+      if (g.ch === ' ' || /\s/.test(g.ch)) { if (w) w.space = true; continue; }
+      if (w && Math.abs(w.y - y) < h * .3 && g.xL - (w.x + w.w) < h * .15 && g.xL - (w.x + w.w) > -h * .5 && !w.space) { w.s += g.ch; w.w = g.xR - w.x; }
+      else words.push({ s: g.ch, x: g.xL, y, w: g.xR - g.xL, h });
+    }
+    return words;
+  } catch (e) { console.warn('Letter positions unavailable', e); return null; }
+}
+async function pdfToExcel(file, pdf, title, progress) {
+  await lib('xlsx');
+  let doc = null;
+  try { await loadEditor(); doc = await loadPdfBytes(new Uint8Array(await file.arrayBuffer())); } catch (e) { doc = null; }
+  const wb = XLSX.utils.book_new(), all = [];
+  let anyText = false;
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p), vp = page.getViewport({ scale: 1 });
+    let items = (await page.getTextContent()).items.filter(it => it.str && it.str.trim()).map(it => {
+      const m = pdfjsLib.Util.transform(vp.transform, it.transform), h = Math.hypot(m[2], m[3]) || 10;
+      return { s: it.str, x: m[4], y: m[5], w: it.width * (vp.scale || 1), h };
+    }).filter(it => it.w > 0);
+    // use the exact letter positions when they account for (nearly) all the text pdf.js sees, and the page isn't turned
+    const words = doc && !page.rotate ? await pageWords(doc, p - 1) : null, count = list => list.reduce((n, it) => n + it.s.replace(/\s/g, '').length, 0);
+    if (words && words.length && count(words) >= count(items) * .9) items = words;
+    if (items.length) anyText = true;
+    // lines: items whose baselines are close
+    items.sort((a, b) => a.y - b.y || a.x - b.x);
+    const lines = [];
+    for (const it of items) { const ln = lines.find(l => Math.abs(l.y - it.y) < Math.min(l.h, it.h) * .45); if (ln) ln.items.push(it); else lines.push({ y: it.y, h: it.h, items: [it] }); }
+    lines.sort((a, b) => a.y - b.y);
+    // cells: pieces of a line separated by a clear gap
+    for (const ln of lines) {
+      ln.items.sort((a, b) => a.x - b.x); ln.cells = [];
+      for (const it of ln.items) {
+        const c = ln.cells[ln.cells.length - 1], gap = c ? it.x - (c.x + c.w) : Infinity;
+        if (c && gap < it.h * .45) { c.s += (gap > it.h * .15 && !/\s$/.test(c.s) && !/^\s/.test(it.s) ? ' ' : '') + it.s; c.w = it.x + it.w - c.x; }
+        else ln.cells.push({ s: it.s, x: it.x, w: it.w });
+      }
+    }
+    // Columns: cells that start at the same place (or end at the same place, for right-aligned amounts)
+    // belong together. Columns that never meet in one row and overlap on the page are then joined.
+    const cells = lines.flatMap((ln, r) => ln.cells.map(c => ({ ...c, r })));
+    const cluster = vals => { const out = []; for (const v of vals.sort((x, y) => x - y)) { const g = out[out.length - 1]; if (g && v - g.last <= 4) { g.n++; g.sum += v; g.last = v; } else out.push({ n: 1, sum: v, last: v }); } return out.filter(g => g.n >= 2).map(g => ({ v: g.sum / g.n, n: g.n })); };
+    const multi = cells.filter(c => lines[c.r].cells.length > 1);
+    const lefts = cluster(multi.map(c => c.x)), rights = cluster(multi.map(c => c.x + c.w));
+    const near = (list, v) => list.find(a => Math.abs(a.v - v) <= 4);
+    let cols = [];
+    for (const c of cells) {
+      // the edge shared with more cells wins: amounts line up on the right, words on the left
+      const l = near(lefts, c.x), rr = near(rights, c.x + c.w);
+      const key = l && (!rr || l.n >= rr.n) ? 'L' + l.v.toFixed(1) : rr ? 'R' + rr.v.toFixed(1) : 'X' + c.r + ':' + c.x.toFixed(1);
+      let col = cols.find(k => k.key === key); if (!col) cols.push(col = { key, cells: [], rows: new Set(), x1: Infinity, x2: -Infinity });
+      col.cells.push(c); col.rows.add(c.r); col.x1 = Math.min(col.x1, c.x); col.x2 = Math.max(col.x2, c.x + c.w);
+    }
+    const mid = k => k.cells.reduce((n, c) => n + c.x + c.w / 2, 0) / k.cells.length;
+    cols.sort((x, y) => mid(x) - mid(y));
+    // join the pair that overlaps most first (a heading with the amounts under it), then look again
+    for (;;) {
+      let best = -1, most = 0;
+      for (let i = 0; i + 1 < cols.length; i++) {
+        const A = cols[i], B = cols[i + 1], ov = Math.min(A.x2, B.x2) - Math.max(A.x1, B.x1);
+        if (ov > 0 && ov / Math.min(A.x2 - A.x1, B.x2 - B.x1) > most && ![...A.rows].some(r => B.rows.has(r))) { most = ov / Math.min(A.x2 - A.x1, B.x2 - B.x1); best = i; }
+      }
+      if (best < 0) break;
+      const A = cols[best], B = cols[best + 1];
+      A.cells.push(...B.cells); B.rows.forEach(r => A.rows.add(r)); A.x1 = Math.min(A.x1, B.x1); A.x2 = Math.max(A.x2, B.x2);
+      cols.splice(best + 1, 1);
+    }
+    const rowsOut = lines.map(() => Array(cols.length).fill(''));
+    cols.forEach((k, i) => { for (const c of k.cells.sort((x, y) => x.x - y.x)) rowsOut[c.r][i] = rowsOut[c.r][i] ? rowsOut[c.r][i] + ' ' + c.s.trim() : c.s.trim(); });
+    for (const row of rowsOut) all.push(row.map(toNumber));
+    if (p < pdf.numPages) all.push([]);
+    progress(p / pdf.numPages);
+  }
+  if (!anyText) throw new Error(T('docx.noText'));
+  const ws = XLSX.utils.aoa_to_sheet(all);
+  // column widths from the longest text in each column
+  const n = Math.max(...all.map(r => r.length));
+  ws['!cols'] = Array.from({ length: n }, (_, c) => ({ wch: Math.min(60, Math.max(6, ...all.map(r => String(r[c] ?? '').length + 1))) }));
+  XLSX.utils.book_append_sheet(wb, ws, 'PDF');
+  return [{ name: title + '.xlsx', blob: new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) }];
 }
 
 // ---------- converters by kind ----------
@@ -1668,6 +1827,7 @@ async function convertPDF(file, target, o, progress) {
   if (target === 'ocr') return ocrPDF(file, pdf, progress);
   const b = base(file.name), out = [], pad = String(pdf.numPages).length;
   if (target === 'docx') return pdfToWord(pdf, b, progress);
+  if (target === 'xlsx') return pdfToExcel(file, pdf, b, progress);
   if (target === 'txt') {
     const pages = [];
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -2065,11 +2225,12 @@ const PRESET = (document.querySelector('main[data-preset]') || {}).dataset?.pres
 // The PDF editor is big, so it is fetched only when a page needs it: right away (when idle) on the PDF editing pages,
 // otherwise the moment a PDF is sent to it. The version tag of app.js is reused so a new editor is never mixed with an old app.
 const ASSET_V = ((document.currentScript && document.currentScript.src) || '').split('?')[1] || '';
+const ASSET_MIN = /\.min\.js(\?|$)/.test((document.currentScript && document.currentScript.src) || '') ? '.min' : ''; // the built pages use the compact copies
 let editorLoading = null;
 function loadEditor() {
   if (window.LVEditor && window.LVPdfText) return Promise.resolve(window.LVEditor);
   if (!editorLoading) {
-    const add = name => new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `/assets/${name}.js${ASSET_V ? '?' + ASSET_V : ''}`; sc.onload = ok; sc.onerror = () => no(new Error('Could not load ' + name)); document.head.appendChild(sc); });
+    const add = name => new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `/assets/${name}${ASSET_MIN}.js${ASSET_V ? '?' + ASSET_V : ''}`; sc.onload = ok; sc.onerror = () => no(new Error('Could not load ' + name)); document.head.appendChild(sc); });
     editorLoading = Promise.all([add('pdf-text'), add('editor')]).then(() => window.LVEditor).catch(e => { editorLoading = null; throw e; });
   }
   return editorLoading;
@@ -2736,8 +2897,13 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     if (refreshing || !hadController || !navigator.serviceWorker.controller) return;
     refreshing = true;
     // Offer the new version now, unless the visitor is in the middle of something (files in the tray or the editor open).
+    // A small note that stays until it is answered (a toast was easy to miss).
     const busy = tray.length || jobs.length || document.documentElement.classList.contains('ed-open');
-    toast(T('toast.updated'), false, busy ? null : { label: T('toast.reload'), run: () => location.reload() });
+    const n = document.createElement('div'); n.className = 'upd-note'; n.setAttribute('role', 'status');
+    n.innerHTML = `<span><b>${esc(T('toast.updated'))}</b>${busy ? ' ' + esc(T('upd.later')) : ''}</span>
+      ${busy ? '' : `<button type="button" class="btn sm primary" data-u="go">${esc(T('toast.reload'))}</button>`}<button type="button" class="btn sm" data-u="no">${esc(T(busy ? 'err.close' : 'upd.close'))}</button>`;
+    n.addEventListener('click', e => { const u = e.target.closest('[data-u]'); if (!u) return; if (u.dataset.u === 'go') location.reload(); else n.remove(); });
+    document.body.appendChild(n);
   });
 }
 const net = $('net');

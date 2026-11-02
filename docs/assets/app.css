@@ -911,3 +911,6 @@ html.ed-open .welcome-card { display: none; }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 14px; border-radius: 8px; background: var(--accent); color: var(--accent-ink, #fff); font-weight: 600; text-decoration: none; transition: top .15s; }
 .skip:focus { top: 12px; }
 main[tabindex="-1"]:focus { outline: none; }
+/* "A new version is ready": stays until answered */
+.upd-note { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 61; max-width: min(440px, calc(100vw - 32px)); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--ink); box-shadow: var(--shadow); font-size: 14px; line-height: 1.4; }
+.upd-note span { flex: 1 1 200px; }

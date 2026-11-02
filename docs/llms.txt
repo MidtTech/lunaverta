@@ -41,6 +41,8 @@ Key facts:
 - [Remove photo location](https://lunaverta.com/remove-location-from-photos/): Remove GPS location, camera details and other hidden EXIF data from photos before sharing. Quality stays the same. Free, no upload.
 - [Excel to CSV](https://lunaverta.com/excel-to-csv/): Convert Excel workbooks (XLSX, XLS, ODS) to CSV in your browser, one CSV per sheet. Free and private: nothing is uploaded.
 - [CSV to Excel](https://lunaverta.com/csv-to-excel/): Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.
+- [Excel to PDF](https://lunaverta.com/excel-to-pdf/): Turn Excel, CSV and ODS spreadsheets into a tidy PDF with real, selectable text. Free and private: nothing is uploaded.
+- [PDF to Excel](https://lunaverta.com/pdf-to-excel/): Pull the tables out of a PDF into an Excel workbook, with amounts as real numbers. Free and private: the PDF never leaves your device.
 - [Video to GIF](https://lunaverta.com/video-to-gif/): Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.
 - [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
 - [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn a PDF into a Word document you can edit, keeping fonts, colours, paragraphs and pictures. Free and private: your PDF is never uploaded.
@@ -79,6 +81,8 @@ Key facts:
 - [Fjern GPS fra billeder](https://lunaverta.com/da/fjern-gps-fra-billeder/): Fjern GPS-placering, kameraoplysninger og andre skjulte EXIF-data fra billeder, før du deler dem. Kvaliteten er uændret. Gratis, uden upload.
 - [Excel til CSV](https://lunaverta.com/da/excel-til-csv/): Konvertér Excel-projektmapper (XLSX, XLS, ODS) til CSV i din browser, én CSV pr. ark. Gratis og privat: intet bliver uploadet.
 - [CSV til Excel](https://lunaverta.com/da/csv-til-excel/): Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.
+- [Excel til PDF](https://lunaverta.com/da/excel-til-pdf/): Lav Excel-, CSV- og ODS-regneark om til en pæn PDF med rigtig, markérbar tekst. Gratis og privat: intet bliver uploadet.
+- [PDF til Excel](https://lunaverta.com/da/pdf-til-excel/): Få tabellerne ud af en PDF og ind i en Excel-projektmappe, med beløb som rigtige tal. Gratis og privat: PDF'en forlader aldrig din enhed.
 - [Video til GIF](https://lunaverta.com/da/video-til-gif/): Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.
 - [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
 - [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav en PDF om til et Word-dokument, du kan redigere, med skrifttyper, farver, afsnit og billeder. Gratis og privat: din PDF bliver aldrig uploadet.
@@ -117,6 +121,8 @@ Key facts:
 - [Standort aus Fotos entfernen](https://lunaverta.com/de/standort-aus-fotos-entfernen/): GPS-Standort, Kameradaten und andere versteckte EXIF-Daten vor dem Teilen aus Fotos entfernen. Die Qualität bleibt gleich. Kostenlos, ohne Upload.
 - [Excel in CSV](https://lunaverta.com/de/excel-in-csv/): Excel-Arbeitsmappen (XLSX, XLS, ODS) im Browser in CSV umwandeln, eine CSV pro Blatt. Kostenlos und privat: Nichts wird hochgeladen.
 - [CSV in Excel](https://lunaverta.com/de/csv-in-excel/): CSV- und JSON-Dateien im Browser in Excel (XLSX) umwandeln. Kostenlos und privat: Nichts wird hochgeladen.
+- [Excel in PDF](https://lunaverta.com/de/excel-in-pdf/): Wandle Excel-, CSV- und ODS-Tabellen in ein ordentliches PDF mit echtem, markierbarem Text um. Kostenlos und privat: Nichts wird hochgeladen.
+- [PDF in Excel](https://lunaverta.com/de/pdf-in-excel/): Hol die Tabellen aus einem PDF in eine Excel-Mappe, mit Beträgen als echten Zahlen. Kostenlos und privat: Das PDF verlässt nie dein Gerät.
 - [Video in GIF](https://lunaverta.com/de/video-in-gif/): Ein animiertes GIF aus den ersten Sekunden eines Videos (MP4, WebM, MOV) im Browser erstellen. Kostenlos und privat, ohne Upload.
 - [Video in MP3](https://lunaverta.com/de/video-in-mp3/): Den Ton aus einem Video holen oder WAV, M4A und andere Audiodateien im Browser in MP3 umwandeln. Kostenlos und privat, ohne Upload.
 - [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Ein PDF in ein bearbeitbares Word-Dokument umwandeln, mit Schriften, Farben, Absätzen und Bildern. Kostenlos und privat: Dein PDF wird nie hochgeladen.
@@ -155,6 +161,8 @@ Key facts:
 - [Fjern posisjon fra bilder](https://lunaverta.com/no/fjern-posisjon-fra-bilder/): Fjern GPS-posisjon, kameradetaljer og andre skjulte EXIF-data fra bilder før du deler dem. Kvaliteten blir den samme. Gratis, uten opplasting.
 - [Excel til CSV](https://lunaverta.com/no/excel-til-csv/): Konverter Excel-arbeidsbøker (XLSX, XLS, ODS) til CSV i nettleseren, én CSV per ark. Gratis og privat: ingenting lastes opp.
 - [CSV til Excel](https://lunaverta.com/no/csv-til-excel/): Konverter CSV- og JSON-filer til Excel (XLSX) i nettleseren. Gratis og privat: ingenting lastes opp.
+- [Excel til PDF](https://lunaverta.com/no/excel-til-pdf/): Gjør Excel-, CSV- og ODS-regneark om til en pen PDF med ekte, markerbar tekst. Gratis og privat: ingenting lastes opp.
+- [PDF til Excel](https://lunaverta.com/no/pdf-til-excel/): Få tabellene ut av en PDF og inn i en Excel-arbeidsbok, med beløp som ekte tall. Gratis og privat: PDF-en forlater aldri enheten din.
 - [Video til GIF](https://lunaverta.com/no/video-til-gif/): Lag en animert GIF av de første sekundene i en video (MP4, WebM, MOV) i nettleseren. Gratis og privat, uten opplasting.
 - [Video til MP3](https://lunaverta.com/no/video-til-mp3/): Hent ut lyden fra en video, eller konverter WAV, M4A og annen lyd til MP3 i nettleseren. Gratis og privat, uten opplasting.
 - [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør en PDF om til et Word-dokument du kan redigere, med skrifter, farger, avsnitt og bilder. Gratis og privat: PDF-en din lastes aldri opp.
@@ -193,6 +201,8 @@ Key facts:
 - [Ta bort plats från foton](https://lunaverta.com/sv/ta-bort-plats-fran-bilder/): Ta bort GPS-position, kamerauppgifter och andra dolda EXIF-data från foton innan du delar dem. Kvaliteten blir densamma. Gratis, utan uppladdning.
 - [Excel till CSV](https://lunaverta.com/sv/excel-till-csv/): Konvertera Excel-arbetsböcker (XLSX, XLS, ODS) till CSV i webbläsaren, en CSV per blad. Gratis och privat: inget laddas upp.
 - [CSV till Excel](https://lunaverta.com/sv/csv-till-excel/): Konvertera CSV- och JSON-filer till Excel (XLSX) i webbläsaren. Gratis och privat: inget laddas upp.
+- [Excel till PDF](https://lunaverta.com/sv/excel-till-pdf/): Gör om Excel-, CSV- och ODS-kalkylark till en snygg PDF med riktig, markerbar text. Gratis och privat: inget laddas upp.
+- [PDF till Excel](https://lunaverta.com/sv/pdf-till-excel/): Få ut tabellerna ur en PDF till en Excel-arbetsbok, med belopp som riktiga tal. Gratis och privat: PDF:en lämnar aldrig din enhet.
 - [Video till GIF](https://lunaverta.com/sv/video-till-gif/): Gör en animerad GIF av de första sekunderna i en video (MP4, WebM, MOV) i webbläsaren. Gratis och privat, utan uppladdning.
 - [Video till MP3](https://lunaverta.com/sv/video-till-mp3/): Ta ut ljudet ur en video, eller konvertera WAV, M4A och annat ljud till MP3 i webbläsaren. Gratis och privat, utan uppladdning.
 - [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om en PDF till ett Word-dokument som du kan redigera, med typsnitt, färger, stycken och bilder. Gratis och privat: din PDF laddas aldrig upp.
