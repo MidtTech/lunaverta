@@ -209,6 +209,10 @@ Key facts:
 - [Share a payslip safely](https://lunaverta.com/guide/share-payslip-safely/) · [Send en lønseddel sikkert](https://lunaverta.com/da/guide/send-loenseddel-sikkert/)
 - [Sign a rental contract without printing](https://lunaverta.com/guide/sign-lease-without-printing/) · [Underskriv en lejekontrakt uden at printe](https://lunaverta.com/da/guide/underskriv-lejekontrakt-uden-at-printe/)
 - [Collect receipts in one PDF](https://lunaverta.com/guide/combine-receipts-into-one-pdf/) · [Saml kvitteringer i én PDF](https://lunaverta.com/da/guide/saml-kvitteringer-i-en-pdf/)
+- [Turn iPhone photos (HEIC) into JPG](https://lunaverta.com/guide/iphone-photos-heic-to-jpg/) · [Lav iPhone-billeder (HEIC) om til JPG](https://lunaverta.com/da/guide/iphone-billeder-heic-til-jpg/)
+- [Make a PDF small enough to e-mail](https://lunaverta.com/guide/make-pdf-small-enough-to-email/) · [Gør en PDF lille nok til mail](https://lunaverta.com/da/guide/goer-pdf-lille-nok-til-mail/)
+- [Remove the location from photos before you share them](https://lunaverta.com/guide/remove-location-before-sharing-photos/) · [Fjern placeringen fra billeder, før du deler dem](https://lunaverta.com/da/guide/fjern-placering-foer-du-deler-billeder/)
+- [Turn a PDF into Word and keep the layout](https://lunaverta.com/guide/pdf-to-word-keep-layout/) · [Lav en PDF om til Word og behold layoutet](https://lunaverta.com/da/guide/pdf-til-word-behold-layout/)
 
 ## About
 - [Why nothing is uploaded](https://lunaverta.com/no-upload.html): how files are processed on the device, and how to check it yourself

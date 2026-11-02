@@ -118,6 +118,8 @@ ${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<
 }
 // Short how-to videos (English voice, subtitles in every language), shown on their tool pages.
 const VIDEO_FOR = { 'extract-pages': 'extract', 'crop-image': 'crop', 'scan-to-pdf': 'scan', 'edit-pdf': 'edit', 'remove-prices': 'redact', 'redact-pdf': 'redact', 'sign-pdf': 'sign', 'merge-pdf': 'merge' };
+// Share image: the page's own one (docs/og/<lang>/<name>.jpg, made by make-share-images.mjs) when it exists, otherwise the site's
+const ogFor = (lang, name) => { try { return `${SITE}/og/${lang}/${name}.jpg?v=` + createHash('sha1').update(readFileSync(`docs/og/${lang}/${name}.jpg`)).digest('hex').slice(0, 8); } catch (e) { return SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2'; } };
 // a short fingerprint of each video file, so a changed video is fetched afresh instead of an old copy kept in the browser
 const vv = f => { try { return '?v=' + createHash('sha1').update(readFileSync('docs/videos/' + f)).digest('hex').slice(0, 8); } catch (e) { return ''; } };
 function videoFigure(lang, key, caption) {
@@ -203,7 +205,7 @@ function render(lang, page) {
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [...LANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${page.alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${page.alts.en}">`].join('\n'),
-    OG_IMAGE: SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2',
+    OG_IMAGE: page.tool ? ogFor(lang, page.tool.slug[lang]) : SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2',
     OG_LOCALE: META[lang].og, OG_LOCALE_ALT: LANGS.filter(L => L !== lang).map(L => META[L].og).join('">\n<meta property="og:locale:alternate" content="'),
     LANG_MENU: langMenu(lang, page), LANG_STRINGS: extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : '',
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
@@ -239,7 +241,7 @@ function guideHtml(lang, g, main, ld) {
   const vals = {
     LANG: lang, TITLE: esc(g.title), DESC: esc(g.desc), CANONICAL: SITE + g.path, HOME: path(lang), GUIDES: gPath(lang), GUIDES_LABEL: esc(GUIDE_INDEX[lang].guides),
     ALTERNATES: [...GLANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${SITE + alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${SITE + alts.en}">`].join('\n'),
-    OG_IMAGE: SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2', OG_LOCALE: META[lang].og, OG_LOCALE_ALT: META[lang === 'da' ? 'en' : 'da'].og,
+    OG_IMAGE: g.og ? ogFor(lang, g.og) : SITE + (lang === 'da' ? '/og-da.png' : '/og.png') + '?v=2', OG_LOCALE: META[lang].og, OG_LOCALE_ALT: META[lang === 'da' ? 'en' : 'da'].og,
     LANG_MENU: `<details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Language</span> <span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
           <ul>${GLANGS.map(L => `<li><a href="${alts[L]}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`,
     JSONLD: JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, ...ld] }).replace(/</g, '\\u003c'),
@@ -253,7 +255,7 @@ for (const lang of GLANGS) {
   const I = GUIDE_INDEX[lang], links = { merge: toolUrl(lang, 'merge-pdf'), compress: toolUrl(lang, 'compress-pdf') };
   const crumbs = extra => `    <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(LABELS[lang].home)}</a> <span aria-hidden="true">›</span> ${extra}</nav>`;
   for (const g of GUIDES) {
-    const d = g[lang], tool = toolUrl(lang, g.tool), fill = x => x.replace(/\{(tool|merge|compress)\}/g, (m, k) => (k === 'tool' ? tool : links[k]));
+    const d = g[lang], tool = toolUrl(lang, g.tool), fill = x => x.replace(/\{t:([a-z-]+)\}/g, (m, id) => toolUrl(lang, id)).replace(/\{(tool|merge|compress)\}/g, (m, k) => (k === 'tool' ? tool : links[k]));
     const body = d.body.map(b => typeof b === 'string' ? `    <p>${fill(b)}</p>` : b.h ? `    <h2>${esc(b.h)}</h2>` : b.ol ? `    <ol>${b.ol.map(x => `<li>${fill(x)}</li>`).join('')}</ol>` : `    <ul>${b.ul.map(x => `<li>${fill(x)}</li>`).join('')}</ul>`).join('\n');
     const others = GUIDES.filter(o => o !== g).map(o => `<li><a href="${gPath(lang, o[lang].slug)}">${esc(o[lang].h1)}</a></li>`).join('');
     const main = `${crumbs(`<a href="${gPath(lang)}">${esc(I.guides)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(d.h1)}</span>`)}
@@ -264,7 +266,7 @@ ${body}
     <h2>${esc(I.all)}</h2>
     <ul>${others}</ul>`;
     const steps = (d.body.find(b => b.ol) || { ol: [] }).ol.map((x, i) => ({ '@type': 'HowToStep', position: i + 1, text: x.replace(/<[^>]+>/g, '') }));
-    const pg = { path: gPath(lang, d.slug), title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L, g[L].slug)])) };
+    const pg = { path: gPath(lang, d.slug), og: 'guide-' + d.slug, title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L, g[L].slug)])) };
     const ld = [{ '@type': 'HowTo', name: d.h1, description: d.desc, inLanguage: lang, step: steps },
       { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: LABELS[lang].home, item: url(lang) }, { '@type': 'ListItem', position: 2, name: I.guides, item: SITE + gPath(lang) }, { '@type': 'ListItem', position: 3, name: d.h1, item: SITE + pg.path }] }];
     guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });

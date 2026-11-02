@@ -109,6 +109,7 @@ window.LV_STR.sv = {
   'opt.pdfq.small': 'Liten fil',
   'opt.ocr': 'OCR-språk',
   'opt.ocr.auto': 'Samma som sidan',
+  'err.memory': 'Filen är för stor för enhetens minne. Prova med färre filer åt gången, eller välj en mindre storlek i Inställningar.',
   'skip': 'Hoppa till innehållet',
   'install.btn': 'Installera som app',
   'install.hint': 'Fungerar offline, och du kan högerklicka på en fil på datorn och välja Öppna med LunaVerta.',

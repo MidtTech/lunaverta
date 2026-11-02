@@ -369,6 +369,18 @@ await test('an error offers a report to copy or email, and sends nothing by itse
   await done(p);
 });
 
+await test('a 200-page PDF with thousands of amounts is searched without freezing the page', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica);
+  for (let i = 0; i < 200; i++) { const pg = d.addPage([595, 842]); for (let k = 0; k < 40; k++) pg.drawText(`Line ${k + 1}: Invoice 12.345,00 kr. CPR 010190-1234`, { x: 40, y: 800 - k * 18, size: 9, font: f }); }
+  const p = await page('/remove-prices-from-pdf/');
+  await p.evaluate(() => { window.__lt = 0; new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt = Math.max(window.__lt, e.duration); }).observe({ type: 'longtask' }); });
+  await p.setInputFiles('#fileInput', file('long.pdf', Buffer.from(await d.save())));
+  await p.waitForSelector('#edFindSave:not([disabled])', { timeout: 60000 }); await p.waitForTimeout(1500);
+  const lt = await p.evaluate(() => window.__lt); assert(lt < 1500, `page froze for ${Math.round(lt)} ms`);
+  const cpr = await p.$eval('.ed-cat[data-k="cpr"] .ed-cat-n', e => e.textContent); assert(cpr === '8000', 'CPR hits: ' + cpr);
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

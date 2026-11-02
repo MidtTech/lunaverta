@@ -125,5 +125,133 @@ export const GUIDES = [
         'Mange mailtjenester stopper ved 20–25 MB. <a href="{compress}">Komprimér PDF</a> gør filen mindre, uden at kvitteringerne bliver svære at læse.'
       ]
     }
+  },
+  {
+    id: 'heic', tool: 'heic-to-jpg',
+    en: {
+      slug: 'iphone-photos-heic-to-jpg', title: 'iPhone photos (HEIC) to JPG, free and without uploading · LunaVerta',
+      desc: 'Your iPhone photos are .HEIC files that Windows and many websites cannot open? Turn them into ordinary JPG photos in seconds, on your own device.',
+      h1: 'Turn iPhone photos (HEIC) into JPG', lead: 'iPhones save photos as HEIC to save space. That is fine on the phone, but many Windows PCs, websites and forms will not take them. Here is how to turn them into ordinary JPG photos.',
+      body: [
+        { h: 'Step by step' },
+        { ol: ['Open <a href="{tool}">HEIC to JPG</a>.', 'Choose your HEIC photos, or drop them on the page. You can take many at once.', 'They are turned into JPG straight away, on your device.', 'Click <b>Save</b> on each one, or save them all at once as a .zip.'] },
+        { h: 'Is the quality the same?' },
+        'The photo looks the same. JPG files are a bit bigger than HEIC, which is the price of being readable everywhere. If you need them smaller, for example for a web form with a size limit, use <a href="{t:compress-image}">Compress image</a> afterwards.',
+        { h: 'Location and other hidden data' },
+        'Photos from a phone usually carry the place they were taken. If you are sharing them with strangers, run them through <a href="{t:remove-photo-location}">Remove photo location</a> as well.',
+        { h: 'Stop the iPhone making HEIC' },
+        'On the iPhone, go to Settings › Camera › Formats and choose <b>Most Compatible</b>. New photos are then saved as JPG. Photos you have already taken stay HEIC.'
+      ]
+    },
+    da: {
+      slug: 'iphone-billeder-heic-til-jpg', title: 'iPhone-billeder (HEIC) til JPG – gratis og uden upload · LunaVerta',
+      desc: 'Er dine iPhone-billeder .HEIC-filer, som Windows og mange hjemmesider ikke kan åbne? Lav dem om til almindelige JPG-billeder på få sekunder, på din egen enhed.',
+      h1: 'Lav iPhone-billeder (HEIC) om til JPG', lead: 'iPhones gemmer billeder som HEIC for at spare plads. Det går fint på telefonen, men mange Windows-computere, hjemmesider og formularer vil ikke tage imod dem. Sådan laver du dem om til almindelige JPG-billeder.',
+      body: [
+        { h: 'Trin for trin' },
+        { ol: ['Åbn <a href="{tool}">HEIC til JPG</a>.', 'Vælg dine HEIC-billeder, eller slip dem på siden. Du kan tage mange på én gang.', 'De bliver lavet om til JPG med det samme, på din enhed.', 'Klik på <b>Gem</b> ved hvert billede, eller gem dem alle på én gang som .zip.'] },
+        { h: 'Er kvaliteten den samme?' },
+        'Billedet ser ens ud. JPG-filer er lidt større end HEIC, og det er prisen for, at de kan læses alle steder. Skal de være mindre, fx til en formular med en størrelsesgrænse, så brug <a href="{t:compress-image}">Komprimér billede</a> bagefter.',
+        { h: 'Placering og andre skjulte data' },
+        'Billeder fra en telefon gemmer som regel, hvor de er taget. Deler du dem med fremmede, så kør dem også gennem <a href="{t:remove-photo-location}">Fjern GPS fra billeder</a>.',
+        { h: 'Få iPhonen til at holde op med at lave HEIC' },
+        'Gå på iPhonen til Indstillinger › Kamera › Formater, og vælg <b>Mest kompatibel</b>. Nye billeder gemmes så som JPG. Billeder, du allerede har taget, forbliver HEIC.'
+      ]
+    }
+  },
+  {
+    id: 'email', tool: 'compress-pdf',
+    en: {
+      slug: 'make-pdf-small-enough-to-email', title: 'Make a PDF small enough to e-mail · LunaVerta',
+      desc: 'PDF too big to attach? Most mail services stop at 20–25 MB. Here is how to make it smaller, free and without uploading it anywhere.',
+      h1: 'Make a PDF small enough to e-mail', lead: 'Your PDF is too big to attach. Most mail services stop at 20 to 25 MB, and some companies set an even lower limit. Here is how to make it small enough.',
+      body: [
+        { h: 'Step by step' },
+        { ol: ['Open <a href="{tool}">Compress PDF</a> and choose the PDF.', 'Every page is redrawn more compactly. The text stays searchable and can still be copied.', 'You see how much smaller it became. Click <b>Save</b>.', 'If it could not get smaller, you get your original back unchanged.'] },
+        { h: 'What makes PDFs big' },
+        'Almost always pictures: scans, photos and phone snaps of paper. A 30-page scan can easily be 40 MB; after compressing it is often a few MB. PDFs that are mostly typed text are usually small already, and compressing them does little.',
+        { h: 'Still too big?' },
+        { ul: ['Split it: <a href="{t:split-pdf}">Split PDF</a> makes one file per page, and <a href="{t:extract-pages}">Extract pages</a> lets you send only the pages that matter.', 'Send it in parts, one attachment per e-mail.'] },
+        { h: 'When not to compress' },
+        'Compressing turns the pages into pictures with the text kept on top, so links and fillable form fields are not kept. If the receiver has to fill in or sign the form, send the original.'
+      ]
+    },
+    da: {
+      slug: 'goer-pdf-lille-nok-til-mail', title: 'Gør en PDF lille nok til at sende på mail · LunaVerta',
+      desc: 'Er PDF\'en for stor til at vedhæfte? De fleste mailtjenester stopper ved 20–25 MB. Sådan gør du den mindre, gratis og uden at uploade den nogen steder.',
+      h1: 'Gør en PDF lille nok til mail', lead: 'Din PDF er for stor til at vedhæfte. De fleste mailtjenester stopper ved 20 til 25 MB, og nogle virksomheder har en endnu lavere grænse. Sådan gør du den lille nok.',
+      body: [
+        { h: 'Trin for trin' },
+        { ol: ['Åbn <a href="{tool}">Komprimér PDF</a>, og vælg PDF\'en.', 'Hver side bliver tegnet mere kompakt. Teksten kan stadig søges i og kopieres.', 'Du kan se, hvor meget mindre den er blevet. Klik på <b>Gem</b>.', 'Kunne den ikke blive mindre, får du din original tilbage uændret.'] },
+        { h: 'Hvad gør PDF\'er store' },
+        'Næsten altid billeder: scanninger, fotos og mobilbilleder af papir. En scanning på 30 sider kan sagtens fylde 40 MB; efter komprimering er den ofte nede på få MB. PDF\'er med mest skrevet tekst er som regel små i forvejen, og komprimering gør ikke meget.',
+        { h: 'Stadig for stor?' },
+        { ul: ['Del den op: <a href="{t:split-pdf}">Del PDF</a> laver én fil pr. side, og <a href="{t:extract-pages}">Udtræk sider</a> lader dig sende kun de sider, der betyder noget.', 'Send den i dele, én vedhæftning pr. mail.'] },
+        { h: 'Hvornår du ikke skal komprimere' },
+        'Komprimering laver siderne om til billeder med teksten bevaret ovenpå, så links og udfyldelige formularfelter forsvinder. Skal modtageren udfylde eller underskrive formularen, så send originalen.'
+      ]
+    }
+  },
+  {
+    id: 'gps', tool: 'remove-photo-location',
+    en: {
+      slug: 'remove-location-before-sharing-photos', title: 'Remove the location from photos before you share or sell · LunaVerta',
+      desc: 'Phone photos often reveal where they were taken, including your home. Remove the GPS location and other hidden data before you share or sell online. Free and private.',
+      h1: 'Remove the location from photos before you share them', lead: 'Most phone photos quietly record where they were taken. A photo of the sofa you are selling can tell a stranger where you live. Here is how to remove that before you share.',
+      body: [
+        { h: 'Step by step' },
+        { ol: ['Open <a href="{tool}">Remove photo location</a>.', 'Choose your photos, or drop them on the page.', 'The location, camera details, dates and other hidden data are removed. The picture itself is not touched, so there is no loss of quality.', 'Save the cleaned photos and share those instead of the originals.'] },
+        { h: 'Doesn\'t the website remove it anyway?' },
+        'Some big sites remove the location when you upload, but you cannot always tell, and photos sent by e-mail, as files in a chat or on a USB stick usually keep it. Cleaning them first means you do not have to rely on anyone else.',
+        { h: 'Turn it off for future photos' },
+        { ul: ['iPhone: Settings › Privacy & Security › Location Services › Camera › Never.', 'Android: open the Camera app, go to its settings and switch off location tags (the name varies by phone).'] }
+      ]
+    },
+    da: {
+      slug: 'fjern-placering-foer-du-deler-billeder', title: 'Fjern placeringen fra billeder, før du deler eller sælger · LunaVerta',
+      desc: 'Mobilbilleder afslører tit, hvor de er taget, også dit hjem. Fjern GPS-placeringen og andre skjulte data, før du deler eller sælger på nettet. Gratis og privat.',
+      h1: 'Fjern placeringen fra billeder, før du deler dem', lead: 'De fleste mobilbilleder gemmer i det stille, hvor de er taget. Et billede af sofaen, du sælger, kan fortælle en fremmed, hvor du bor. Sådan fjerner du det, før du deler.',
+      body: [
+        { h: 'Trin for trin' },
+        { ol: ['Åbn <a href="{tool}">Fjern GPS fra billeder</a>.', 'Vælg dine billeder, eller slip dem på siden.', 'Placering, kameraoplysninger, datoer og andre skjulte data fjernes. Selve billedet røres ikke, så kvaliteten er den samme.', 'Gem de rensede billeder, og del dem i stedet for originalerne.'] },
+        { h: 'Fjerner hjemmesiden det ikke alligevel?' },
+        'Nogle store sider fjerner placeringen, når du uploader, men du kan ikke altid se det, og billeder sendt på mail, som filer i en chat eller på en USB-nøgle beholder den som regel. Renser du dem først, behøver du ikke stole på andre.',
+        { h: 'Slå det fra for fremtidige billeder' },
+        { ul: ['iPhone: Indstillinger › Anonymitet & sikkerhed › Lokalitetstjenester › Kamera › Aldrig.', 'Android: åbn Kamera-appen, gå til dens indstillinger, og slå placeringsmærker fra (navnet varierer fra telefon til telefon).'] }
+      ]
+    }
+  },
+  {
+    id: 'word', tool: 'pdf-to-word',
+    en: {
+      slug: 'pdf-to-word-keep-layout', title: 'PDF to Word that keeps the layout, free and private · LunaVerta',
+      desc: 'Turn a PDF into an editable Word document that keeps fonts, bold text, alignment and pictures. Free, no account, and the PDF never leaves your device.',
+      h1: 'Turn a PDF into Word and keep the layout', lead: 'You need to change a document you only have as a PDF. Here is how to turn it into a Word file you can edit, with the fonts, bold text, alignment and pictures kept.',
+      body: [
+        { h: 'Step by step' },
+        { ol: ['Open <a href="{tool}">PDF to Word</a> and choose the PDF.', 'The text on each page is read and built into a .docx file, with paragraphs, fonts, sizes, bold and italic, alignment and pictures.', 'Click <b>Save</b>.', 'Open it in Word, Pages, LibreOffice or Google Docs and edit away.'] },
+        { h: 'Only need to fix a few words?' },
+        'Then you may not need Word at all. <a href="{t:edit-pdf}">Edit PDF</a> lets you correct text directly in the PDF, in its own font, and the rest of the page stays exactly as it was.',
+        { h: 'Scanned PDFs' },
+        'A scan is a picture of paper, so there is no text to read. Run it through <a href="{t:ocr}">OCR: make a PDF searchable</a> first, then convert the result to Word.',
+        { h: 'What does not carry over' },
+        'Complicated layouts, such as text in many columns, tables drawn with lines, or text on top of pictures, may need some tidying in Word afterwards.'
+      ]
+    },
+    da: {
+      slug: 'pdf-til-word-behold-layout', title: 'PDF til Word der beholder layoutet – gratis og privat · LunaVerta',
+      desc: 'Lav en PDF om til et redigerbart Word-dokument, der beholder skrifttyper, fed tekst, justering og billeder. Gratis, ingen konto, og PDF\'en forlader aldrig din enhed.',
+      h1: 'Lav en PDF om til Word og behold layoutet', lead: 'Du skal ændre et dokument, du kun har som PDF. Sådan laver du det om til en Word-fil, du kan redigere, med skrifttyper, fed tekst, justering og billeder bevaret.',
+      body: [
+        { h: 'Trin for trin' },
+        { ol: ['Åbn <a href="{tool}">PDF til Word</a>, og vælg PDF\'en.', 'Teksten på hver side bliver læst og bygget til en .docx-fil med afsnit, skrifttyper, størrelser, fed og kursiv, justering og billeder.', 'Klik på <b>Gem</b>.', 'Åbn den i Word, Pages, LibreOffice eller Google Docs, og ret løs.'] },
+        { h: 'Skal du bare rette et par ord?' },
+        'Så behøver du måske slet ikke Word. Med <a href="{t:edit-pdf}">Redigér PDF</a> retter du teksten direkte i PDF\'en, i dens egen skrift, og resten af siden bliver præcis, som den var.',
+        { h: 'Scannede PDF\'er' },
+        'En scanning er et billede af papir, så der er ingen tekst at læse. Kør den først gennem <a href="{t:ocr}">OCR: gør en PDF søgbar</a>, og lav derefter resultatet om til Word.',
+        { h: 'Det, der ikke kommer med' },
+        'Komplicerede layouts, fx tekst i mange spalter, tabeller tegnet med streger eller tekst oven på billeder, kan kræve lidt oprydning i Word bagefter.'
+      ]
+    }
   }
 ];

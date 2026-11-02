@@ -106,8 +106,14 @@ OPT_IDS.forEach(id => $(id).addEventListener('input', persistOpts));
 persistOpts();
 
 // ---------- canvas helpers ----------
-function canvasToBlob(c, type, q) { return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error(T('err.write', { type }))), type, q)); }
-function fit(w, h, maxDim) { if (!maxDim || Math.max(w, h) <= maxDim) return [w, h]; const s = maxDim / Math.max(w, h); return [Math.max(1, Math.round(w * s)), Math.max(1, Math.round(h * s))]; }
+// Browsers refuse canvases above a certain size (iPhone and iPad: about 16.7 million pixels; others far more).
+// Pictures bigger than that are drawn a little smaller instead of failing; a failed write on a big canvas
+// is reported as a memory problem, which is what it almost always is.
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const MAX_AREA = IOS ? 16777216 : 120000000;
+function canvasToBlob(c, type, q) { return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error(c.width * c.height > 8e6 ? T('err.memory') : T('err.write', { type }))), type, q)); }
+function capArea(w, h) { if (w * h <= MAX_AREA) return [w, h]; const s = Math.sqrt(MAX_AREA / (w * h)) * .999; return [Math.max(1, Math.floor(w * s)), Math.max(1, Math.floor(h * s))]; }
+function fit(w, h, maxDim) { if (maxDim && Math.max(w, h) > maxDim) { const s = maxDim / Math.max(w, h); w = Math.max(1, Math.round(w * s)); h = Math.max(1, Math.round(h * s)); } return capArea(w, h); }
 let heifMod = null;
 function heif() {
   if (!heifMod) heifMod = (async () => {
@@ -1365,7 +1371,7 @@ function outSize(w, h, s) {
 }
 async function renderEdited(img, w, h, s, crop, fmt) {
   const r = crop || { x: 0, y: 0, w, h };
-  const [ow, oh] = outSize(r.w, r.h, s);
+  const [ow, oh] = capArea(...outSize(r.w, r.h, s));
   const c = document.createElement('canvas'); c.width = ow; c.height = oh;
   const x = c.getContext('2d');
   if (fmt === 'jpg') { x.fillStyle = '#fff'; x.fillRect(0, 0, ow, oh); }
@@ -2167,8 +2173,11 @@ async function finishJob(j, outs) {
   j.status = 'done'; j.progress = 1; renderJob(j); updateFoot();
 }
 function failJob(j, err) {
+  console.error(err);
+  // running out of memory shows up as cryptic browser errors; say what it means instead
+  if (err && (err.name === 'RangeError' || /allocation failed|out of memory|Array buffer|Invalid array length/i.test(err.message || ''))) err = new Error(T('err.memory'));
   j.status = 'err'; j.error = (err && err.message) || T('job.failed');
-  console.error(err); renderJob(j); updateFoot();
+  renderJob(j); updateFoot();
   reportError(err, j.target || '');
 }
 async function runBatch(files, target) {
@@ -2535,9 +2544,21 @@ function toast(msg, ok, blob) {
 // the person sees the text (no file contents), can edit it, and copies it or opens their own email with it.
 const ERRS = [];
 let errPillT;
+// Messages written for people ("This video has no soundtrack…", "Wrong password") already say what to do;
+// they are not faults, so they don't offer a report. Anything else (a real bug) does.
+let knownMsgs = null;
+function isKnownMessage(msg) {
+  if (!knownMsgs) {
+    const all = window.LV_STR || {}, rx = s => new RegExp('^' + String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\{\w+\\\}/g, '.+?') + '$');
+    knownMsgs = [];
+    for (const L of Object.keys(all)) for (const [k, v] of Object.entries(all[L])) if (/^(err|toast|job|pw|ocr|sc|im|ex|ed|find)\./.test(k) && typeof v === 'string') knownMsgs.push(rx(v));
+  }
+  return knownMsgs.some(r => r.test(msg));
+}
 function reportError(err, where) {
   const e = err instanceof Error ? err : new Error(String((err && err.message) || err || 'Unknown error'));
   if (/^(AbortError|NotAllowedError)$/.test(e.name)) return; // a closed Save as window is not an error
+  if (where !== 'page' && isKnownMessage(e.message)) return;
   ERRS.push({ when: new Date().toISOString(), where: where || '', msg: e.message, stack: String(e.stack || '').split('\n').slice(0, 6).join('\n') });
   if (ERRS.length > 5) ERRS.shift();
   let pill = $('errPill');

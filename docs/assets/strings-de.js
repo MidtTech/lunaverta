@@ -109,6 +109,7 @@ window.LV_STR.de = {
   'opt.pdfq.small': 'Kleine Datei',
   'opt.ocr': 'OCR-Sprache',
   'opt.ocr.auto': 'Wie die Seite',
+  'err.memory': 'Die Datei ist zu groß für den Speicher deines Geräts. Versuche es mit weniger Dateien auf einmal oder wähle in den Einstellungen eine kleinere Größe.',
   'skip': 'Zum Inhalt springen',
   'install.btn': 'Als App installieren',
   'install.hint': 'Funktioniert offline, und du kannst am Computer mit der rechten Maustaste auf eine Datei klicken und Öffnen mit LunaVerta wählen.',

@@ -1472,10 +1472,14 @@ async function estimatedLines(pg) {
   });
   return lines;
 }
+// Long searches give the page a moment to breathe now and then, so it never freezes.
+let lastBreath = 0;
+const breathe = async () => { if (performance.now() - lastBreath > 40) { await new Promise(r => setTimeout(r, 0)); lastBreath = performance.now(); } };
 async function findAll(re, progress, judge) {
   const hits = [];
   const live = S.pages.filter(p => !p.deleted);
   for (const [i, pg] of live.entries()) {
+    await breathe();
     for (const ln of await pageLines(pg)) {
       re.lastIndex = 0; let m;
       while ((m = re.exec(ln.str))) {
@@ -1545,14 +1549,18 @@ async function findPrices(progress) {
   const heads = await findAll(new RegExp(PRICE_HEAD.source, PRICE_HEAD.flags));
   // plain decimals count when right-aligned with a price, or under a Pris/Beløb heading
   const rateHeads = await findAll(new RegExp(RATE_WORDS.source, 'gi'));
+  // grouped by page, so long documents (thousands of amounts) stay quick
+  const byPage = list => { const m = new Map(); for (const h of list) { const a = m.get(h.pg.id); if (a) a.push(h); else m.set(h.pg.id, [h]); } return m; };
+  const strongP = byPage(strong), headsP = byPage(heads), rateP = byPage(rateHeads), none = [];
   const keep = hits.filter(h => h.kind === 2
     // a percentage just under a heading like Rentesats or Moms
-    || (h.rate && rateHeads.some(c => c.pg.id === h.pg.id && h.y2 < c.y1 + 1 && c.y1 - h.y2 < 30 && h.x2 > c.x1 - 20 && h.x1 < c.x2 + 20))
-    || (!h.rate && strong.some(s => s.pg.id === h.pg.id && Math.abs(s.x2 - h.x2) < 2.5))
-    || (!h.rate && heads.some(c => c.pg.id === h.pg.id && h.y2 < c.y1 + 1 && h.x2 > c.x1 - 12 && h.x1 < c.x2 + 12)));
+    || (h.rate && (rateP.get(h.pg.id) || none).some(c => h.y2 < c.y1 + 1 && c.y1 - h.y2 < 30 && h.x2 > c.x1 - 20 && h.x1 < c.x2 + 20))
+    || (!h.rate && (strongP.get(h.pg.id) || none).some(s => Math.abs(s.x2 - h.x2) < 2.5))
+    || (!h.rate && (headsP.get(h.pg.id) || none).some(c => h.y2 < c.y1 + 1 && h.x2 > c.x1 - 12 && h.x1 < c.x2 + 12)));
   // payment dates (Betaling 02.12.26, Forfald …)
   const dates = await findAll(new RegExp(CATS.dates.source, CATS.dates.flags), null, (m, b, a, line) => (PAY_WORDS.test(line) ? 2 : 0));
-  return keep.concat(dates.filter(d => !keep.some(k => sameSpot(k, d))));
+  const keepP = byPage(keep);
+  return keep.concat(dates.filter(d => !(keepP.get(d.pg.id) || none).some(k => sameSpot(k, d))));
 }
 // One hit from characters s0..s1 of a line.
 function makeHit(pg, n, ln, s0, s1) {
@@ -1579,6 +1587,7 @@ async function findPriceText(progress) {
   const hits = [];
   const live = S.pages.filter(p => !p.deleted);
   for (const [i, pg] of live.entries()) {
+    await breathe();
     for (const ln of await pageLines(pg)) {
       for (const [a, b] of segments(ln)) {
         const seg = ln.str.slice(a, b);
@@ -1655,10 +1664,13 @@ async function openFind() {
   const status = $('#edFindStatus'), list = $('#edFindList'), foot = $('#edFindFoot'), catsEl = $('#edFindCats');
   // the hits shown: those of the switched-on categories, one per spot
   const collect = () => {
-    const out = [];
+    const out = [], seen = new Map(); // seen: hits so far per page, so long documents stay quick
     for (const k of [...Object.keys(CATS), 'custom']) {
       if (!F.active.has(k)) continue;
-      for (const h of (k === 'custom' ? F.custom : F.cats[k] || [])) if (!out.some(o => sameSpot(o, h))) out.push(h);
+      for (const h of (k === 'custom' ? F.custom : F.cats[k] || [])) {
+        const onPage = seen.get(h.pg.id) || []; if (!seen.has(h.pg.id)) seen.set(h.pg.id, onPage);
+        if (!onPage.some(o => sameSpot(o, h))) { out.push(h); onPage.push(h); }
+      }
     }
     out.sort((a, b) => a.n - b.n || b.y1 - a.y1 || a.x1 - b.x1);
     out.forEach(h => { h.done = S.boxes.some(b => covers(b, h)); });
@@ -1678,37 +1690,65 @@ async function openFind() {
     });
   };
   const count = () => {
-    const sel = F.hits.filter(h => h.on && !h.done).length;
+    const picked = F.hits.filter(h => h.on && !h.done), sel = picked.length;
     // Say plainly what will happen before anything is removed.
-    const selPages = new Set(F.hits.filter(h => h.on && !h.done).map(h => h.n)).size;
+    const selPages = new Set(picked.map(h => h.n)).size;
     const sum = $('#edFindSum'); if (sum) { sum.hidden = !sel; sum.textContent = T(selPages === 1 ? 'find.sum1' : 'find.sum', { n: sel, p: selPages }); }
     $('#edFindApply').textContent = T('find.remove', { n: sel }); $('#edFindApply').disabled = !sel;
     $('#edFindSave').textContent = T('find.removeSave', { n: sel }); $('#edFindSave').disabled = !sel && !S.boxes.length;
   };
-  const drawList = () => {
+  // The list of hits, grouped by page. Built off-screen in one go, and a single tick only updates the
+  // numbers (not the whole list), so documents with thousands of hits stay responsive.
+  const status2 = () => {
     const open = F.hits.filter(h => !h.done), pages = new Set(open.map(h => h.n)).size;
     status.textContent = !F.active.size ? T('find.pick') : F.hits.length ? T('find.count', { n: open.length }) + (open.length ? ' ' + T('find.pages', { n: pages }) : '') : T('find.none');
-    list.innerHTML = '';
-    let lastN = 0;
-    for (const h of F.hits) {
-      if (h.n !== lastN) {
-        // the page heading switches every hit on that page at once
-        const onPage = F.hits.filter(o => o.n === h.n && !o.done), sel = onPage.filter(o => o.on).length;
-        const hd = document.createElement('label'); hd.className = 'ed-find-page';
-        hd.innerHTML = `<input type="checkbox" ${sel === onPage.length && sel ? 'checked' : ''}> <span>${esc(T('ed.page', { n: h.n }))}</span><span class="ed-find-pcount">${esc(T('find.pageSel', { n: sel, m: onPage.length }))}</span>`;
-        const cb = hd.querySelector('input'); cb.indeterminate = sel > 0 && sel < onPage.length; cb.disabled = !onPage.length;
-        cb.onchange = () => { onPage.forEach(o => { o.on = cb.checked; }); drawList(); paintHits(); };
-        list.appendChild(hd); lastN = h.n;
+  };
+  let heads = new Map();
+  const headState = n => {
+    const hd = heads.get(n); if (!hd) return;
+    const sel = hd.onPage.filter(o => o.on).length;
+    hd.cb.checked = sel === hd.onPage.length && sel > 0; hd.cb.indeterminate = sel > 0 && sel < hd.onPage.length; hd.cb.disabled = !hd.onPage.length;
+    hd.cnt.textContent = T('find.pageSel', { n: sel, m: hd.onPage.length });
+  };
+  let listGen = 0;
+  const drawList = () => {
+    status2();
+    const gen = ++listGen, groups = new Map();
+    for (const h of F.hits) { const g = groups.get(h.n); if (g) g.push(h); else groups.set(h.n, [h]); }
+    heads = new Map();
+    list.replaceChildren();
+    // Pages are added a batch at a time: the first ones at once, the rest in the background,
+    // so a very long list (thousands of hits) never freezes the page.
+    const todo = [...groups];
+    const addPage = ([n, hits], frag) => {
+      // the page heading switches every hit on that page at once
+      const onPage = hits.filter(o => !o.done);
+      const hd = document.createElement('label'); hd.className = 'ed-find-page';
+      hd.innerHTML = `<input type="checkbox"> <span>${esc(T('ed.page', { n }))}</span><span class="ed-find-pcount"></span>`;
+      const cb = hd.querySelector('input');
+      heads.set(n, { cb, cnt: hd.querySelector('.ed-find-pcount'), onPage });
+      cb.onchange = () => { onPage.forEach(o => { o.on = cb.checked; if (o.row) o.row.querySelector('input').checked = cb.checked; }); headState(n); count(); paintHits(); };
+      frag.appendChild(hd); headState(n);
+      for (const h of hits) {
+        const row = document.createElement('label');
+        row.className = 'ed-find-hit' + (h.done ? ' done' : '');
+        row.innerHTML = `<input type="checkbox" ${h.on && !h.done ? 'checked' : ''} ${h.done ? 'disabled' : ''}><span class="ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</span>${h.done ? `<span class="tag">${esc(T('find.already'))}</span>` : ''}`;
+        row.querySelector('input').onchange = e => { h.on = e.target.checked; headState(n); count(); paintHits(); };
+        row.addEventListener('mouseenter', () => peek(h));
+        row.addEventListener('focusin', () => peek(h));
+        h.row = row;
+        frag.appendChild(row);
       }
-      const row = document.createElement('label');
-      row.className = 'ed-find-hit' + (h.done ? ' done' : '');
-      row.innerHTML = `<input type="checkbox" ${h.on && !h.done ? 'checked' : ''} ${h.done ? 'disabled' : ''}><span class="ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</span>${h.done ? `<span class="tag">${esc(T('find.already'))}</span>` : ''}`;
-      row.querySelector('input').onchange = e => { h.on = e.target.checked; drawList(); paintHits(); };
-      row.addEventListener('mouseenter', () => peek(h));
-      row.addEventListener('focusin', () => peek(h));
-      h.row = row;
-      list.appendChild(row);
-    }
+      return hits.length + 1;
+    };
+    const batch = limit => {
+      if (gen !== listGen) return;
+      const frag = document.createDocumentFragment(); let n = 0;
+      while (todo.length && n < limit) n += addPage(todo.shift(), frag);
+      list.appendChild(frag);
+      if (todo.length) setTimeout(() => batch(250), 0);
+    };
+    batch(300);
     foot.hidden = !F.hits.length && !S.boxes.length; count();
   };
   const update = () => { collect(); drawCats(); drawList(); paintHits(); };
@@ -1726,7 +1766,7 @@ async function openFind() {
     drawList(); paintHits();
     status.textContent = T('find.deselected', { n });
   };
-  F.toggle = h => { h.on = !h.on; const cb = h.row && h.row.querySelector('input'); if (cb) cb.checked = h.on; count(); };
+  F.toggle = h => { h.on = !h.on; const cb = h.row && h.row.querySelector('input'); if (cb) cb.checked = h.on; headState(h.n); count(); };
   // apply: every ticked hit becomes a removal box
   const apply = () => {
     const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
