@@ -285,6 +285,7 @@ await test('Move text turns a paragraph into a box that can be rewritten and mov
   await p.waitForTimeout(1000);
   if (!(await p.$('#edParas'))) { await p.locator('#edBody button').first().click(); await p.waitForSelector('#edParas'); }
   await p.click('#edParas'); await p.locator('.ed-stage-wrap').first().locator('.ed-para').first().click();
+  await p.locator('.ed-block').first().focus(); await p.click('.ed-block [data-b="rewrite"]');
   const ta = p.locator('.ed-block textarea').first(); await ta.waitFor();
   assert((await ta.inputValue()).startsWith('The first paragraph explains what the project is about and why'), 'paragraph text: ' + await ta.inputValue());
   await ta.fill('A rewritten paragraph.');
@@ -297,6 +298,55 @@ await test('Move text turns a paragraph into a box that can be rewritten and mov
   const t1 = await pageText(1), t2 = await pageText(2);
   assert(!t1.includes('first paragraph'), 'old text still on page 1: ' + t1);
   assert(t2.includes('A rewritten paragraph.'), 'new text not on page 2: ' + t2);
+  await done(p);
+});
+
+await test('Moving text without rewriting it keeps its own font and size', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.TimesRomanItalic);
+  d.addPage([595, 842]).drawText('A line in Times Italic at 17 points.', { x: 60, y: 730, size: 17, font: f });
+  d.addPage([595, 842]);
+  const p = await page('/edit-pdf/');
+  await p.setInputFiles('#fileInput', file('times.pdf', Buffer.from(await d.save())));
+  await p.waitForTimeout(1000);
+  if (!(await p.$('#edParas'))) { await p.locator('#edBody button').first().click(); await p.waitForSelector('#edParas'); }
+  await p.click('#edParas'); await p.locator('.ed-stage-wrap').first().locator('.ed-para').first().click();
+  await p.waitForSelector('.ed-block-img');
+  await p.locator('.ed-block').first().focus();
+  const sel = p.locator('.ed-block select').first(); const opts = await sel.locator('option').evaluateAll(o => o.map(x => x.value)); await sel.selectOption(opts[1]);
+  await p.waitForTimeout(400);
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const pdfjs = require('pdfjs-dist/legacy/build/pdf.js'), doc = await pdfjs.getDocument({ data: new Uint8Array(await readFile(await dl.path())), isEvalSupported: false, verbosity: 0 }).promise;
+  const items = n => doc.getPage(n).then(pg => pg.getTextContent()).then(t => t.items.filter(i => i.str.trim()));
+  const one = await items(1), two = await items(2);
+  assert(!one.length, 'text left on page 1: ' + one.map(i => i.str).join(' '));
+  const it = two.find(i => i.str.includes('Times Italic'));
+  assert(it, 'moved text not on page 2');
+  assert(Math.abs(Math.abs(it.transform[3]) - 17) < 0.5, 'size changed to ' + it.transform[3]);
+  const pg2 = await doc.getPage(2); await pg2.getOperatorList();
+  const fobj = pg2.commonObjs.get(it.fontName), fname = (fobj && (fobj.name || fobj.loadedName)) || '';
+  assert(/Times.*Italic/i.test(fname), 'font changed to ' + fname);
+  await done(p);
+});
+
+await test('Rewritten text keeps the PDF\'s own font and size', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.TimesRomanItalic);
+  d.addPage([595, 842]).drawText('An old line in Times Italic.', { x: 60, y: 730, size: 15, font: f });
+  const p = await page('/edit-pdf/');
+  await p.setInputFiles('#fileInput', file('times.pdf', Buffer.from(await d.save())));
+  await p.waitForTimeout(1000);
+  if (!(await p.$('#edParas'))) { await p.locator('#edBody button').first().click(); await p.waitForSelector('#edParas'); }
+  await p.click('#edParas'); await p.locator('.ed-para').first().click();
+  await p.locator('.ed-block').first().focus(); await p.click('.ed-block [data-b="rewrite"]');
+  await p.locator('.ed-block textarea').first().fill('A new sentence, still in Times Italic.');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const pdfjs = require('pdfjs-dist/legacy/build/pdf.js'), doc = await pdfjs.getDocument({ data: new Uint8Array(await readFile(await dl.path())), isEvalSupported: false, verbosity: 0 }).promise;
+  const pg = await doc.getPage(1), tc = await pg.getTextContent(); await pg.getOperatorList();
+  const it = tc.items.find(i => i.str.includes('new sentence'));
+  assert(it, 'new text missing: ' + tc.items.map(i => i.str).join('|'));
+  assert(!tc.items.some(i => i.str.includes('old line')), 'old text still there');
+  const fo = pg.commonObjs.get(it.fontName), name = (fo && (fo.name || fo.loadedName)) || '';
+  assert(/Times.*Italic/i.test(name), 'font is ' + name);
+  assert(Math.abs(Math.abs(it.transform[3]) - 15) < .5, 'size is ' + it.transform[3]);
   await done(p);
 });
 

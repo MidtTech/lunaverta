@@ -222,6 +222,7 @@ async function readPage(doc, page) {
       if (d) {
         f = fontInfo(P, d, streamText);
         if (f.noWidths) f.stdWidth = stdWidth(f.std);
+        f.name = nm; f.ref = fontDict.get(N(nm)); f.sub = String(d.lookup(N('Subtype')) || '');
       }
     } catch (e) { console.warn('Font', nm, e); }
     return (fonts[nm] = f);
@@ -265,7 +266,7 @@ async function readPage(doc, page) {
         const [x1] = apply(m, w0 * gs.fs * gs.th, gs.rise);
         const [, yc] = apply(m, 0, gs.rise + gs.fs * .3);
         const [xa] = apply(m, adv, gs.rise);
-        glyphs.push({ op: idx, k: k++, code, xL: Math.min(x0, x1), xR: Math.max(x0, x1), xc: (x0 + x1) / 2, yc, y0, adv: xa - x0, ch: charOf(f, code), size: Math.abs(m[3]) * gs.fs, hidden: gs.tr === 3 || gs.tr === 7, upright: Math.abs(m[1]) < 1e-6 && Math.abs(m[2]) < 1e-6 && m[0] > 0 });
+        glyphs.push({ op: idx, k: k++, code, xL: Math.min(x0, x1), xR: Math.max(x0, x1), xc: (x0 + x1) / 2, yc, y0, adv: xa - x0, ch: charOf(f, code), font: f, size: Math.abs(m[3]) * gs.fs, hidden: gs.tr === 3 || gs.tr === 7, upright: Math.abs(m[1]) < 1e-6 && Math.abs(m[2]) < 1e-6 && m[0] > 0 });
         tm = mul([1, 0, 0, 1, adv, 0], tm);
       }
     }
@@ -456,5 +457,79 @@ function deletionSpans(ed, inBox) {
   return spans;
 }
 
-window.LVPdfText = { strip, readPage, tokenize };
+// ---------- writing new text in a font the PDF already has ----------
+// The font most used inside an area of a page (to type rewritten text in it)
+async function fontAt(doc, page, rect) {
+  let rd; try { rd = await readPage(doc, page); } catch (e) { return null; }
+  if (!rd) return null;
+  const count = new Map();
+  for (const g of rd.glyphs) if (g.upright && !g.hidden && g.font && g.xc >= rect[0] && g.xc <= rect[2] && g.yc >= rect[1] && g.yc <= rect[3]) count.set(g.font, (count.get(g.font) || 0) + 1);
+  let best = null, n = 0;
+  for (const [f, c] of count) if (c > n) { best = f; n = c; }
+  if (!best || !best.ok || !best.ref || /Type3/.test(best.sub)) return null;
+  // which characters it can draw: from its ToUnicode map (or the standard encoding for simple fonts)
+  const rev = new Map();
+  if (best.uni) for (const [code, u] of best.uni) if (u && [...u].length === 1 && !rev.has(u)) rev.set(u, code);
+  if (best.bytes === 1) for (let c = 32; c < 256; c++) { const ch = charOf(best, c); if (ch && !rev.has(ch) && (!best.uni || !best.uni.size)) rev.set(ch, c); }
+  best.rev = rev;
+  return best;
+}
+// Can this font draw the character (is the letter really in the embedded subset)?
+function canDraw(f, ch) {
+  const code = f.rev.get(ch);
+  if (code === undefined) return false;
+  if (f.widths.size && f.bytes === 1 && !(f.widths.get(code) > 0)) return false;
+  return true;
+}
+function charWidth(f, ch) { // in text space, for size 1
+  const code = f.rev.get(ch); let w = f.widths.get(code);
+  if (w === undefined || w === null) w = f.stdWidth ? f.stdWidth(code) : f.dw || (f.bytes === 2 ? 1000 : 500);
+  return w * f.scale;
+}
+// Measure a string: letters in the PDF's font where it has them, the rest in the fallback font
+function measure(f, fallback, text, size) {
+  let w = 0;
+  for (const ch of text) w += canDraw(f, ch) ? charWidth(f, ch) * size : fallback.widthOfTextAtSize(ch, size);
+  return w;
+}
+// Draw one line at (x, y): runs the font can draw are written with it; spaces it lacks become gaps;
+// other letters are drawn with the fallback font.
+function writeLine(doc, page, f, fallback, text, x, y, size, color) {
+  const P = window.PDFLib, N = k => P.PDFName.of(k);
+  if (!page.__lvFonts) page.__lvFonts = new Map();
+  let key = page.__lvFonts.get(f);
+  if (!key) {
+    key = page.node.newFontDictionaryKey('LVF');
+    page.node.setFontDictionary(key, f.ref instanceof P.PDFRef ? f.ref : doc.context.register(f.ref));
+    page.__lvFonts.set(f, key);
+  }
+  const hex = code => code.toString(16).toUpperCase().padStart(f.bytes * 2, '0');
+  const spaceGap = fallback.widthOfTextAtSize(' ', size);
+  const parts = []; let cur = null;
+  for (const ch of text) {
+    const own = canDraw(f, ch) || (ch === ' ' && (!cur || cur.own));
+    if (!cur || cur.own !== own) parts.push(cur = { own, text: '' });
+    cur.text += ch;
+  }
+  let at = x;
+  for (const part of parts) {
+    if (part.own) {
+      const items = []; let run = '';
+      for (const ch of part.text) {
+        if (ch === ' ' && !canDraw(f, ' ')) { if (run) { items.push(P.PDFHexString.of(run)); run = ''; } items.push(P.PDFNumber.of(-spaceGap / size * 1000)); }
+        else run += hex(f.rev.get(ch));
+      }
+      if (run) items.push(P.PDFHexString.of(run));
+      page.pushOperators(
+        P.pushGraphicsState(), P.beginText(), P.setFontAndSize(key, size), P.setFillingRgbColor(color[0], color[1], color[2]),
+        P.moveText(at, y), P.PDFOperator.of(P.PDFOperatorNames.ShowTextAdjusted, [doc.context.obj(items)]), P.endText(), P.popGraphicsState());
+      at += measure(f, fallback, part.text, size);
+    } else {
+      page.drawText(part.text, { x: at, y, size, font: fallback, color: P.rgb(color[0], color[1], color[2]) });
+      at += fallback.widthOfTextAtSize(part.text, size);
+    }
+  }
+}
+
+window.LVPdfText = { strip, readPage, tokenize, fontAt, measure, writeLine, canDraw };
 })();

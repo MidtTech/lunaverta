@@ -109,6 +109,8 @@ window.LV_STR.no = {
   'opt.pdfq.small': 'Liten fil',
   'opt.ocr': 'OCR-språk',
   'opt.ocr.auto': 'Samme som siden',
+  'blk.rewrite': 'Skriv om',
+  'blk.rewriteTip': 'Endre ordene. De skrives med PDF-ens egen skrift der den har bokstavene; andre bokstaver får nærmeste standardskrift.',
   'ed.paras': 'Flytt tekst',
   'tip.paras': 'Gjør et avsnitt til en boks du kan skrive om, endre størrelse på og flytte, også til en annen side',
   'ed.parasHint': 'Klikk på et avsnitt, eller dra en ramme over linjene du vil ha. Skriv det så om, flytt det i håndtaket, eller dra i høyre kant for å endre bredden.',

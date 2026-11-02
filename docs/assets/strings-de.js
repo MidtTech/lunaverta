@@ -109,6 +109,8 @@ window.LV_STR.de = {
   'opt.pdfq.small': 'Kleine Datei',
   'opt.ocr': 'OCR-Sprache',
   'opt.ocr.auto': 'Wie die Seite',
+  'blk.rewrite': 'Umschreiben',
+  'blk.rewriteTip': 'Wörter ändern. Sie werden in der eigenen Schrift des PDFs gesetzt, soweit sie die Buchstaben enthält; andere Buchstaben erhalten die nächstliegende Standardschrift.',
   'ed.paras': 'Text verschieben',
   'tip.paras': 'Einen Absatz in ein Feld verwandeln, das du umschreiben, in der Größe ändern und verschieben kannst, auch auf eine andere Seite',
   'ed.parasHint': 'Klicke auf einen Absatz oder zieh einen Rahmen über die gewünschten Zeilen. Schreib ihn dann um, verschieb ihn am Griff oder zieh am rechten Rand, um die Breite zu ändern.',

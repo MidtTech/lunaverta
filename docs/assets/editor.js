@@ -633,6 +633,8 @@ function textBox(t, vp, layer, rot) {
 // A paragraph (or the lines inside a dragged frame) becomes a box: its letters are
 // taken out of the page (as with Edit text), and the text is written again on saving,
 // wrapped to the box's width, wherever the box now is, on this page or another.
+// Pictures of the text as it was drawn, by box id (kept out of the undo history to keep it small)
+const SNAPS = new Map();
 function groupParas(runs) {
   const rs = runs.slice().sort((a, b) => b.y - a.y || a.x - b.x), paras = [];
   for (const r of rs) {
@@ -714,6 +716,8 @@ function makeBlock(v, runs) {
   const [x1, y1, x2, y2] = vp.convertToViewportRectangle([first.x, first.y - first.size * .25, first.x + first.w, first.y + first.size * .95]);
   const c = sampleColours(canvas, dpr, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
   const font = fontStyle(page, first.fontName, v.paraStyles || {});
+  let cssName = ''; // e.g. "ABCDEF+Georgia-Bold" → "Georgia", to show the box in the same font when the computer has it
+  try { const fo = page.commonObjs.has(first.fontName) && page.commonObjs.get(first.fontName); cssName = String((fo && fo.name) || '').replace(/^[A-Z]{6}\+/, '').split(/[-,]/)[0].replace(/(PS)?MT$|PS$/, '').replace(/([a-z])([A-Z])/g, '$1 $2').trim(); } catch (e) {}
   for (const r of runs) {
     const key = `${pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
     S.edits = S.edits.filter(e => e.key !== key);
@@ -722,8 +726,18 @@ function makeBlock(v, runs) {
   const size = first.size, gaps = rows.slice(1).map((w, i) => rows[i].y - w.y);
   const lh = gaps.length ? Math.min(size * 1.8, Math.max(size * 1.05, gaps.reduce((a, b) => a + b, 0) / gaps.length)) : size * 1.2;
   const x = Math.min(...runs.map(r => r.x)), right = Math.max(...runs.map(r => r.x + r.w));
-  S.blocks.push({ id, pageId: pg.id, x, top: Math.max(...runs.map(r => r.y)) + size * .95, w: Math.max(right - x + size * .5, size * 4), size, lh: lh / size, text, font, ink: c.ink });
-  S.dirty = true; v.job++; fillLayer(v).then(() => { const ta = v.layer.querySelector(`.ed-block[data-id="${id}"] textarea`); if (ta) ta.focus(); });
+  // The text exactly as it is drawn (its own font, size and colour): this area of the page moves as it is,
+  // until the words themselves are changed.
+  const src = { doc: pg.doc, index: pg.index, x1: x - 1, x2: right + 1, y1: Math.min(...runs.map(r => r.y - r.size * .3)), y2: Math.max(...runs.map(r => r.y + r.size * 1.0)) };
+  const [sx1, sy1, sx2, sy2] = vp.convertToViewportRectangle([src.x1, src.y1, src.x2, src.y2]);
+  const cx = Math.min(sx1, sx2) * dpr, cy = Math.min(sy1, sy2) * dpr, cw = Math.abs(sx2 - sx1) * dpr, ch = Math.abs(sy2 - sy1) * dpr;
+  const snap = document.createElement('canvas'); snap.width = Math.max(1, Math.round(cw)); snap.height = Math.max(1, Math.round(ch));
+  snap.getContext('2d').drawImage(canvas, cx, cy, cw, ch, 0, 0, snap.width, snap.height);
+  SNAPS.set(id, snap.toDataURL('image/png'));
+  S.blocks.push({ id, pageId: pg.id, x: src.x1, top: src.y2, w: src.x2 - src.x1, h: src.y2 - src.y1, src, retype: false, size, lh: lh / size, text, orig: text, font, cssName, ink: c.ink,
+    // one line stays one line; centred text stays centred
+    single: rows.length === 1, align: Math.abs((x + right) / 2 - (page.view[0] + page.view[2]) / 2) < size * 1.5 && right - x < (page.view[2] - page.view[0]) * .8 ? 'center' : 'left', cx: (x + right) / 2 });
+  S.dirty = true; v.job++; fillLayer(v).then(() => { const el = v.layer.querySelector(`.ed-block[data-id="${id}"]`); if (el) el.focus(); });
   updateFinish();
 }
 function refreshPage(id) { const o = S.pv && S.pv.views.get(id); if (o && o.drawn) { o.job++; fillLayer(o); } }
@@ -732,29 +746,46 @@ function blockBox(v, b) {
   const el = document.createElement('div');
   el.className = 'ed-block'; el.dataset.id = b.id;
   const live = S.pages.filter(p => !p.deleted);
+  const pic = !b.retype && SNAPS.has(b.id);
+  el.tabIndex = pic ? 0 : -1; el.classList.toggle('ed-block-pic', pic);
+  el.setAttribute('aria-label', T('blk.label'));
   el.innerHTML = `<div class="ed-block-bar">
       <button type="button" class="ed-ico ed-grip2" data-b="move" title="${esc(T('blk.move'))}" aria-label="${esc(T('blk.move'))}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3M21 12l-3-3m3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
-      <button type="button" class="ed-ico" data-b="smaller" title="${esc(T('blk.smaller'))}" aria-label="${esc(T('blk.smaller'))}">A−</button>
+      ${pic ? `<button type="button" class="ed-ico ed-rewrite" data-b="rewrite" title="${esc(T('blk.rewriteTip'))}">✎ ${esc(T('blk.rewrite'))}</button>` : `<button type="button" class="ed-ico" data-b="smaller" title="${esc(T('blk.smaller'))}" aria-label="${esc(T('blk.smaller'))}">A−</button>
       <button type="button" class="ed-ico" data-b="bigger" title="${esc(T('blk.bigger'))}" aria-label="${esc(T('blk.bigger'))}">A+</button>
-      <button type="button" class="ed-ico" data-b="bold" aria-pressed="${!!b.font.bold}" title="${esc(T('blk.bold'))}" aria-label="${esc(T('blk.bold'))}"><b>B</b></button>
+      <button type="button" class="ed-ico" data-b="bold" aria-pressed="${!!b.font.bold}" title="${esc(T('blk.bold'))}" aria-label="${esc(T('blk.bold'))}"><b>B</b></button>`}
       <label class="ed-blk-page" title="${esc(T('blk.toPage'))}"><span class="sr-only">${esc(T('blk.toPage'))}</span><select>${live.map((p, i) => `<option value="${p.id}"${p.id === b.pageId ? ' selected' : ''}>${esc(T('ed.page', { n: i + 1 }))}</option>`).join('')}</select></label>
       <button type="button" class="ed-ico" data-b="restore" title="${esc(T('blk.restore'))}" aria-label="${esc(T('blk.restore'))}">${ICON.undo}</button>
       <button type="button" class="ed-ico" data-b="delete" title="${esc(T('blk.delete'))}" aria-label="${esc(T('blk.delete'))}">${ICON.del}</button>
-    </div><textarea spellcheck="true" aria-label="${esc(T('blk.label'))}"></textarea><span class="ed-block-w" title="${esc(T('blk.width'))}" aria-hidden="true"></span>`;
-  const ta = el.querySelector('textarea');
+    </div>${pic ? `<img class="ed-block-img" alt="" draggable="false" src="${SNAPS.get(b.id)}">` : `<textarea rows="1" spellcheck="true" aria-label="${esc(T('blk.label'))}"></textarea><span class="ed-block-w" title="${esc(T('blk.width'))}" aria-hidden="true"></span>`}`;
+  const ta = el.querySelector('textarea') || el.querySelector('img');
   const style = () => {
     const [vx, vy] = vp.convertToViewportPoint(b.x, b.top);
     Object.assign(el.style, { left: vx + 'px', top: vy + 'px', width: b.w * k + 'px' });
-    Object.assign(ta.style, { fontFamily: CSS_FONT[b.font.family], fontWeight: b.font.bold ? '700' : '400', fontStyle: b.font.italic ? 'italic' : 'normal', fontSize: b.size * k + 'px', lineHeight: b.size * b.lh * k + 'px', color: `rgb(${b.ink})` });
+    if (pic) { ta.style.width = b.w * k + 'px'; ta.style.height = b.h * k + 'px'; return; }
+    Object.assign(ta.style, { fontFamily: (b.cssName && !b.restyled ? `"${b.cssName}", ` : '') + CSS_FONT[b.font.family], fontWeight: b.font.bold ? '700' : '400', fontStyle: b.font.italic ? 'italic' : 'normal', fontSize: b.size * k + 'px', lineHeight: b.size * b.lh * k + 'px', color: `rgb(${b.ink})` });
+    ta.style.textAlign = b.align || 'left';
+    if (b.single && !b.text.includes('\n')) { // grow sideways with the text (around the middle when centred)
+      ta.style.whiteSpace = 'pre';
+      const m = (blockBox.ctx || (blockBox.ctx = document.createElement('canvas').getContext('2d')));
+      m.font = `${ta.style.fontStyle} ${ta.style.fontWeight} ${ta.style.fontSize} ${ta.style.fontFamily}`;
+      const need = m.measureText(b.text).width / k + b.size * .4;
+      if (need > b.w) { b.w = need; if (b.align === 'center' && b.cx) b.x = b.cx - b.w / 2; const [vx] = vp.convertToViewportPoint(b.x, b.top); el.style.left = vx + 'px'; el.style.width = b.w * k + 'px'; }
+    } else ta.style.whiteSpace = '';
     ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px';
   };
-  ta.value = b.text;
-  ta.addEventListener('input', () => { b.text = ta.value; S.dirty = true; style(); });
+  if (!pic) { ta.value = b.text; ta.addEventListener('input', () => { b.text = ta.value; S.dirty = true; style(); }); }
   const bar = el.querySelector('.ed-block-bar');
+  const btn = n => bar.querySelector(`[data-b="${n}"]`) || {};
+  // Rewrite: from here on the text is typed again, in the closest standard font, at the same size
+  btn('rewrite').onclick = () => {
+    b.retype = true; S.dirty = true;
+    const o = S.pv.views.get(b.pageId); if (o) { o.job++; fillLayer(o).then(() => { const t = o.layer.querySelector(`.ed-block[data-id="${b.id}"] textarea`); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }); }
+  };
   bar.addEventListener('pointerdown', e => { if (e.target.closest('[data-b="move"]') === null && e.target.tagName !== 'SELECT') e.preventDefault(); });
-  bar.querySelector('[data-b="smaller"]').onclick = () => { b.size = Math.max(5, Math.round((b.size - 1) * 2) / 2); S.dirty = true; style(); };
-  bar.querySelector('[data-b="bigger"]').onclick = () => { b.size = Math.min(96, Math.round((b.size + 1) * 2) / 2); S.dirty = true; style(); };
-  bar.querySelector('[data-b="bold"]').onclick = e => { b.font = { ...b.font, bold: !b.font.bold }; e.currentTarget.setAttribute('aria-pressed', String(b.font.bold)); S.dirty = true; style(); };
+  btn('smaller').onclick = () => { b.size = Math.max(5, Math.round((b.size - 1) * 2) / 2); S.dirty = true; style(); };
+  btn('bigger').onclick = () => { b.size = Math.min(96, Math.round((b.size + 1) * 2) / 2); S.dirty = true; style(); };
+  btn('bold').onclick = e => { b.font = { ...b.font, bold: !b.font.bold }; b.restyled = true; e.currentTarget.setAttribute('aria-pressed', String(b.font.bold)); S.dirty = true; style(); };
   bar.querySelector('[data-b="restore"]').onclick = () => { S.blocks = S.blocks.filter(x => x !== b); S.edits = S.edits.filter(x => x.block !== b.id); S.dirty = true; renderPage(); };
   bar.querySelector('[data-b="delete"]').onclick = () => { S.blocks = S.blocks.filter(x => x !== b); S.dirty = true; el.remove(); updateFinish(); };
   bar.querySelector('select').onchange = e => moveBlockTo(b, +e.target.value, null);
@@ -788,7 +819,8 @@ function blockBox(v, b) {
     addEventListener('pointermove', move); addEventListener('pointerup', up);
   });
   // drag the right edge to change the width; the text wraps again
-  el.querySelector('.ed-block-w').addEventListener('pointerdown', e => {
+  if (pic) ta.addEventListener('dblclick', () => btn('rewrite').onclick());
+  if (!pic) el.querySelector('.ed-block-w').addEventListener('pointerdown', e => {
     e.preventDefault();
     const x0 = e.clientX, w0 = b.w;
     const move = ev => { b.w = Math.max(b.size * 3, w0 + (ev.clientX - x0) / k); style(); };
@@ -804,22 +836,23 @@ function moveBlockTo(b, pageId, at) {
     const [, , pw, ph] = o.page.view;
     if (at) [b.x, b.top] = at;
     b.x = Math.min(Math.max(o.page.view[0], b.x), pw - Math.min(b.w, pw - o.page.view[0]) );
-    b.top = Math.min(Math.max(o.page.view[1] + b.size, b.top), ph);
+    b.top = Math.min(Math.max(o.page.view[1] + (b.retype || !b.h ? b.size : b.h), b.top), ph);
     if (b.w > pw - b.x) b.w = Math.max(b.size * 3, pw - b.x);
   }
+  if (b.cx !== undefined) b.cx = b.x + b.w / 2;
   b.pageId = pageId; S.dirty = true;
   refreshPage(from); if (pageId !== from) refreshPage(pageId);
   if (pageId !== from && !at) scrollToPage(pageId, true);
   updateFinish();
 }
-// Wrap a box's text to its width with the font it will be written in
-function wrapBlock(b, font, size) {
+// Wrap a box's text to its width, measured with the font(s) it will be written in
+function wrapBlock(b, width, text) {
   const out = [];
-  for (const para of b.text.replace(app().WIN_ANSI, '?').split('\n')) {
+  for (const para of text.split('\n')) {
     let line = '';
     for (const word of para.split(/\s+/).filter(Boolean)) {
       const tryLine = line ? line + ' ' + word : word;
-      if (!line || font.widthOfTextAtSize(tryLine, size) <= b.w) line = tryLine; else { out.push(line); line = word; }
+      if (!line || width(tryLine) <= b.w) line = tryLine; else { out.push(line); line = word; }
     }
     out.push(line);
   }
@@ -2011,7 +2044,14 @@ async function save(opt) {
     const fontFor = async f => { const n = STD[f.family][(f.bold ? 1 : 0) + (f.italic ? 2 : 0)]; return fonts[n] || (fonts[n] = await out.embedFont(StandardFonts[n])); };
     const col = c => rgb(c[0] / 255, c[1] / 255, c[2] / 255);
     let covered = 0;
-    const sigCache = {}, extraFonts = {};
+    const sigCache = {}, extraFonts = {}, snapDocs = {};
+    // rewritten boxes are typed in the font their text had, read from the source page before it changes
+    const ownFont = new Map();
+    for (const b of S.blocks) {
+      if (!b.retype || !b.src || b.restyled) continue;
+      const from = final.find(e => e.pg.doc === b.src.doc && e.pg.index === b.src.index);
+      if (from) { try { ownFont.set(b.id, await window.LVPdfText.fontAt(out, from.page, [b.src.x1, b.src.y1, b.src.x2, b.src.y2])); } catch (e) { console.warn('Font not reusable', e); } }
+    }
     const flatten = [];
     for (const [pi, { pg, page }] of final.entries()) {
       const turn = (page.getRotation().angle + pg.rotate) % 360;
@@ -2068,8 +2108,25 @@ async function save(opt) {
       }
       await drawExtras(out, page, pg, pi, final.length, extraFonts);
       for (const b of S.blocks.filter(x => x.pageId === pg.id && x.text.trim())) {
-        const f = await fontFor(b.font);
-        wrapBlock(b, f, b.size).forEach((line, i) => { if (line) page.drawText(line, { x: b.x, y: b.top - b.size * .9 - i * b.size * b.lh, size: b.size, font: f, color: col(b.ink) }); });
+        if (!b.retype && b.src) { // the original drawing of the text, moved as it is (same font, size and colour)
+          snapDocs[b.src.doc] = snapDocs[b.src.doc] || await app().loadPdfBytes(new Uint8Array(await S.docs[b.src.doc].file.arrayBuffer()));
+          const emb = await out.embedPage(snapDocs[b.src.doc].getPage(b.src.index), { left: b.src.x1, bottom: b.src.y1, right: b.src.x2, top: b.src.y2 });
+          page.drawPage(emb, { x: b.x, y: b.top - (b.src.y2 - b.src.y1) });
+          continue;
+        }
+        const f = await fontFor(b.font), own = ownFont.get(b.id), L = window.LVPdfText;
+        // letters neither font can draw become "?"
+        const notAnsi = new RegExp(app().WIN_ANSI.source);
+        const text = own ? [...b.text].map(ch => ch === '\n' || L.canDraw(own, ch) || !notAnsi.test(ch) ? ch : '?').join('') : b.text.replace(app().WIN_ANSI, '?');
+        const width = own ? t => L.measure(own, f, t, b.size) : t => f.widthOfTextAtSize(t, b.size);
+        const lines = b.single && !text.includes('\n') ? [text] : wrapBlock(b, width, text);
+        lines.forEach((line, i) => {
+          if (!line) return;
+          const y = b.top - b.size * .9 - i * b.size * b.lh;
+          const x = b.align === 'center' ? (b.single && b.cx ? b.cx : b.x + b.w / 2) - width(line) / 2 : b.x;
+          if (own) L.writeLine(out, page, own, f, line, x, y, b.size, b.ink.map(v => v / 255));
+          else page.drawText(line, { x, y, size: b.size, font: f, color: col(b.ink) });
+        });
       }
       for (const t of S.texts.filter(x => x.pageId === pg.id && x.text.trim())) {
         page.drawText(t.text.replace(app().WIN_ANSI, '?'), { x: t.x, y: t.y, size: t.size, font, color: rgb(0, 0, 0), lineHeight: t.size * 1.2, rotate: degrees(turn) });

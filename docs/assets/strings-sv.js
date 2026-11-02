@@ -109,6 +109,8 @@ window.LV_STR.sv = {
   'opt.pdfq.small': 'Liten fil',
   'opt.ocr': 'OCR-språk',
   'opt.ocr.auto': 'Samma som sidan',
+  'blk.rewrite': 'Skriv om',
+  'blk.rewriteTip': 'Ändra orden. De skrivs med PDF:ens eget typsnitt där det har bokstäverna; andra bokstäver får närmaste standardtypsnitt.',
   'ed.paras': 'Flytta text',
   'tip.paras': 'Gör ett stycke till en ruta som du kan skriva om, ändra storlek på och flytta, även till en annan sida',
   'ed.parasHint': 'Klicka på ett stycke, eller dra en ram över raderna du vill ha. Skriv sedan om det, flytta det i handtaget eller dra i högerkanten för att ändra bredden.',
