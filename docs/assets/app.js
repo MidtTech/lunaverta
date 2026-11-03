@@ -3189,6 +3189,11 @@ async function openQR() {
         <label class="pw-show"><input type="checkbox" id="qrHidden"> ${esc(T('qr.hidden'))}</label></div>
       <div data-q="contact" hidden>${f('qrName', 'qr.name')}${f('qrPhone', 'qr.phone', 'tel')}${f('qrMail', 'qr.email', 'email')}${f('qrOrg', 'qr.org')}${f('qrWeb', 'qr.web', 'url')}</div>
       <label class="qr-color">${esc(T('qr.color'))}<input id="qrColor" type="color" value="#151a2d"></label>
+      <div class="qr-logo"><span class="qr-logo-lbl">${esc(T('qr.logo'))}</span>
+        <span class="qr-logo-row"><img id="qrLogoPrev" alt="" hidden><label class="btn sm qr-logo-pick"><input id="qrLogoFile" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif" class="sr-only"><span id="qrLogoPickTxt">${esc(T('qr.logoAdd'))}</span></label>
+          <button type="button" class="btn sm" id="qrLogoDel" hidden>${esc(T('qr.logoDel'))}</button>
+          <label class="qr-logo-size" hidden>${esc(T('qr.logoSize'))} <select id="qrLogoSize"><option value=".16">${esc(T('qr.logoSmall'))}</option><option value=".22" selected>${esc(T('qr.logoMedium'))}</option><option value=".27">${esc(T('qr.logoLarge'))}</option></select></label></span>
+        <small class="pw-note" id="qrLogoNote" hidden>${esc(T('qr.logoNote'))}</small></div>
       <p class="pw-note">${esc(T('qr.note'))}</p>
     </div><div class="qr-out"><canvas id="qrCanvas" width="512" height="512" aria-label="QR"></canvas><p class="qr-msg" id="qrMsg" aria-live="polite"></p>
       <div class="pw-btns"><button type="button" class="btn sm" id="qrSvg">${esc(T('qr.svg'))}</button><button type="button" class="btn sm primary" id="qrPng">${esc(T('qr.png'))}</button></div></div></div>`;
@@ -3204,32 +3209,74 @@ async function openQR() {
       $q('qrOrg').value && `ORG:${escV($q('qrOrg').value)}`, $q('qrPhone').value && `TEL;TYPE=CELL:${escV($q('qrPhone').value)}`,
       $q('qrMail').value && `EMAIL:${escV($q('qrMail').value)}`, $q('qrWeb').value && `URL:${escV($q('qrWeb').value)}`, 'END:VCARD'].filter(Boolean).join('\r\n');
   };
-  let code = null;
+  let code = null, logo = null; // logo: { img, w, h, png (data URL for the SVG) }
+  // Draws the code into a square of `size` pixels; with a logo, the modules under it are left out
+  // and the logo sits on a white rounded patch (high error correction keeps the code readable).
+  const paint = (ctx, size) => {
+    const n = code.getModuleCount(), cell = size / (n + 8), off = 4 * cell;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
+    let hole = null;
+    if (logo) { const L = Math.max(5, Math.round(n * +$q('qrLogoSize').value) | 1), s0 = (n - L) / 2; hole = [Math.floor(s0), Math.floor(s0) + L]; }
+    ctx.fillStyle = $q('qrColor').value;
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (hole && r >= hole[0] && r < hole[1] && c >= hole[0] && c < hole[1]) continue;
+      if (code.isDark(r, c)) ctx.fillRect(Math.floor(off + c * cell), Math.floor(off + r * cell), Math.ceil(cell), Math.ceil(cell));
+    }
+    if (hole) {
+      const x0 = off + hole[0] * cell, w = (hole[1] - hole[0]) * cell, pad = cell * .6;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); (ctx.roundRect ? ctx.roundRect(x0, x0, w, w, cell) : ctx.rect(x0, x0, w, w)); ctx.fill();
+      const room = w - 2 * pad, k = Math.min(room / logo.w, room / logo.h), lw = logo.w * k, lh = logo.h * k;
+      ctx.drawImage(logo.img, x0 + (w - lw) / 2, x0 + (w - lh) / 2, lw, lh);
+    }
+    return { n, hole };
+  };
   const draw = () => {
     box.querySelectorAll('[data-q]').forEach(d => { d.hidden = d.dataset.q !== type(); });
     const text = payload(), cv = $q('qrCanvas'), ctx = cv.getContext('2d'), msg = $q('qrMsg');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); code = null;
     if (!text) { msg.textContent = T('qr.empty'); return; }
-    try { const q = qrcode(0, 'M'); q.addData(text, 'Byte'); q.make(); code = q; } catch (e) { msg.textContent = T('qr.tooLong'); return; }
+    try { const q = qrcode(0, logo ? 'H' : 'M'); q.addData(text, 'Byte'); q.make(); code = q; } catch (e) { msg.textContent = T('qr.tooLong'); return; }
     msg.textContent = '';
-    const n = code.getModuleCount(), cell = Math.floor(cv.width / (n + 8)), off = Math.floor((cv.width - cell * n) / 2);
-    ctx.fillStyle = $q('qrColor').value;
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (code.isDark(r, c)) ctx.fillRect(off + c * cell, off + r * cell, cell, cell);
+    paint(ctx, cv.width);
   };
-  box.addEventListener('input', draw); box.addEventListener('change', draw);
+  box.addEventListener('input', e => { if (e.target.id !== 'qrLogoFile') draw(); }); box.addEventListener('change', e => { if (e.target.id !== 'qrLogoFile') draw(); });
+  const showLogo = () => {
+    $q('qrLogoPrev').hidden = $q('qrLogoDel').hidden = $q('qrLogoNote').hidden = !logo;
+    box.querySelector('.qr-logo-size').hidden = !logo;
+    $q('qrLogoPickTxt').textContent = T(logo ? 'qr.logoChange' : 'qr.logoAdd');
+    if (logo) $q('qrLogoPrev').src = logo.png;
+  };
+  $q('qrLogoFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const { img, w, h } = await decodeImage(f);
+      // kept as a PNG of sensible size: drawn on the canvas, and embedded as-is in the SVG
+      const c = drawToCanvas(img, w, h, 600), png = c.toDataURL('image/png');
+      logo = { img: c, w: c.width, h: c.height, png };
+    } catch (err) { toast(T('qr.logoBad')); return; }
+    showLogo(); draw();
+  });
+  $q('qrLogoDel').onclick = () => { logo = null; showLogo(); draw(); };
   const fileBase = () => 'qr-' + (type() === 'wifi' ? 'wifi' : type() === 'contact' ? 'contact' : 'code');
   $q('qrPng').onclick = async () => {
     if (!code) return draw();
-    const n = code.getModuleCount(), cell = Math.max(8, Math.ceil(1024 / (n + 8))), size = cell * (n + 8), c = document.createElement('canvas'); c.width = c.height = size;
-    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, size, size); x.fillStyle = $q('qrColor').value;
-    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (code.isDark(r, k)) x.fillRect((k + 4) * cell, (r + 4) * cell, cell, cell);
+    const n = code.getModuleCount(), size = Math.max(8, Math.ceil(1024 / (n + 8))) * (n + 8), c = document.createElement('canvas'); c.width = c.height = size;
+    paint(c.getContext('2d'), size);
     download(fileBase() + '.png', await canvasToBlob(c, 'image/png'));
   };
   $q('qrSvg').onclick = () => {
     if (!code) return draw();
-    const n = code.getModuleCount(); let d = '';
-    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (code.isDark(r, k)) d += `M${k + 4} ${r + 4}h1v1h-1z`;
-    download(fileBase() + '.svg', new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 8} ${n + 8}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="${$q('qrColor').value}"/></svg>`], { type: 'image/svg+xml' }));
+    const n = code.getModuleCount(); let d = '', hole = null, extra = '';
+    if (logo) {
+      const L = Math.max(5, Math.round(n * +$q('qrLogoSize').value) | 1), s0 = Math.floor((n - L) / 2); hole = [s0, s0 + L];
+      const x0 = s0 + 4, pad = .6, room = L - 2 * pad, k = Math.min(room / logo.w, room / logo.h), lw = logo.w * k, lh = logo.h * k;
+      extra = `<rect x="${x0}" y="${x0}" width="${L}" height="${L}" rx="1" fill="#fff"/><image href="${logo.png}" x="${(x0 + (L - lw) / 2).toFixed(3)}" y="${(x0 + (L - lh) / 2).toFixed(3)}" width="${lw.toFixed(3)}" height="${lh.toFixed(3)}" preserveAspectRatio="xMidYMid meet"/>`;
+    }
+    for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) {
+      if (hole && r >= hole[0] && r < hole[1] && k >= hole[0] && k < hole[1]) continue;
+      if (code.isDark(r, k)) d += `M${k + 4} ${r + 4}h1v1h-1z`;
+    }
+    download(fileBase() + '.svg', new Blob([`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 8} ${n + 8}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="${$q('qrColor').value}"/>${extra}</svg>`], { type: 'image/svg+xml' }));
   };
   draw();
 }

@@ -466,6 +466,12 @@ await test('QR code generator makes a code for a link and for Wi-Fi', async () =
   await p.click('label:has(input[value="wifi"])'); await p.fill('#qrSsid', 'Home'); await p.fill('#qrPass', 'secret');
   [dl] = await Promise.all([p.waitForEvent('download'), p.click('#qrSvg')]);
   const svg = (await readFile(await dl.path())).toString(); assert(dl.suggestedFilename() === 'qr-wifi.svg' && /<path d="M/.test(svg), 'svg');
+  // a company logo in the middle: shown, embedded in the SVG, and removable
+  await p.setInputFiles('#qrLogoFile', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'logo.png'));
+  await p.waitForSelector('#qrLogoDel:not([hidden])');
+  [dl] = await Promise.all([p.waitForEvent('download'), p.click('#qrSvg')]);
+  assert(/<image href="data:image\/png;base64,/.test((await readFile(await dl.path())).toString()), 'logo not in SVG');
+  await p.click('#qrLogoDel'); assert(await p.isHidden('#qrLogoPrev'), 'logo not removed');
   await done(p);
 });
 

@@ -950,3 +950,12 @@ main[tabindex="-1"]:focus { outline: none; }
 .qr-out canvas { width: 100%; max-width: 300px; height: auto; aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
 .qr-msg { margin: 0; font-size: 14px; color: var(--muted); min-height: 1.4em; text-align: center; }
 .qr-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px; min-width: 0; }
+.qr-logo { display: grid; gap: 6px; }
+.qr-logo-lbl { font-size: 14px; font-weight: 500; }
+.qr-logo-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.qr-logo-row img { width: 36px; height: 36px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 2px; }
+.qr-logo-pick { cursor: pointer; }
+.qr-logo-pick:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.qr-logo-size { display: inline-flex !important; align-items: center; gap: 6px !important; font-weight: 400 !important; }
+.qr-logo-size[hidden] { display: none !important; }
+.qr-logo-size select { width: auto !important; padding: 6px 8px !important; }
