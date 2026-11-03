@@ -78,10 +78,10 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
 }
 // All tools, grouped by what they work on, so the list can be scanned.
 const TOOL_GROUPS = [
-  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'compare-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
-  ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location']],
-  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
-  ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['video-to-gif', 'video-to-mp3']]
+  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'make-fillable-pdf', 'redact-pdf', 'remove-prices', 'merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'rotate-pdf', 'compress-pdf', 'page-numbers', 'watermark-pdf', 'protect-pdf', 'unlock-pdf', 'ocr', 'clean-pdf', 'compare-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'pdf-to-text']],
+  ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location', 'qr-code-generator']],
+  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'powerpoint-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
+  ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['compress-video', 'video-to-gif', 'video-to-mp3']]
 ];
 function toolsSection(lang, currentId) {
   const L = LABELS[lang];
@@ -161,6 +161,16 @@ ${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id
   </nav>`;
 }
 
+const RECIPE_IDS = [['photos-pdf'], ['share-photos'], ['pdf-send'], ['scan-search'], ['docs-one-pdf']];
+function recipesSection(lang) {
+  return `\n  <section class="recipes" aria-labelledby="h-rec">
+    <h2 id="h-rec"><span data-i18n="recipe.h">${esc(t(lang, 'recipe.h'))}</span> <small data-i18n="recipe.sub">${esc(t(lang, 'recipe.sub'))}</small></h2>
+    <ul class="rec-grid">
+${RECIPE_IDS.map(([id]) => `      <li><button type="button" data-recipe="${id}"><b data-i18n="recipe.${id}.t">${esc(t(lang, 'recipe.' + id + '.t'))}</b><span data-i18n="recipe.${id}.d">${esc(t(lang, 'recipe.' + id + '.d'))}</span></button></li>`).join('\n')}
+    </ul>
+  </section>`;
+}
+
 // ---------- structured data ----------
 const org = { '@type': 'Organization', '@id': SITE + '/#org', name: COMPANY.name, url: COMPANY.url, email: COMPANY.email, vatID: 'DK' + COMPANY.cvr,
   address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
@@ -215,7 +225,7 @@ function render(lang, page) {
     HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
     // the coffee button (MobilePay) on every page; the English text says it only works in Denmark
     COFFEE: `    <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Buy us a coffee</span></button>\n`,
-    POPULAR: page.tool ? '' : popularSection(lang),
+    POPULAR: page.tool ? '' : popularSection(lang), RECIPES: page.tool ? '' : recipesSection(lang),
     REFSUM: esc(t(lang, 'ref.sum', { n: new Set(Object.values(KINDS).flatMap(k => k.exts)).size, m: new Set(Object.values(KINDS).flatMap(k => k.targets)).size })),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
     GUIDES_URL: path(lang, GUIDE_INDEX[lang].slug), NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'

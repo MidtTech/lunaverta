@@ -21,6 +21,11 @@ const VENDOR = {
   'pdf-lib.min.js': nm('pdf-lib/dist/pdf-lib.min.js'),
   'qpdf.js': nm('@neslinesli93/qpdf-wasm/dist/qpdf.js'),
   'qpdf.wasm': nm('@neslinesli93/qpdf-wasm/dist/qpdf.wasm'),
+  // video compression: reading (MP4Box) and writing (mp4-muxer) MP4 files; the browser's own video encoder does the work
+  'mp4box.all.min.js': nm('mp4box/dist/mp4box.all.min.js'),
+  'mp4-muxer.js': nm('mp4-muxer/build/mp4-muxer.js'),
+  // QR codes
+  'qrcode.js': nm('qrcode-generator/qrcode.js'),
   // OCR (text recognition): tesseract.js, its engine and language data (Danish, English, Swedish, Norwegian, German)
   'tesseract/tesseract.min.js': nm('tesseract.js/dist/tesseract.min.js'),
   'tesseract/worker.min.js': nm('tesseract.js/dist/worker.min.js'),

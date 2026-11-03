@@ -43,6 +43,10 @@ Key facts:
 - [CSV to Excel](https://lunaverta.com/csv-to-excel/): Convert CSV and JSON files to Excel (XLSX) in your browser. Free and private: nothing is uploaded.
 - [Excel to PDF](https://lunaverta.com/excel-to-pdf/): Turn Excel, CSV and ODS spreadsheets into a tidy PDF with real, selectable text. Free and private: nothing is uploaded.
 - [PDF to Excel](https://lunaverta.com/pdf-to-excel/): Pull the tables out of a PDF into an Excel workbook, with amounts as real numbers. Free and private: the PDF never leaves your device.
+- [Compress video](https://lunaverta.com/compress-video/): Make phone videos (MP4, MOV) much smaller in your browser, for e-mail, chat or saving space. Free and private: the video never leaves your device.
+- [PowerPoint to PDF](https://lunaverta.com/powerpoint-to-pdf/): Turn PowerPoint slides (.pptx) into a PDF in your browser, one slide per page. Free and private: nothing is uploaded.
+- [Make a fillable PDF](https://lunaverta.com/make-fillable-pdf/): Turn any PDF into a form others can fill in: add text lines, text boxes and tick boxes. Free and private: nothing is uploaded.
+- [QR code generator](https://lunaverta.com/qr-code-generator/): Make QR codes for links, Wi-Fi and contact cards. Free, no tracking and no expiry: the code holds your text itself. Save as PNG or SVG.
 - [Video to GIF](https://lunaverta.com/video-to-gif/): Make an animated GIF from the first seconds of a video (MP4, WebM, MOV) in your browser. Free and private, no upload.
 - [Video to MP3](https://lunaverta.com/video-to-mp3/): Extract the sound from a video, or convert WAV, M4A and other audio to MP3 in your browser. Free and private, no upload.
 - [PDF to Word](https://lunaverta.com/pdf-to-word/): Turn a PDF into a Word document you can edit, keeping fonts, colours, paragraphs and pictures. Free and private: your PDF is never uploaded.
@@ -83,6 +87,10 @@ Key facts:
 - [CSV til Excel](https://lunaverta.com/da/csv-til-excel/): Konvertér CSV- og JSON-filer til Excel (XLSX) i din browser. Gratis og privat: intet bliver uploadet.
 - [Excel til PDF](https://lunaverta.com/da/excel-til-pdf/): Lav Excel-, CSV- og ODS-regneark om til en pæn PDF med rigtig, markérbar tekst. Gratis og privat: intet bliver uploadet.
 - [PDF til Excel](https://lunaverta.com/da/pdf-til-excel/): Få tabellerne ud af en PDF og ind i en Excel-projektmappe, med beløb som rigtige tal. Gratis og privat: PDF'en forlader aldrig din enhed.
+- [Komprimér video](https://lunaverta.com/da/komprimer-video/): Gør mobilvideoer (MP4, MOV) meget mindre i din browser, til mail, chat eller for at spare plads. Gratis og privat: videoen forlader aldrig din enhed.
+- [PowerPoint til PDF](https://lunaverta.com/da/powerpoint-til-pdf/): Lav PowerPoint-dias (.pptx) om til en PDF i din browser, ét dias pr. side. Gratis og privat: intet bliver uploadet.
+- [Lav en udfyldelig PDF](https://lunaverta.com/da/lav-udfyldelig-pdf/): Lav enhver PDF om til en formular, andre kan udfylde: tilføj tekstlinjer, tekstfelter og afkrydsningsfelter. Gratis og privat: intet bliver uploadet.
+- [QR-kode-generator](https://lunaverta.com/da/qr-kode-generator/): Lav QR-koder til links, wi-fi og kontaktkort. Gratis, uden sporing og uden udløb: koden indeholder selve din tekst. Gem som PNG eller SVG.
 - [Video til GIF](https://lunaverta.com/da/video-til-gif/): Lav en animeret GIF af de første sekunder af en video (MP4, WebM, MOV) i din browser. Gratis og privat, uden upload.
 - [Video til MP3](https://lunaverta.com/da/video-til-mp3/): Træk lyden ud af en video, eller konvertér WAV, M4A og anden lyd til MP3 i din browser. Gratis og privat, uden upload.
 - [PDF til Word](https://lunaverta.com/da/pdf-til-word/): Lav en PDF om til et Word-dokument, du kan redigere, med skrifttyper, farver, afsnit og billeder. Gratis og privat: din PDF bliver aldrig uploadet.
@@ -123,6 +131,10 @@ Key facts:
 - [CSV in Excel](https://lunaverta.com/de/csv-in-excel/): CSV- und JSON-Dateien im Browser in Excel (XLSX) umwandeln. Kostenlos und privat: Nichts wird hochgeladen.
 - [Excel in PDF](https://lunaverta.com/de/excel-in-pdf/): Wandle Excel-, CSV- und ODS-Tabellen in ein ordentliches PDF mit echtem, markierbarem Text um. Kostenlos und privat: Nichts wird hochgeladen.
 - [PDF in Excel](https://lunaverta.com/de/pdf-in-excel/): Hol die Tabellen aus einem PDF in eine Excel-Mappe, mit Beträgen als echten Zahlen. Kostenlos und privat: Das PDF verlässt nie dein Gerät.
+- [Video komprimieren](https://lunaverta.com/de/video-komprimieren/): Mach Handyvideos (MP4, MOV) im Browser viel kleiner, für E-Mail, Chat oder mehr Speicherplatz. Kostenlos und privat: Das Video verlässt nie dein Gerät.
+- [PowerPoint in PDF](https://lunaverta.com/de/powerpoint-in-pdf/): Wandle PowerPoint-Folien (.pptx) im Browser in ein PDF um, eine Folie pro Seite. Kostenlos und privat: Nichts wird hochgeladen.
+- [Ausfüllbares PDF erstellen](https://lunaverta.com/de/ausfuellbares-pdf-erstellen/): Mach aus jedem PDF ein Formular, das andere ausfüllen können: Textzeilen, Textfelder und Kontrollkästchen hinzufügen. Kostenlos und privat: Nichts wird hochgeladen.
+- [QR-Code-Generator](https://lunaverta.com/de/qr-code-generator/): Erstelle QR-Codes für Links, WLAN und Visitenkarten. Kostenlos, ohne Tracking und ohne Ablaufdatum: Der Code enthält deinen Text selbst. Als PNG oder SVG speichern.
 - [Video in GIF](https://lunaverta.com/de/video-in-gif/): Ein animiertes GIF aus den ersten Sekunden eines Videos (MP4, WebM, MOV) im Browser erstellen. Kostenlos und privat, ohne Upload.
 - [Video in MP3](https://lunaverta.com/de/video-in-mp3/): Den Ton aus einem Video holen oder WAV, M4A und andere Audiodateien im Browser in MP3 umwandeln. Kostenlos und privat, ohne Upload.
 - [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Ein PDF in ein bearbeitbares Word-Dokument umwandeln, mit Schriften, Farben, Absätzen und Bildern. Kostenlos und privat: Dein PDF wird nie hochgeladen.
@@ -163,6 +175,10 @@ Key facts:
 - [CSV til Excel](https://lunaverta.com/no/csv-til-excel/): Konverter CSV- og JSON-filer til Excel (XLSX) i nettleseren. Gratis og privat: ingenting lastes opp.
 - [Excel til PDF](https://lunaverta.com/no/excel-til-pdf/): Gjør Excel-, CSV- og ODS-regneark om til en pen PDF med ekte, markerbar tekst. Gratis og privat: ingenting lastes opp.
 - [PDF til Excel](https://lunaverta.com/no/pdf-til-excel/): Få tabellene ut av en PDF og inn i en Excel-arbeidsbok, med beløp som ekte tall. Gratis og privat: PDF-en forlater aldri enheten din.
+- [Komprimer video](https://lunaverta.com/no/komprimer-video/): Gjør mobilvideoer (MP4, MOV) mye mindre i nettleseren, for e-post, chat eller for å spare plass. Gratis og privat: videoen forlater aldri enheten din.
+- [PowerPoint til PDF](https://lunaverta.com/no/powerpoint-til-pdf/): Gjør PowerPoint-lysbilder (.pptx) om til en PDF i nettleseren, ett lysbilde per side. Gratis og privat: ingenting lastes opp.
+- [Lag en utfyllbar PDF](https://lunaverta.com/no/lag-utfyllbar-pdf/): Gjør hvilken som helst PDF om til et skjema andre kan fylle ut: legg til tekstlinjer, tekstfelt og avkrysningsbokser. Gratis og privat: ingenting lastes opp.
+- [QR-kodegenerator](https://lunaverta.com/no/qr-kode-generator/): Lag QR-koder for lenker, wifi og kontaktkort. Gratis, uten sporing og uten utløp: koden inneholder selve teksten. Lagre som PNG eller SVG.
 - [Video til GIF](https://lunaverta.com/no/video-til-gif/): Lag en animert GIF av de første sekundene i en video (MP4, WebM, MOV) i nettleseren. Gratis og privat, uten opplasting.
 - [Video til MP3](https://lunaverta.com/no/video-til-mp3/): Hent ut lyden fra en video, eller konverter WAV, M4A og annen lyd til MP3 i nettleseren. Gratis og privat, uten opplasting.
 - [PDF til Word](https://lunaverta.com/no/pdf-til-word/): Gjør en PDF om til et Word-dokument du kan redigere, med skrifter, farger, avsnitt og bilder. Gratis og privat: PDF-en din lastes aldri opp.
@@ -203,6 +219,10 @@ Key facts:
 - [CSV till Excel](https://lunaverta.com/sv/csv-till-excel/): Konvertera CSV- och JSON-filer till Excel (XLSX) i webbläsaren. Gratis och privat: inget laddas upp.
 - [Excel till PDF](https://lunaverta.com/sv/excel-till-pdf/): Gör om Excel-, CSV- och ODS-kalkylark till en snygg PDF med riktig, markerbar text. Gratis och privat: inget laddas upp.
 - [PDF till Excel](https://lunaverta.com/sv/pdf-till-excel/): Få ut tabellerna ur en PDF till en Excel-arbetsbok, med belopp som riktiga tal. Gratis och privat: PDF:en lämnar aldrig din enhet.
+- [Komprimera video](https://lunaverta.com/sv/komprimera-video/): Gör mobilvideor (MP4, MOV) mycket mindre i webbläsaren, för e-post, chatt eller för att spara plats. Gratis och privat: videon lämnar aldrig din enhet.
+- [PowerPoint till PDF](https://lunaverta.com/sv/powerpoint-till-pdf/): Gör om PowerPoint-bilder (.pptx) till en PDF i webbläsaren, en bild per sida. Gratis och privat: inget laddas upp.
+- [Gör en ifyllbar PDF](https://lunaverta.com/sv/gor-ifyllbar-pdf/): Gör om valfri PDF till ett formulär som andra kan fylla i: lägg till textrader, textrutor och kryssrutor. Gratis och privat: inget laddas upp.
+- [QR-kodgenerator](https://lunaverta.com/sv/qr-kod-generator/): Gör QR-koder för länkar, wifi och kontaktkort. Gratis, utan spårning och utan utgångsdatum: koden innehåller själva texten. Spara som PNG eller SVG.
 - [Video till GIF](https://lunaverta.com/sv/video-till-gif/): Gör en animerad GIF av de första sekunderna i en video (MP4, WebM, MOV) i webbläsaren. Gratis och privat, utan uppladdning.
 - [Video till MP3](https://lunaverta.com/sv/video-till-mp3/): Ta ut ljudet ur en video, eller konvertera WAV, M4A och annat ljud till MP3 i webbläsaren. Gratis och privat, utan uppladdning.
 - [PDF till Word](https://lunaverta.com/sv/pdf-till-word/): Gör om en PDF till ett Word-dokument som du kan redigera, med typsnitt, färger, stycken och bilder. Gratis och privat: din PDF laddas aldrig upp.

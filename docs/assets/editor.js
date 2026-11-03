@@ -175,8 +175,8 @@ let renderSeq = 0;
 // undo), from scratch otherwise.
 // Only one tool shows as chosen at a time. "Remove sensitive" counts as chosen
 // while its panel is open and no other tool is on, because clicks on the page then go to it.
-function endModes() { S.editing = S.adding = S.redacting = S.marking = S.paras = false; S.justDone = false; }
-function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking && !S.paras; }
+function endModes() { S.editing = S.adding = S.redacting = S.marking = S.paras = S.fielding = false; S.justDone = false; }
+function findOn() { return !!document.getElementById('edFindPanel') && !S.editing && !S.adding && !S.redacting && !S.marking && !S.paras && !S.fielding; }
 function renderPage() { if (S.pv && S.view === 'page') refreshModes(); else buildPages(S.current); }
 
 // A short tour the first time someone opens a page: three steps, shown once.
@@ -223,6 +223,8 @@ function pageTools() {
     <span class="ed-group" role="group" aria-label="${esc(T('grp.insert'))}" data-label="${esc(T('grp.insert'))}">
       <button class="btn sm" type="button" id="edSign" title="${esc(T('tip.sign'))}">${esc(T('ed.sign'))}</button>
       <button class="btn sm" type="button" id="edStamp" title="${esc(T('tip.stamp'))}">${esc(T('ed.stamp'))}</button>
+      <button class="btn sm${S.fielding ? ' primary' : ''}" type="button" id="edFields" aria-pressed="${!!S.fielding}" title="${esc(T('tip.fields'))}">${esc(T('ed.fields'))}</button>
+      ${S.fielding ? `<label class="ed-size"><span class="sr-only">${esc(T('fld.kind'))}</span><select id="edFieldKind"><option value="text"${S.fieldKind === 'text' ? ' selected' : ''}>${esc(T('fld.text'))}</option><option value="area"${S.fieldKind === 'area' ? ' selected' : ''}>${esc(T('fld.area'))}</option><option value="check"${S.fieldKind === 'check' ? ' selected' : ''}>${esc(T('fld.check'))}</option></select></label>` : ''}
     </span>
     <span class="ed-group ed-group-find" role="group" aria-label="${esc(T('grp.privacy'))}" data-label="${esc(T('grp.privacy'))}">
       <button class="btn sm${findOn() ? ' primary' : ''}" type="button" id="edFind" aria-pressed="${findOn()}" title="${esc(T('tip.find'))}">${ICON.search}<span>${esc(T('ed.find'))}</span></button>
@@ -243,6 +245,8 @@ function pageTools() {
   $('#edSign').onclick = () => { endModes(); renderPage(); openSign(); };
   $('#edStamp').onclick = () => { endModes(); renderPage(); openStamps(); };
   $('#edMark').onclick = mode('marking');
+  $('#edFields').onclick = mode('fielding');
+  if ($('#edFieldKind')) $('#edFieldKind').onchange = e => { S.fieldKind = e.target.value; };
   $('#edZoomOut').onclick = () => stepZoom(-1); $('#edZoomIn').onclick = () => stepZoom(1); $('#edZoomReset').onclick = () => setZoom(1);
   $('#edSearchBtn').onclick = openSearch;
   wireUndo();
@@ -260,7 +264,7 @@ function setHint() {
   const views = S.pv ? [...S.pv.views.values()] : [];
   const fields = views.reduce((n, v) => n + (v.fields || 0), 0);
   const noText = S.editing && views.some(v => v.drawn) && views.every(v => !v.drawn || v.runs === 0);
-  h.textContent = justDone ? T('ed.doneHint') : S.paras ? T('ed.parasHint') + ' ' + T('blk.word') : S.redacting ? T('ed.redactHint') : S.adding ? T('ed.addTextHint')
+  h.textContent = justDone ? T('ed.doneHint') : S.paras ? T('ed.parasHint') + ' ' + T('blk.word') : S.redacting ? T('ed.redactHint') : S.fielding ? T('fld.hint') : S.adding ? T('ed.addTextHint')
     : S.editing ? (noText ? T('ed.noText') : T('ed.editHint')) : fields ? T('ed.formHint', { n: fields }) : T('ed.pageHint');
 }
 function scrollToPage(id, smooth) {
@@ -298,7 +302,7 @@ async function buildPages(startId) {
     const cv = stage.querySelector('canvas'); cv.width = cv.height = 0; cv.style.width = vp.width + 'px'; cv.style.height = vp.height + 'px';
     list.appendChild(wrap);
     const v = { pg, page, rot, scale, vp, dpr, wrap, stage, canvas: stage.querySelector('canvas'), layer: stage.querySelector('.ed-layer'), drawn: false, near: false, fields: 0, runs: 0, job: 0 };
-    stage.classList.toggle('adding', !!S.adding); stage.classList.toggle('redacting', !!S.redacting); stage.classList.toggle('marking', !!S.marking);
+    stage.classList.toggle('adding', !!S.adding); stage.classList.toggle('redacting', !!S.redacting || !!S.fielding); stage.classList.toggle('marking', !!S.marking);
     stage.addEventListener('click', e => addTextAt(v, e));
     views.set(pg.id, v);
   }
@@ -366,6 +370,8 @@ async function fillLayer(v) {
   if (S.marking) markDraw(v);
   pageOverlays(v); searchMarks(v);
   if (S.redacting) drawBoxes(pg, vp, layer);
+  S.fields.filter(f => f.pageId === pg.id).forEach(f => fieldBox(f, vp, layer));
+  if (S.fielding) drawFields(pg, vp, layer);
   hitMarks(v);
   setHint();
 }
@@ -373,7 +379,7 @@ async function fillLayer(v) {
 function refreshModes() {
   pageTools();
   for (const v of S.pv.views.values()) {
-    v.stage.classList.toggle('adding', !!S.adding); v.stage.classList.toggle('redacting', !!S.redacting); v.stage.classList.toggle('marking', !!S.marking);
+    v.stage.classList.toggle('adding', !!S.adding); v.stage.classList.toggle('redacting', !!S.redacting || !!S.fielding); v.stage.classList.toggle('marking', !!S.marking);
     if (v.drawn) { v.job++; fillLayer(v); }
   }
   finishBar(); setHint();
@@ -410,7 +416,7 @@ function addTextAt(v, e) {
 // clear how to finish.
 function finishBar() {
   let bar = $('#edFinish');
-  const mode = S.editing ? 'edit' : S.paras ? 'paras' : S.redacting ? 'redact' : S.adding ? 'add' : S.marking ? 'mark' : '';
+  const mode = S.editing ? 'edit' : S.paras ? 'paras' : S.redacting ? 'redact' : S.fielding ? 'fields' : S.adding ? 'add' : S.marking ? 'mark' : '';
   if (!mode) { if (bar) bar.remove(); return; }
   if (!bar) {
     bar = document.createElement('div'); bar.id = 'edFinish'; bar.className = 'ed-finish'; bar.setAttribute('role', 'status');
@@ -432,6 +438,7 @@ function updateFinish() {
   el.textContent = S.editing ? (lines ? T('ed.barEdit', { n: lines }) : T('ed.barEditNone'))
     : S.paras ? (blocks ? T('ed.barBlocks', { n: blocks }) : T('ed.barBlocksNone'))
     : S.redacting ? (boxes ? T('ed.barRedact', { n: boxes }) : T('ed.barRedactNone'))
+    : S.fielding ? T('fld.bar', { n: S.fields.filter(f => live.has(f.pageId)).length })
     : S.marking ? T('mark.hint.' + S.markTool)
     : T('ed.barAdd');
 }
@@ -870,7 +877,7 @@ function wrapBlock(b, width, text) {
 // Every change sets S.dirty; a moment later the state is noted down. Undo and
 // redo step through those notes (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y).
 const H = { stack: [], i: -1, timer: 0, quiet: false };
-const snap = () => JSON.stringify({ pages: S.pages, texts: S.texts, blocks: S.blocks, edits: S.edits, boxes: S.boxes, images: S.images, marks: S.marks, values: S.values, wm: S.watermark, nums: S.pageNums });
+const snap = () => JSON.stringify({ pages: S.pages, texts: S.texts, blocks: S.blocks, edits: S.edits, boxes: S.boxes, fields: S.fields, images: S.images, marks: S.marks, values: S.values, wm: S.watermark, nums: S.pageNums });
 function trackChanges() {
   let dirty = false;
   Object.defineProperty(S, 'dirty', { configurable: true, enumerable: true, get: () => dirty, set: v => { dirty = v; if (v && !H.quiet) { clearTimeout(H.timer); H.timer = setTimeout(noteState, 350); } } });
@@ -898,7 +905,7 @@ function stepHistory(d) {
   H.i = to;
   const o = JSON.parse(H.stack[to]);
   H.quiet = true;
-  Object.assign(S, { pages: o.pages, texts: o.texts, blocks: o.blocks || [], edits: o.edits, boxes: o.boxes, images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
+  Object.assign(S, { pages: o.pages, texts: o.texts, blocks: o.blocks || [], edits: o.edits, boxes: o.boxes, fields: o.fields || [], images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
   S.dirty = true; H.quiet = false;
   if (S.view === 'page') buildPages(S.current); else renderGrid();
   app().toast(T(d < 0 ? 'hist.undone' : 'hist.redone'));
@@ -1373,6 +1380,51 @@ function drawBoxes(pg, vp, layer) {
       const [ax, ay] = vp.convertToPdfPoint(sx, sy), [bx, by] = vp.convertToPdfPoint(ex, ey);
       const b = { id: ++uid, pageId: pg.id, x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) };
       S.boxes.push(b); S.dirty = true; blackBox(b, vp, layer); updateFinish();
+    };
+    addEventListener('pointermove', move); addEventListener('pointerup', up);
+  });
+}
+
+// ---------- fillable form fields ----------
+// Drag a box where people should type (or click for a tick box); saving adds real PDF form fields there.
+function fieldBox(f, vp, layer) {
+  const [x1, y1, x2, y2] = vp.convertToViewportRectangle([f.x1, f.y1, f.x2, f.y2]);
+  const el = document.createElement('div');
+  el.className = 'ed-fieldbox ' + f.kind;
+  Object.assign(el.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
+  el.innerHTML = `<span>${f.kind === 'check' ? '' : esc(T(f.kind === 'area' ? 'fld.area' : 'fld.text'))}</span>`;
+  if (S.fielding) {
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'ed-ico ed-box-x'; x.innerHTML = ICON.x;
+    x.title = T('fld.remove'); x.setAttribute('aria-label', T('fld.remove'));
+    x.onclick = e => { e.stopPropagation(); S.fields = S.fields.filter(o => o !== f); S.dirty = true; el.remove(); updateFinish(); };
+    el.appendChild(x);
+  }
+  layer.appendChild(el);
+}
+function drawFields(pg, vp, layer) {
+  layer.addEventListener('pointerdown', e => {
+    if (!S.fielding || e.target !== layer || e.button) return;
+    e.preventDefault();
+    const r = layer.getBoundingClientRect(), sx = e.clientX - r.left, sy = e.clientY - r.top;
+    const ghost = document.createElement('div'); ghost.className = 'ed-fieldbox drawing'; layer.appendChild(ghost);
+    let ex = sx, ey = sy;
+    const move = ev => {
+      ex = Math.min(Math.max(0, ev.clientX - r.left), r.width); ey = Math.min(Math.max(0, ev.clientY - r.top), r.height);
+      Object.assign(ghost.style, { left: Math.min(sx, ex) + 'px', top: Math.min(sy, ey) + 'px', width: Math.abs(ex - sx) + 'px', height: Math.abs(ey - sy) + 'px' });
+    };
+    const up = () => {
+      removeEventListener('pointermove', move); removeEventListener('pointerup', up); ghost.remove();
+      const kind = S.fieldKind || 'text';
+      let [ax, ay] = vp.convertToPdfPoint(sx, sy), [bx, by] = vp.convertToPdfPoint(ex, ey);
+      if (Math.abs(ex - sx) < 6 || Math.abs(ey - sy) < 6) {
+        // a click: a field of a sensible size starting there
+        const w = kind === 'check' ? 14 : kind === 'area' ? 240 : 180, h = kind === 'check' ? 14 : kind === 'area' ? 60 : 20;
+        bx = ax + w; by = ay - h;
+      }
+      const f = { id: ++uid, pageId: pg.id, kind, x1: Math.min(ax, bx), y1: Math.min(ay, by), x2: Math.max(ax, bx), y2: Math.max(ay, by) };
+      if (kind === 'check') { const sz = Math.min(f.x2 - f.x1, f.y2 - f.y1, 24); f.x2 = f.x1 + sz; f.y1 = f.y2 - sz; }
+      S.fields.push(f); S.dirty = true; fieldBox(f, vp, layer); updateFinish();
     };
     addEventListener('pointermove', move); addEventListener('pointerup', up);
   });
@@ -2231,6 +2283,19 @@ async function save(opt) {
         }
       } catch (e) { console.warn('Form clean-up skipped', e); }
     }
+    // New fillable fields drawn in the editor become real form fields
+    if (S.fields.length) {
+      const form = out.getForm(); let k = 0;
+      const nextName = () => { let nm; do { nm = T('fld.name', { n: ++k }); } while (form.getFieldMaybe(nm)); return nm; };
+      for (const f of S.fields) {
+        const fin = final.find(x => x.pg.id === f.pageId); if (!fin) continue;
+        const box = { x: f.x1, y: f.y1, width: f.x2 - f.x1, height: f.y2 - f.y1, borderColor: PDFLib.rgb(.45, .5, .6), borderWidth: 1, backgroundColor: PDFLib.rgb(.96, .97, 1) };
+        try {
+          if (f.kind === 'check') form.createCheckBox(nextName()).addToPage(fin.page, box);
+          else { const tf = form.createTextField(nextName()); if (f.kind === 'area') tf.enableMultiline(); tf.addToPage(fin.page, box); tf.setFontSize(f.kind === 'area' ? 11 : 0); }
+        } catch (e) { console.warn('Field not added', e); }
+      }
+    }
     // Old page drawings that are no longer used are deleted from the file.
     const inUse = new Set();
     for (const p of out.getPages()) { const c = p.node.get(N('Contents')); (c && c.asArray ? c.asArray() : [c]).forEach(r => inUse.add(String(r))); }
@@ -2255,7 +2320,7 @@ async function save(opt) {
 
 // ---------- open ----------
 async function open(files, opt = {}) {
-  S = { docs: [], pages: [], texts: [], blocks: [], paras: false, edits: [], boxes: [], images: [], marks: [], watermark: null, pageNums: null, zoom: 1, marking: false, markTool: 'hl', markColor: 'yellow', search: null, placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
+  S = { docs: [], pages: [], texts: [], blocks: [], paras: false, edits: [], boxes: [], fields: [], fielding: false, fieldKind: 'text', images: [], marks: [], watermark: null, pageNums: null, zoom: 1, marking: false, markTool: 'hl', markColor: 'yellow', search: null, placing: null, redacting: false, editing: false, values: {}, view: 'grid', current: null, adding: false, dirty: false, size: 12 };
   thumbCache.clear(); textCache.clear(); libDocs.clear(); pathCache.clear();
   build(); labels();
   $('#edBody').innerHTML = `<p class="ed-loading">${esc(T('ed.loading'))}</p>`;
@@ -2266,7 +2331,8 @@ async function open(files, opt = {}) {
   if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
   if (opt.find && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
   // Tool pages that open straight at one job: sign, page numbers, watermark, filling in a form.
-  if (['sign', 'nums', 'wm', 'form'].includes(opt.action) && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
+  if (['sign', 'nums', 'wm', 'form', 'makeform'].includes(opt.action) && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
+  if (opt.action === 'makeform') S.fielding = true; // the Make a fillable PDF page opens ready to draw fields
   render();
   if (opt.action === 'sign') openSign();
   else if (opt.action === 'nums' || opt.action === 'wm') openStamps(opt.action);

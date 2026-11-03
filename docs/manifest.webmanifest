@@ -121,6 +121,9 @@
           ".mov",
           ".m4v",
           ".mkv"
+        ],
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+          ".pptx"
         ]
       },
       "launch_type": "single-client"
@@ -151,6 +154,7 @@
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             "application/vnd.ms-excel",
             "application/vnd.oasis.opendocument.spreadsheet",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
             "audio/*",
             "video/*",
             ".png",
@@ -175,6 +179,7 @@
             ".xlsx",
             ".xls",
             ".ods",
+            ".pptx",
             ".mp3",
             ".wav",
             ".ogg",

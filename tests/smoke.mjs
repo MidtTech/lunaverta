@@ -399,6 +399,76 @@ await test('Excel to PDF lays the sheet out as a table with real text, and PDF t
   await done(p);
 });
 
+await test('recipes: photos become one PDF, and documents of mixed kinds become one PDF in order', async () => {
+  const p = await page('/');
+  const [fc] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-recipe="photos-pdf"]')]);
+  await fc.setFiles([jpg('a.jpg', await photo()), jpg('b.jpg', await photo())]);
+  const one = await saveFirst(p); assert(one.name === 'photos.pdf', 'name ' + one.name);
+  assert((await PDFDocument.load(one.buf)).getPageCount() === 2, 'pages');
+  await p.click('#clearOut').catch(() => {});
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica); d.addPage([595, 842]).drawText('First document', { x: 60, y: 780, size: 20, font: f });
+  const [fc2] = await Promise.all([p.waitForEvent('filechooser'), p.click('[data-recipe="docs-one-pdf"]')]);
+  await fc2.setFiles([file('first.pdf', Buffer.from(await d.save())), jpg('pic.jpg', await photo())]);
+  await p.waitForFunction(() => [...document.querySelectorAll('.row.done')].some(j => /combined\.pdf/.test(j.textContent)), null, { timeout: 30000 });
+  await done(p);
+});
+
+await test('Compress video makes an MP4 smaller and keeps its turn (skipped without ffmpeg)', async () => {
+  const { execFileSync } = await import('node:child_process'); const { mkdtempSync } = await import('node:fs'); const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'lv-')), src = join(dir, 'clip.mp4');
+  // VP9 in MP4: the test browser (open-source Chromium) has no H.264; real Chrome and Safari use H.264 for both
+  try {
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc2=size=1920x1080:rate=30', '-f', 'lavfi', '-i', 'sine=frequency=440:sample_rate=48000', '-t', '5', '-c:v', 'libvpx-vp9', '-b:v', '8M', '-deadline', 'realtime', '-cpu-used', '8', '-c:a', 'libopus', '-f', 'mp4', join(dir, 'flat.mp4')]);
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-display_rotation', '90', '-i', join(dir, 'flat.mp4'), '-c', 'copy', src]); // a portrait phone video: turned by a note in the file
+  }
+  catch (e) { console.log('     (no ffmpeg, skipped)'); return; }
+  const p = await page('/compress-video/');
+  await p.setInputFiles('#fileInput', src);
+  await p.click('dialog[open] input[value="small"]'); await p.click('dialog[open] [value="ok"]');
+  const out = await saveFirst(p); assert(out.name === 'clip-small.mp4', 'name ' + out.name);
+  assert(out.buf.length < (await readFile(src)).length * .6, `not much smaller: ${out.buf.length}`);
+  const { writeFileSync } = await import('node:fs'); writeFileSync(join(dir, 'out.mp4'), out.buf);
+  const probe = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=codec_type,width,height:stream_side_data=rotation', '-of', 'compact', join(dir, 'out.mp4')]).toString();
+  assert(/width=1280\|height=720/.test(probe) && /codec_type=audio/.test(probe) && /rotation=90/.test(probe), 'probe: ' + probe);
+  await done(p);
+});
+
+await test('PowerPoint to PDF draws each slide with real text, bullets and the table', async () => {
+  const p = await page('/powerpoint-to-pdf/');
+  await p.setInputFiles('#fileInput', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'slides.pptx'));
+  const out = await saveFirst(p); assert(out.name === 'slides.pdf', 'name ' + out.name);
+  assert((await PDFDocument.load(out.buf)).getPageCount() === 3, 'pages');
+  const text = await pdfText(out.buf);
+  assert(/Årsrapport 2026/.test(text) && /Ny butik i Aarhus/.test(text) && /150\.000/.test(text), 'text: ' + text.replace(/\s+/g, ' ').slice(0, 160));
+  await done(p);
+});
+
+await test('Make a fillable PDF adds real text and tick-box fields where they are drawn', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica); d.addPage([595, 842]).drawText('Name:', { x: 60, y: 780, size: 14, font: f });
+  const p = await page('/make-fillable-pdf/');
+  await p.setInputFiles('#fileInput', file('blank.pdf', Buffer.from(await d.save())));
+  await p.waitForSelector('#edFields[aria-pressed="true"]', { timeout: 20000 }); await p.waitForTimeout(1000);
+  const L = await p.locator('.ed-stage-wrap').first().locator('.ed-layer').boundingBox();
+  await p.mouse.move(L.x + 150, L.y + 60); await p.mouse.down(); await p.mouse.move(L.x + 400, L.y + 85, { steps: 5 }); await p.mouse.up();
+  await p.selectOption('#edFieldKind', 'check'); await p.mouse.click(L.x + 150, L.y + 120);
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const form = (await PDFDocument.load(await readFile(await dl.path()))).getForm();
+  const kinds = form.getFields().map(x => x.constructor.name).sort().join(',');
+  assert(kinds === 'PDFCheckBox,PDFTextField', 'fields: ' + kinds);
+  await done(p);
+});
+
+await test('QR code generator makes a code for a link and for Wi-Fi', async () => {
+  const p = await page('/qr-code-generator/');
+  await p.waitForSelector('#qrText'); await p.fill('#qrText', 'https://lunaverta.com/');
+  let [dl] = await Promise.all([p.waitForEvent('download'), p.click('#qrPng')]);
+  assert(dl.suggestedFilename() === 'qr-code.png' && (await readFile(await dl.path())).length > 1000, 'png');
+  await p.click('label:has(input[value="wifi"])'); await p.fill('#qrSsid', 'Home'); await p.fill('#qrPass', 'secret');
+  [dl] = await Promise.all([p.waitForEvent('download'), p.click('#qrSvg')]);
+  const svg = (await readFile(await dl.path())).toString(); assert(dl.suggestedFilename() === 'qr-wifi.svg' && /<path d="M/.test(svg), 'svg');
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);
