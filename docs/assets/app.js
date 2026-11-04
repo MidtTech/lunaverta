@@ -1948,7 +1948,7 @@ async function cleanPDF(file) {
 // The result is a PDF with the picture as before and the recognised words as
 // invisible text on top, so the text can be searched, selected and copied.
 let ocrWorker = null, ocrProgress = null, ocrLangs = '';
-const OCR_FOR_PAGE = { da: 'dan', en: 'dan', sv: 'swe', no: 'nor', de: 'deu' };
+const OCR_FOR_PAGE = { da: 'dan', en: 'dan', sv: 'swe', no: 'nor', de: 'deu', es: 'spa', fr: 'fra' };
 function ocrLanguages() {
   const pick = ($('optOcr') || {}).value || 'auto';
   const main = pick === 'auto' ? (OCR_FOR_PAGE[document.documentElement.lang] || 'dan') : pick;
@@ -3567,9 +3567,9 @@ document.addEventListener('click', e => {
 // Subtitles in every language; the video itself is the Danish or the English one.
 // bump when a video changes, so browsers fetch the new one instead of a kept copy
 const VIDEO_REV = '?v=20261102';
-const SUB_NAMES = { da: 'Dansk', en: 'English', sv: 'Svenska', no: 'Norsk', de: 'Deutsch' };
+const SUB_NAMES = { da: 'Dansk', en: 'English', sv: 'Svenska', no: 'Norsk', de: 'Deutsch', es: 'Español', fr: 'Français' };
 function subTracks(key, page) {
-  const order = [page, 'en', 'da', 'sv', 'no', 'de'].filter((l, i, a) => SUB_NAMES[l] && a.indexOf(l) === i);
+  const order = [page, 'en', 'da', 'sv', 'no', 'de', 'es', 'fr'].filter((l, i, a) => SUB_NAMES[l] && a.indexOf(l) === i);
   return order.map((l, i) => `<track kind="subtitles" srclang="${l}" label="${SUB_NAMES[l]}" src="/videos/${key}.${l}.vtt${VIDEO_REV}"${i === 0 ? ' default' : ''}>`).join('');
 }
 function playVideo(key, title, page) {

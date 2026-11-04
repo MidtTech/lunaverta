@@ -8,7 +8,7 @@ const STR = window.LV_STR;
 
 const KEY = 'lunaverta-lang';
 // Every language the site has pages in. A page only loads its own language's texts (plus English).
-const SUPPORTED = ['en', 'da', 'sv', 'no', 'de'];
+const SUPPORTED = ['en', 'da', 'sv', 'no', 'de', 'es', 'fr'];
 const browserLang = l => (/^(nb|nn|no)\b/i.test(l) ? 'no' : l.slice(0, 2).toLowerCase());
 function detect() {
   try { const saved = localStorage.getItem(KEY); if (saved && SUPPORTED.includes(saved)) return saved; } catch (e) {}

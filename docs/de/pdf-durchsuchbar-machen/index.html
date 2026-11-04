@@ -4,13 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>OCR · Gescannte PDFs durchsuchbar machen, ohne Upload</title>
-<meta name="description" content="Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.">
+<meta name="description" content="Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; worker-src 'self' blob:; connect-src 'self' blob: data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <link rel="canonical" href="https://lunaverta.com/de/pdf-durchsuchbar-machen/">
 <link rel="alternate" hreflang="en" href="https://lunaverta.com/ocr-pdf/">
 <link rel="alternate" hreflang="da" href="https://lunaverta.com/da/goer-pdf-soegbar/">
 <link rel="alternate" hreflang="de" href="https://lunaverta.com/de/pdf-durchsuchbar-machen/">
+<link rel="alternate" hreflang="es" href="https://lunaverta.com/es/ocr-pdf/">
+<link rel="alternate" hreflang="fr" href="https://lunaverta.com/fr/ocr-pdf/">
 <link rel="alternate" hreflang="no" href="https://lunaverta.com/no/gjor-pdf-sokbar/">
 <link rel="alternate" hreflang="sv" href="https://lunaverta.com/sv/gor-pdf-sokbar/">
 <link rel="alternate" hreflang="x-default" href="https://lunaverta.com/ocr-pdf/">
@@ -27,20 +29,22 @@
 <meta property="og:locale" content="de_DE">
 <meta property="og:locale:alternate" content="en_GB">
 <meta property="og:locale:alternate" content="da_DK">
+<meta property="og:locale:alternate" content="es_ES">
+<meta property="og:locale:alternate" content="fr_FR">
 <meta property="og:locale:alternate" content="nb_NO">
 <meta property="og:locale:alternate" content="sv_SE">
 <meta property="og:title" content="OCR · Gescannte PDFs durchsuchbar machen, ohne Upload">
-<meta property="og:description" content="Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.">
+<meta property="og:description" content="Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.">
 <meta property="og:url" content="https://lunaverta.com/de/pdf-durchsuchbar-machen/">
-<meta property="og:image" content="https://lunaverta.com/og/de/pdf-durchsuchbar-machen.jpg?v=b7dbf490">
+<meta property="og:image" content="https://lunaverta.com/og/de/pdf-durchsuchbar-machen.jpg?v=1661521a">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.min.css?v=841bede73f">
+<link rel="stylesheet" href="/assets/app.min.css?v=51928acb0f">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · OCR: PDF durchsuchbar machen","url":"https://lunaverta.com/de/pdf-durchsuchbar-machen/","inLanguage":"de","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"de","mainEntity":[{"@type":"Question","name":"Wird mein Dokument für die OCR hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. Die Texterkennung läuft in deinem Browser, auf deinem eigenen Gerät."}},{"@type":"Question","name":"Welche Sprachen werden erkannt?","acceptedAnswer":{"@type":"Answer","text":"Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch. Auf der deutschen Seite werden Deutsch und Englisch gelesen; eine andere Sprache wählst du unter Einstellungen, OCR-Sprache. Die Sprachdaten (etwa 2 MB) werden beim ersten Mal geladen und dann auf deinem Gerät gespeichert, sodass es auch offline funktioniert."}},{"@type":"Question","name":"Was passiert mit Seiten, die schon Text haben?","acceptedAnswer":{"@type":"Answer","text":"Sie bleiben, wie sie sind; nur Seiten ohne Text werden gelesen."}},{"@type":"Question","name":"Werden meine Dateien irgendwo hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. LunaVerta hat keinen Server, der Dateien empfängt. Jede Umwandlung läuft in deinem Browser, auf deinem Gerät, und das Ergebnis wird direkt auf deinem Gerät gespeichert."}},{"@type":"Question","name":"Funktioniert es offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Nach deinem ersten Besuch wird die App auf deinem Gerät gespeichert. Hilfsprogramme für PDF, Word, Excel, MP3 und HEIC werden beim ersten Gebrauch gespeichert und funktionieren danach ebenfalls offline."}},{"@type":"Question","name":"Was kostet es?","acceptedAnswer":{"@type":"Answer","text":"Nichts. Es gibt keine Konten, keine Werbung, keine Cookies und keine Tracker."}},{"@type":"Question","name":"Warum ist es kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Weil alles auf deinem eigenen Gerät läuft, hat LunaVerta fast keine laufenden Kosten: Es gibt keine Server, die Dateien empfangen, speichern oder verarbeiten. Deshalb kann es ohne Werbung, ohne Konten und ohne Datenverkauf kostenlos sein. LunaVerta wird von Midt-Tech in Aarhus als nützliches Werkzeug und als Beispiel dafür gebaut, was wir entwickeln. Wenn es dir Zeit spart, kannst du uns gern einen Kaffee spendieren (MobilePay, vorerst nur in Dänemark)."}},{"@type":"Question","name":"Bleibt LunaVerta kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja, das ist der Plan. Der Betrieb von LunaVerta kostet sehr wenig, daher gibt es heute keinen Grund, Geld dafür zu verlangen. Wenn du es nützlich findest und die Arbeit unterstützen möchtest, kannst du uns gern einen Kaffee spendieren. Wenn die Plattform wächst, könnten manche Funktionen später als Teil eines freiwilligen Abos angeboten werden, aber dafür gibt es derzeit keine Pläne."}}]},{"@type":"HowTo","name":"Ein gescanntes PDF durchsuchbar machen","inLanguage":"de","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Wähle ein gescanntes PDF oder ein Foto eines Dokuments aus."},{"@type":"HowToStep","position":2,"text":"LunaVerta liest den Text auf jeder Seite. Beim ersten Mal werden Sprachdaten (etwa 5 MB) geladen."},{"@type":"HowToStep","position":3,"text":"Speichere das durchsuchbare PDF. Es sieht genauso aus wie vorher."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Startseite","item":"https://lunaverta.com/de/"},{"@type":"ListItem","position":2,"name":"OCR: PDF durchsuchbar machen","item":"https://lunaverta.com/de/pdf-durchsuchbar-machen/"}]}]}
+{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","es","fr","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · OCR: PDF durchsuchbar machen","url":"https://lunaverta.com/de/pdf-durchsuchbar-machen/","inLanguage":"de","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"DKK"},"isAccessibleForFree":true,"description":"Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.","publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"FAQPage","inLanguage":"de","mainEntity":[{"@type":"Question","name":"Wird mein Dokument für die OCR hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. Die Texterkennung läuft in deinem Browser, auf deinem eigenen Gerät."}},{"@type":"Question","name":"Welche Sprachen werden erkannt?","acceptedAnswer":{"@type":"Answer","text":"Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch. Auf der deutschen Seite werden Deutsch und Englisch gelesen; eine andere Sprache wählst du unter Einstellungen, OCR-Sprache. Die Sprachdaten (etwa 2 MB) werden beim ersten Mal geladen und dann auf deinem Gerät gespeichert, sodass es auch offline funktioniert."}},{"@type":"Question","name":"Was passiert mit Seiten, die schon Text haben?","acceptedAnswer":{"@type":"Answer","text":"Sie bleiben, wie sie sind; nur Seiten ohne Text werden gelesen."}},{"@type":"Question","name":"Werden meine Dateien irgendwo hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. LunaVerta hat keinen Server, der Dateien empfängt. Jede Umwandlung läuft in deinem Browser, auf deinem Gerät, und das Ergebnis wird direkt auf deinem Gerät gespeichert."}},{"@type":"Question","name":"Funktioniert es offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Nach deinem ersten Besuch wird die App auf deinem Gerät gespeichert. Hilfsprogramme für PDF, Word, Excel, MP3 und HEIC werden beim ersten Gebrauch gespeichert und funktionieren danach ebenfalls offline."}},{"@type":"Question","name":"Was kostet es?","acceptedAnswer":{"@type":"Answer","text":"Nichts. Es gibt keine Konten, keine Werbung, keine Cookies und keine Tracker."}},{"@type":"Question","name":"Warum ist es kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Weil alles auf deinem eigenen Gerät läuft, hat LunaVerta fast keine laufenden Kosten: Es gibt keine Server, die Dateien empfangen, speichern oder verarbeiten. Deshalb kann es ohne Werbung, ohne Konten und ohne Datenverkauf kostenlos sein. LunaVerta wird von Midt-Tech in Aarhus als nützliches Werkzeug und als Beispiel dafür gebaut, was wir entwickeln. Wenn es dir Zeit spart, kannst du uns gern einen Kaffee spendieren (MobilePay, vorerst nur in Dänemark)."}},{"@type":"Question","name":"Bleibt LunaVerta kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja, das ist der Plan. Der Betrieb von LunaVerta kostet sehr wenig, daher gibt es heute keinen Grund, Geld dafür zu verlangen. Wenn du es nützlich findest und die Arbeit unterstützen möchtest, kannst du uns gern einen Kaffee spendieren. Wenn die Plattform wächst, könnten manche Funktionen später als Teil eines freiwilligen Abos angeboten werden, aber dafür gibt es derzeit keine Pläne."}}]},{"@type":"HowTo","name":"Ein gescanntes PDF durchsuchbar machen","inLanguage":"de","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Wähle ein gescanntes PDF oder ein Foto eines Dokuments aus."},{"@type":"HowToStep","position":2,"text":"LunaVerta liest den Text auf jeder Seite. Beim ersten Mal werden Sprachdaten (etwa 5 MB) geladen."},{"@type":"HowToStep","position":3,"text":"Speichere das durchsuchbare PDF. Es sieht genauso aus wie vorher."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Startseite","item":"https://lunaverta.com/de/"},{"@type":"ListItem","position":2,"name":"OCR: PDF durchsuchbar machen","item":"https://lunaverta.com/de/pdf-durchsuchbar-machen/"}]}]}
 </script>
 </head>
 <body>
@@ -56,14 +60,14 @@
       <span class="net" id="net" hidden data-i18n="net.offline">Offline</span>
       <nav class="head-nav" aria-label="Sections"><a href="#h-tools" data-i18n="nav.tools">Alle Werkzeuge</a><a href="#h-faq" data-i18n="nav.faq">Fragen</a></nav>
       <details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Sprache</span> <span lang="de">DE</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
-          <ul><li><a href="/ocr-pdf/" hreflang="en" lang="en" data-set-lang="en"><b>EN</b>English</a></li><li><a href="/da/goer-pdf-soegbar/" hreflang="da" lang="da" data-set-lang="da"><b>DA</b>Dansk</a></li><li><a href="/de/pdf-durchsuchbar-machen/" hreflang="de" lang="de" data-set-lang="de" aria-current="true"><b>DE</b>Deutsch</a></li><li><a href="/no/gjor-pdf-sokbar/" hreflang="no" lang="no" data-set-lang="no"><b>NO</b>Norsk</a></li><li><a href="/sv/gor-pdf-sokbar/" hreflang="sv" lang="sv" data-set-lang="sv"><b>SV</b>Svenska</a></li></ul></details>
+          <ul><li><a href="/ocr-pdf/" hreflang="en" lang="en" data-set-lang="en"><b>EN</b>English</a></li><li><a href="/da/goer-pdf-soegbar/" hreflang="da" lang="da" data-set-lang="da"><b>DA</b>Dansk</a></li><li><a href="/de/pdf-durchsuchbar-machen/" hreflang="de" lang="de" data-set-lang="de" aria-current="true"><b>DE</b>Deutsch</a></li><li><a href="/es/ocr-pdf/" hreflang="es" lang="es" data-set-lang="es"><b>ES</b>Español</a></li><li><a href="/fr/ocr-pdf/" hreflang="fr" lang="fr" data-set-lang="fr"><b>FR</b>Français</a></li><li><a href="/no/gjor-pdf-sokbar/" hreflang="no" lang="no" data-set-lang="no"><b>NO</b>Norsk</a></li><li><a href="/sv/gor-pdf-sokbar/" hreflang="sv" lang="sv" data-set-lang="sv"><b>SV</b>Svenska</a></li></ul></details>
     </div>
   </header>
 
   <section class="hero" aria-labelledby="h-page">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/de/">Startseite</a> <span aria-hidden="true">›</span> <span aria-current="page">OCR: PDF durchsuchbar machen</span></nav>
     <h1 id="h-page">Ein gescanntes PDF durchsuchbar machen</h1>
-    <p class="lead">Ein Scan ist nur ein Bild von Text. OCR liest die Wörter und legt sie als unsichtbaren Text auf die Seite, sodass du suchen, markieren und kopieren kannst. Es läuft auf deinem eigenen Gerät und liest Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch.</p>
+    <p class="lead">Ein Scan ist nur ein Bild von Text. OCR liest die Wörter und legt sie als unsichtbaren Text auf die Seite, sodass du suchen, markieren und kopieren kannst. Es läuft auf deinem eigenen Gerät und liest Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch.</p>
   </section>
 
   <main class="main" id="main" tabindex="-1" data-preset="ocr" data-mode="">
@@ -101,7 +105,7 @@
           <select id="optPdfQ"><option value="best" data-i18n="opt.pdfq.best">Beste Qualität</option><option value="small" data-i18n="opt.pdfq.small">Kleine Datei</option></select>
         </label>
         <label class="opt"><span data-i18n="opt.ocr">OCR-Sprache</span>
-          <select id="optOcr"><option value="auto" data-i18n="opt.ocr.auto">Wie die Seite</option><option value="dan" lang="da">Dansk</option><option value="eng" lang="en">English</option><option value="swe" lang="sv">Svenska</option><option value="nor" lang="no">Norsk</option><option value="deu" lang="de">Deutsch</option></select>
+          <select id="optOcr"><option value="auto" data-i18n="opt.ocr.auto">Wie die Seite</option><option value="dan" lang="da">Dansk</option><option value="eng" lang="en">English</option><option value="swe" lang="sv">Svenska</option><option value="nor" lang="no">Norsk</option><option value="deu" lang="de">Deutsch</option><option value="spa" lang="es">Español</option><option value="fra" lang="fr">Français</option></select>
         </label>
         <label class="opt"><span data-i18n="opt.kbps">MP3-Bitrate</span>
           <select id="optKbps"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select>
@@ -225,7 +229,7 @@
     <h2 id="h-faq">Fragen zu OCR: PDF durchsuchbar machen</h2>
     <div class="faq-list">
       <details open><summary>Wird mein Dokument für die OCR hochgeladen?</summary><p>Nein. Die Texterkennung läuft in deinem Browser, auf deinem eigenen Gerät.</p></details>
-      <details><summary>Welche Sprachen werden erkannt?</summary><p>Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch. Auf der deutschen Seite werden Deutsch und Englisch gelesen; eine andere Sprache wählst du unter Einstellungen, OCR-Sprache. Die Sprachdaten (etwa 2 MB) werden beim ersten Mal geladen und dann auf deinem Gerät gespeichert, sodass es auch offline funktioniert.</p></details>
+      <details><summary>Welche Sprachen werden erkannt?</summary><p>Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch. Auf der deutschen Seite werden Deutsch und Englisch gelesen; eine andere Sprache wählst du unter Einstellungen, OCR-Sprache. Die Sprachdaten (etwa 2 MB) werden beim ersten Mal geladen und dann auf deinem Gerät gespeichert, sodass es auch offline funktioniert.</p></details>
       <details><summary>Was passiert mit Seiten, die schon Text haben?</summary><p>Sie bleiben, wie sie sind; nur Seiten ohne Text werden gelesen.</p></details>
       <details><summary data-i18n="faq.q1">Werden meine Dateien irgendwo hochgeladen?</summary><p data-i18n-html="faq.a1">Nein. LunaVerta hat keinen Server, der Dateien empfängt. Jede Umwandlung läuft in deinem Browser, auf deinem Gerät, und das Ergebnis wird direkt auf deinem Gerät gespeichert.</p></details>
       <details><summary data-i18n="faq.q2">Funktioniert es offline?</summary><p data-i18n-html="faq.a2">Ja. Nach deinem ersten Besuch wird die App auf deinem Gerät gespeichert. Hilfsprogramme für PDF, Word, Excel, MP3 und HEIC werden beim ersten Gebrauch gespeichert und funktionieren danach ebenfalls offline.</p></details>
@@ -271,7 +275,7 @@
       <div><dt>Uploads</dt><dd>Keine: Die Dateien bleiben auf deinem Gerät</dd></div>
       <div><dt>Konto</dt><dd>Nicht nötig</dd></div>
       <div><dt>Funktioniert offline</dt><dd>Ja, nach dem ersten Besuch</dd></div>
-      <div><dt>Sprachen</dt><dd>Deutsch, Dänisch, Englisch, Schwedisch und Norwegisch</dd></div>
+      <div><dt>Sprachen</dt><dd>Deutsch, Dänisch, Englisch, Schwedisch, Norwegisch, Spanisch und Französisch</dd></div>
       <div><dt>Entwickelt von</dt><dd><a href="https://midttech.com/" target="_blank" rel="noopener">Midt-Tech, Aarhus, Dänemark (CVR 34256276)</a></dd></div>
     </dl>
   </section>
@@ -280,7 +284,7 @@
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">Ein Produkt von</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Dänemark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Spendier uns einen Kaffee</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Keine Cookies · kein Konto · keine Werbung</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+841bede · 2026-11-04">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Kostenlose, private Dateiumwandlung</span> · <span id="buildVer" title="Version v1.0.0+51928ac · 2026-11-04">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Problem melden</a><a href="/de/anleitungen/" data-i18n="nav.guides">Anleitungen</a><a href="/no-upload.html" data-i18n="nav.noUpload">Warum nichts hochgeladen wird</a><a href="/privacy.html" data-i18n="nav.privacy">Datenschutz</a><a href="/licenses.html" data-i18n="nav.licenses">Open-Source-Lizenzen</a></nav>
   </footer>
 </div>
@@ -289,9 +293,9 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Format wählen"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta wandelt Dateien mit JavaScript in deinem Browser um. Aktiviere JavaScript, um es zu nutzen.</p></noscript>
-<script src="/assets/strings.min.js?v=841bede73f"></script>
-<script src="/assets/strings-de.min.js?v=841bede73f"></script>
-<script src="/assets/i18n.min.js?v=841bede73f"></script>
-<script src="/assets/app.min.js?v=841bede73f"></script>
+<script src="/assets/strings.min.js?v=51928acb0f"></script>
+<script src="/assets/strings-de.min.js?v=51928acb0f"></script>
+<script src="/assets/i18n.min.js?v=51928acb0f"></script>
+<script src="/assets/app.min.js?v=51928acb0f"></script>
 </body>
 </html>

@@ -144,10 +144,10 @@ await test('A signature can be put on every page at once', async () => {
 
 await test('every language has its own texts and a menu with all languages', async () => {
   const p = await page('/');
-  for (const [L, word] of [['da', 'Vælg filer'], ['sv', 'Välj filer'], ['no', 'Velg filer'], ['de', 'Dateien wählen']]) {
+  for (const [L, word] of [['da', 'Vælg filer'], ['sv', 'Välj filer'], ['no', 'Velg filer'], ['de', 'Dateien wählen'], ['es', 'Elegir archivos'], ['fr', 'Choisir des fichiers']]) {
     await p.goto(`${BASE}/${L}/`);
     assert((await p.locator('#btnChoose, [data-i18n="btn.choose"]').first().innerText()).trim() === word, `${L}: choose button not translated`);
-    assert(await p.locator('.lang-menu a').count() === 5, `${L}: language menu should have 5 languages`);
+    assert(await p.locator('.lang-menu a').count() === 7, `${L}: language menu should have 7 languages`);
     assert(await p.evaluate(l => !!(window.LV_STR && window.LV_STR[l]), L), `${L}: texts not loaded`);
   }
   await done(p);
@@ -157,7 +157,9 @@ await test('every language has its own texts and a menu with all languages', asy
 const SCANS = [
   ['sv', '/sv/gor-pdf-sokbar/', 'Kära kund, fakturan för måndag är betald. Tack för köpet och välkommen åter.', ['Kära', 'måndag', 'köpet', 'välkommen']],
   ['no', '/no/gjor-pdf-sokbar/', 'Kjære kunde, fødselsnummeret må ikke deles. Vi ønsker deg en fin søndag på kontoret.', ['Kjære', 'fødselsnummeret', 'ønsker', 'søndag']],
-  ['de', '/de/pdf-durchsuchbar-machen/', 'Sehr geehrte Damen und Herren, die Größe der Lieferung für Grüße aus Köln ist gemäß Übersicht.', ['Größe', 'Grüße', 'Köln', 'Übersicht']]
+  ['de', '/de/pdf-durchsuchbar-machen/', 'Sehr geehrte Damen und Herren, die Größe der Lieferung für Grüße aus Köln ist gemäß Übersicht.', ['Größe', 'Grüße', 'Köln', 'Übersicht']],
+  ['es', '/es/ocr-pdf/', 'Estimado señor, la factura del miércoles está pagada. Gracias por su atención y feliz año.', ['señor', 'miércoles', 'atención', 'año']],
+  ['fr', '/fr/ocr-pdf/', 'Cher client, la facture de février est réglée. Nous vous remercions pour votre fidélité, à bientôt.', ['février', 'réglée', 'fidélité', 'bientôt']]
 ];
 async function scanPdf(text) {
   const p = await browser.newPage({ viewport: { width: 1240, height: 400 } });

@@ -2,7 +2,7 @@
 
 Free, private file conversion and PDF editing in the browser: [lunaverta.com](https://lunaverta.com)
 
-Everything happens on your own device. Files are never uploaded, there are no accounts, cookies, trackers or ads, and it works offline once loaded. Available in English, Danish, Swedish, Norwegian and German.
+Everything happens on your own device. Files are never uploaded, there are no accounts, cookies, trackers or ads, and it works offline once loaded. Available in English, Danish, Swedish, Norwegian, German, Spanish and French.
 
 ## What it does
 
@@ -20,7 +20,7 @@ docs/                 the website (published as is)
 src/template.html     page template
 scripts/              build-pages.mjs (pages in every language, sitemap, llms.txt, version),
                       site-content.mjs (English and Danish page texts), vendor.mjs (copies libraries into docs/)
-scripts/lang/         one file per extra language (sv, no, de) with its page texts;
+scripts/lang/         one file per extra language (sv, no, de, es, fr) with its page texts;
                       its interface texts are in docs/assets/strings-<code>.js
 ```
 

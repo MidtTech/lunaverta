@@ -36,7 +36,9 @@ const VENDOR = {
   'tesseract/lang/eng.traineddata.gz': nm('@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz'),
   'tesseract/lang/swe.traineddata.gz': nm('@tesseract.js-data/swe/4.0.0_best_int/swe.traineddata.gz'),
   'tesseract/lang/nor.traineddata.gz': nm('@tesseract.js-data/nor/4.0.0_best_int/nor.traineddata.gz'),
-  'tesseract/lang/deu.traineddata.gz': nm('@tesseract.js-data/deu/4.0.0_best_int/deu.traineddata.gz')
+  'tesseract/lang/deu.traineddata.gz': nm('@tesseract.js-data/deu/4.0.0_best_int/deu.traineddata.gz'),
+  'tesseract/lang/spa.traineddata.gz': nm('@tesseract.js-data/spa/4.0.0_best_int/spa.traineddata.gz'),
+  'tesseract/lang/fra.traineddata.gz': nm('@tesseract.js-data/fra/4.0.0_best_int/fra.traineddata.gz')
 };
 const FONTS = [
   ['bricolage-grotesque', [500, 700]],

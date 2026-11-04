@@ -1,4 +1,4 @@
-// The guides in Swedish, Norwegian and German, adapted to each country (personnummer, fødselsnummer, Steuer-ID).
+// The guides in Swedish, Norwegian, German, Spanish and French, adapted to each country (personnummer, fødselsnummer, Steuer-ID, DNI, sécurité sociale).
 // Same structure as guides.mjs; merged into GUIDES by build-pages.mjs and make-share-images.mjs.
 export const GUIDE_INDEX_EXTRA = {
   sv: { slug: 'guider', title: 'Guider: vardagens PDF-uppgifter, helt privat · LunaVerta', desc: 'Korta guider för vanliga uppgifter: ta bort personnummer, skicka en lönespecifikation säkert, signera ett hyresavtal utan att skriva ut, samla kvitton i en PDF med mera.', h1: 'Guider', lead: 'Korta, praktiska guider för de uppgifter man oftast behöver göra med sina dokument. Allt sker på din egen enhet.', read: 'Läs guiden', open: 'Öppna verktyget', all: 'Alla guider', guides: 'Guider' },
@@ -355,3 +355,8 @@ export const GUIDE_TEXT = {
     }
   }
 };
+
+// Spanish and French live in their own file to keep this one readable.
+import { GUIDE_INDEX_ESFR, GUIDE_TEXT_ESFR } from './guides-esfr.mjs';
+Object.assign(GUIDE_INDEX_EXTRA, GUIDE_INDEX_ESFR);
+Object.assign(GUIDE_TEXT, GUIDE_TEXT_ESFR);

@@ -2,14 +2,14 @@
 
 > LunaVerta is a free file converter and PDF editor that runs entirely in the web browser. Files are processed on the user's own device and are never uploaded to a server. It works offline after the first visit, needs no account, sets no cookies and shows no ads. LunaVerta is made in Denmark by Midt-Tech.
 
-LunaVerta is available in English (https://lunaverta.com/), Danish (https://lunaverta.com/da/), German (https://lunaverta.com/de/), Norwegian (https://lunaverta.com/no/), Swedish (https://lunaverta.com/sv/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
+LunaVerta is available in English (https://lunaverta.com/), Danish (https://lunaverta.com/da/), German (https://lunaverta.com/de/), Español (https://lunaverta.com/es/), Français (https://lunaverta.com/fr/), Norwegian (https://lunaverta.com/no/), Swedish (https://lunaverta.com/sv/). It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
 
 Key facts:
 - Price: Free
 - Uploads: None: files stay on your device
 - Account: Not needed
 - Works offline: Yes, after the first visit
-- Languages: English, Danish, Swedish, Norwegian and German
+- Languages: English, Danish, Swedish, Norwegian, German, Spanish and French
 - Made by: Midt-Tech, Aarhus, Denmark (CVR 34256276)
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
 - Not supported: video-to-video re-encoding (e.g. to MP4) and legacy .doc/.ppt files
@@ -22,7 +22,7 @@ Key facts:
 - [Compress PDF](https://lunaverta.com/compress-pdf/): Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.
 - [Protect PDF](https://lunaverta.com/protect-pdf/): Add a password to a PDF in your browser with AES-256 encryption. Free and private: the PDF and the password never leave your device.
 - [Unlock PDF](https://lunaverta.com/unlock-pdf/): Remove the password from a PDF you can open, right in your browser. Free and private: your PDF is never uploaded.
-- [OCR: make a PDF searchable](https://lunaverta.com/ocr-pdf/): Recognise the text in scanned PDFs and photos, in English, Danish, Swedish, Norwegian and German, so it can be searched and copied. Free and private: runs on your device.
+- [OCR: make a PDF searchable](https://lunaverta.com/ocr-pdf/): Recognise the text in scanned PDFs and photos, in English, Danish, Swedish, Norwegian, German, Spanish and French, so it can be searched and copied. Free and private: runs on your device.
 - [Remove prices from PDF](https://lunaverta.com/remove-prices-from-pdf/): Find every price in a quote or invoice and remove them all at once, keeping measurements and other details. Free and private: no upload.
 - [Redact PDF](https://lunaverta.com/redact-pdf/): Black out names, CPR numbers and other confidential text in a PDF. The text is removed, not just covered. Free and private: your PDF is never uploaded.
 - [Remove PDF metadata](https://lunaverta.com/remove-pdf-metadata/): Strip author names, software, dates, attachments and scripts from a PDF before you share it. Free and private: your PDF is never uploaded.
@@ -76,7 +76,7 @@ Key facts:
 - [Komprimér PDF](https://lunaverta.com/da/komprimer-pdf/): Gør en PDF mindre direkte i din browser. Teksten kan stadig søges i. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Beskyt PDF](https://lunaverta.com/da/beskyt-pdf-med-adgangskode/): Sæt adgangskode på en PDF direkte i din browser med AES-256-kryptering. Gratis og privat: PDF'en og adgangskoden forlader aldrig din enhed.
 - [Lås PDF op](https://lunaverta.com/da/fjern-adgangskode-fra-pdf/): Fjern adgangskoden fra en PDF, du kan åbne, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
-- [OCR: gør en PDF søgbar](https://lunaverta.com/da/goer-pdf-soegbar/): Genkend teksten i scannede PDF'er og fotos, på dansk, engelsk, svensk, norsk og tysk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.
+- [OCR: gør en PDF søgbar](https://lunaverta.com/da/goer-pdf-soegbar/): Genkend teksten i scannede PDF'er og fotos, på dansk, engelsk, svensk, norsk, tysk, spansk og fransk, så den kan søges i og kopieres. Gratis og privat: kører på din enhed.
 - [Fjern priser fra PDF](https://lunaverta.com/da/fjern-priser-fra-pdf/): Find alle priser i et tilbud eller en faktura, og fjern dem på én gang, mens mål og andre oplysninger bliver stående. Gratis og privat: uden upload.
 - [Anonymisér PDF](https://lunaverta.com/da/anonymiser-pdf/): Anonymisér en PDF: fjern navne, CPR-numre og anden fortrolig tekst. Teksten slettes og bliver ikke bare dækket. Gratis og privat: din PDF bliver aldrig uploadet.
 - [Fjern metadata fra PDF](https://lunaverta.com/da/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedhæftede filer og scripts fra en PDF, før du deler den. Gratis og privat: din PDF bliver aldrig uploadet.
@@ -130,7 +130,7 @@ Key facts:
 - [PDF komprimieren](https://lunaverta.com/de/pdf-komprimieren/): Die Dateigröße eines PDFs im Browser verringern. Der Text bleibt durchsuchbar. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [PDF schützen](https://lunaverta.com/de/pdf-mit-passwort-schuetzen/): Ein PDF im Browser mit einem Passwort und AES-256-Verschlüsselung versehen. Kostenlos und privat: PDF und Passwort verlassen nie dein Gerät.
 - [PDF entsperren](https://lunaverta.com/de/pdf-passwort-entfernen/): Das Passwort aus einem PDF entfernen, das du öffnen kannst, direkt im Browser. Kostenlos und privat: Dein PDF wird nie hochgeladen.
-- [OCR: PDF durchsuchbar machen](https://lunaverta.com/de/pdf-durchsuchbar-machen/): Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch und Norwegisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.
+- [OCR: PDF durchsuchbar machen](https://lunaverta.com/de/pdf-durchsuchbar-machen/): Den Text in gescannten PDFs und Fotos erkennen, auf Deutsch, Englisch, Dänisch, Schwedisch, Norwegisch, Spanisch und Französisch, damit er durchsucht und kopiert werden kann. Kostenlos und privat: läuft auf deinem Gerät.
 - [Preise aus PDF entfernen](https://lunaverta.com/de/preise-aus-pdf-entfernen/): Alle Preise in einem Angebot oder einer Rechnung finden und auf einmal entfernen, während Maße und andere Angaben bleiben. Kostenlos und privat: ohne Upload.
 - [PDF schwärzen](https://lunaverta.com/de/pdf-schwaerzen/): Namen, Kontonummern und anderen vertraulichen Text in einem PDF schwärzen. Der Text wird entfernt, nicht nur verdeckt. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [PDF-Metadaten entfernen](https://lunaverta.com/de/pdf-metadaten-entfernen/): Autorennamen, Programm, Datumsangaben, Anhänge und Skripte aus einem PDF entfernen, bevor du es teilst. Kostenlos und privat: Dein PDF wird nie hochgeladen.
@@ -176,6 +176,114 @@ Key facts:
 - [Kopf- und Fußzeile](https://lunaverta.com/de/kopfzeile-fusszeile-pdf/): Setze denselben Text oben oder unten auf jede Seite: "Vertraulich", das Datum, den Dateinamen, Seitenzahlen. Kostenlos und privat, nichts wird hochgeladen.
 - [PDF in Text](https://lunaverta.com/de/pdf-in-text/): Den gesamten Text eines PDFs im Browser in eine einfache Textdatei extrahieren. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 
+## Herramientas (español)
+- [HEIC a JPG](https://lunaverta.com/es/heic-a-jpg/): Convierte fotos HEIC del iPhone a JPG en tu navegador. Gratis, rápido y privado: tus fotos nunca se suben. Funciona con muchas fotos a la vez.
+- [Word a PDF](https://lunaverta.com/es/word-a-pdf/): Convierte documentos de Word (DOCX) a PDF en tu navegador. Conserva fuentes, tablas, imágenes, encabezados y pies de página. Gratis y privado, sin subir nada.
+- [Unir PDF](https://lunaverta.com/es/unir-pdf/): Combina varios archivos PDF (e imágenes) en un solo PDF en tu navegador. Arrastra para elegir el orden. Gratis y privado: no se sube nada.
+- [Dividir PDF](https://lunaverta.com/es/dividir-pdf/): Divide un PDF en archivos PDF separados de una página en tu navegador. Gratis y privado: tu PDF nunca se sube.
+- [Comprimir PDF](https://lunaverta.com/es/comprimir-pdf/): Reduce el tamaño de un archivo PDF en tu navegador. El texto sigue siendo buscable. Gratis y privado: tu PDF nunca se sube.
+- [Proteger PDF](https://lunaverta.com/es/proteger-pdf/): Añade una contraseña a un PDF en tu navegador con cifrado AES-256. Gratis y privado: ni el PDF ni la contraseña salen de tu dispositivo.
+- [Desbloquear PDF](https://lunaverta.com/es/desbloquear-pdf/): Quita la contraseña de un PDF que puedes abrir, directamente en tu navegador. Gratis y privado: tu PDF nunca se sube.
+- [OCR: hacer un PDF buscable](https://lunaverta.com/es/ocr-pdf/): Reconoce el texto de PDF escaneados y fotos, en español, francés, inglés, alemán y lenguas nórdicas, para poder buscarlo y copiarlo. Gratis y privado: funciona en tu dispositivo.
+- [Quitar precios de un PDF](https://lunaverta.com/es/quitar-precios-de-pdf/): Encuentra todos los precios de un presupuesto o una factura y quítalos de una vez, conservando medidas y otros datos. Gratis y privado: sin subir nada.
+- [Anonimizar PDF](https://lunaverta.com/es/anonimizar-pdf/): Tapa nombres, números de DNI y otro texto confidencial en un PDF. El texto se elimina, no solo se cubre. Gratis y privado: tu PDF nunca se sube.
+- [Quitar metadatos de un PDF](https://lunaverta.com/es/quitar-metadatos-pdf/): Quita de un PDF el nombre del autor, el programa, las fechas, los adjuntos y los scripts antes de compartirlo. Gratis y privado: tu PDF nunca se sube.
+- [Editar PDF](https://lunaverta.com/es/editar-pdf/): Edita PDF en tu navegador: corrige texto, añade texto, rellena formularios, reordena, gira y elimina páginas. Gratis y privado, sin subir nada.
+- [Firmar PDF](https://lunaverta.com/es/firmar-pdf/): Dibuja o sube tu firma y colócala en un PDF en tu navegador. Gratis y privado: ni el PDF ni tu firma salen de tu dispositivo.
+- [Eliminar páginas de un PDF](https://lunaverta.com/es/eliminar-paginas-pdf/): Quita páginas de un PDF en tu navegador. Ve cada página en miniatura, elimina las que no necesites y guarda. Gratis y privado, sin subir nada.
+- [Girar PDF](https://lunaverta.com/es/girar-pdf/): Pon derechas las páginas de un PDF en tu navegador. Gira páginas sueltas o todas y guarda. Gratis y privado, sin subir nada.
+- [Numerar páginas](https://lunaverta.com/es/numerar-paginas-pdf/): Numera las páginas de un PDF en tu navegador. Elige la posición y el estilo, como 1, 2, 3 o Página 1 de 10. Gratis y privado, sin subir nada.
+- [Marca de agua en PDF](https://lunaverta.com/es/marca-de-agua-pdf/): Pon una marca de agua de texto, como Copia, Borrador o Confidencial, en todas las páginas de un PDF. Gratis y privado, en tu navegador, sin subir nada.
+- [Rellenar formulario PDF](https://lunaverta.com/es/rellenar-formulario-pdf/): Rellena formularios PDF en tu navegador: escribe en los campos, marca las casillas y guarda. El formulario sigue siendo rellenable. Gratis y privado, sin subir nada.
+- [PDF a JPG](https://lunaverta.com/es/pdf-a-jpg/): Convierte cada página de un PDF en una imagen JPG en tu navegador. Gratis y privado: tu PDF nunca se sube.
+- [PDF a PNG](https://lunaverta.com/es/pdf-a-png/): Convierte cada página de un PDF en una imagen PNG en tu navegador. Sin pérdida y nítida. Gratis y privado, sin subir nada.
+- [JPG a PDF](https://lunaverta.com/es/jpg-a-pdf/): Convierte imágenes JPG, PNG y HEIC en un PDF en tu navegador, una página por imagen. Gratis y privado: no se sube nada.
+- [PNG a JPG](https://lunaverta.com/es/png-a-jpg/): Convierte imágenes PNG a JPG en tu navegador y hazlas mucho más pequeñas. Gratis y privado: no se sube nada.
+- [WebP a JPG](https://lunaverta.com/es/webp-a-jpg/): Convierte imágenes WebP de la web a JPG en tu navegador para que se abran en cualquier programa. Gratis y privado, sin subir nada.
+- [Quitar la ubicación de fotos](https://lunaverta.com/es/quitar-ubicacion-fotos/): Quita la ubicación GPS, los datos de la cámara y otros datos EXIF ocultos de las fotos antes de compartirlas. La calidad no cambia. Gratis, sin subir nada.
+- [Excel a CSV](https://lunaverta.com/es/excel-a-csv/): Convierte libros de Excel (XLSX, XLS, ODS) a CSV en tu navegador, un CSV por hoja. Gratis y privado: no se sube nada.
+- [CSV a Excel](https://lunaverta.com/es/csv-a-excel/): Convierte archivos CSV y JSON a Excel (XLSX) en tu navegador. Gratis y privado: no se sube nada.
+- [Excel a PDF](https://lunaverta.com/es/excel-a-pdf/): Convierte hojas de cálculo de Excel, CSV y ODS en un PDF ordenado con texto real y seleccionable. Gratis y privado: no se sube nada.
+- [PDF a Excel](https://lunaverta.com/es/pdf-a-excel/): Saca las tablas de un PDF a un libro de Excel, con los importes como números de verdad. Gratis y privado: el PDF nunca sale de tu dispositivo.
+- [Comprimir vídeo](https://lunaverta.com/es/comprimir-video/): Haz mucho más pequeños los vídeos del móvil (MP4, MOV) en tu navegador, para correo, chat o ahorrar espacio. Gratis y privado: el vídeo nunca sale de tu dispositivo.
+- [PowerPoint a PDF](https://lunaverta.com/es/powerpoint-a-pdf/): Convierte diapositivas de PowerPoint (.pptx) en un PDF en tu navegador, una diapositiva por página. Gratis y privado: no se sube nada.
+- [Crear un PDF rellenable](https://lunaverta.com/es/crear-pdf-rellenable/): Convierte cualquier PDF en un formulario que otros puedan rellenar: añade líneas de texto, cuadros de texto y casillas. Gratis y privado: no se sube nada.
+- [Generador de códigos QR](https://lunaverta.com/es/generador-codigo-qr/): Crea códigos QR para enlaces, wifi y tarjetas de contacto. Gratis, sin rastreo y sin caducidad: el código contiene tu texto. Guárdalo como PNG o SVG.
+- [Vídeo a GIF](https://lunaverta.com/es/video-a-gif/): Crea un GIF animado con los primeros segundos de un vídeo (MP4, WebM, MOV) en tu navegador. Gratis y privado, sin subir nada.
+- [Vídeo a MP3](https://lunaverta.com/es/video-a-mp3/): Extrae el sonido de un vídeo, o convierte WAV, M4A y otros audios a MP3 en tu navegador. Gratis y privado, sin subir nada.
+- [PDF a Word](https://lunaverta.com/es/pdf-a-word/): Convierte un PDF en un documento de Word que puedes editar, conservando fuentes, colores, párrafos e imágenes. Gratis y privado: tu PDF nunca se sube.
+- [Comparar dos PDF](https://lunaverta.com/es/comparar-pdf/): Compara dos versiones de un PDF y ve cada línea añadida, eliminada o cambiada, palabra por palabra. Gratis y privado: no se sube nada.
+- [Extraer páginas de un PDF](https://lunaverta.com/es/extraer-paginas-pdf/): Elige las páginas que necesitas de un PDF, como 2-5 y 9, y guárdalas como un PDF nuevo. Gratis y privado: tu PDF nunca se sube.
+- [Comprimir imagen](https://lunaverta.com/es/comprimir-imagen/): Haz más pequeñas las fotos e imágenes para el correo y la web. Ve el nuevo tamaño antes de guardar. Gratis y privado: tus imágenes nunca se suben.
+- [Redimensionar imagen](https://lunaverta.com/es/redimensionar-imagen/): Cambia el tamaño de fotos e imágenes al 75 %, 50 %, 25 % o a un ancho exacto en píxeles, muchas a la vez. Gratis y privado: tus imágenes nunca se suben.
+- [Recortar imagen](https://lunaverta.com/es/recortar-imagen/): Recorta una foto o imagen en tu navegador: cuadrada para una foto de perfil, 4:3, 16:9 o cualquier forma. Gratis y privado: tu imagen nunca se sube.
+- [Escanear a PDF](https://lunaverta.com/es/escanear-a-pdf/): Haz fotos de papeles con el móvil y obtén un PDF limpio y derecho, con el texto buscable si quieres. Gratis y privado: las fotos nunca salen de tu dispositivo.
+- [Unir alternando](https://lunaverta.com/es/unir-pdf-alternando/): ¿Escaneaste los anversos y los reversos en dos montones? Combínalos en un PDF en el orden correcto. Gratis y privado, no se sube nada.
+- [Quitar páginas en blanco](https://lunaverta.com/es/quitar-paginas-en-blanco-pdf/): Quita las páginas vacías que dejan los escáneres y la impresión a doble cara en un PDF. Gratis y privado, no se sube nada.
+- [Aplanar formulario PDF](https://lunaverta.com/es/aplanar-pdf/): Convierte un formulario PDF rellenado en texto fijo que ya no se puede cambiar, antes de enviarlo o firmarlo. Gratis y privado, no se sube nada.
+- [PDF en escala de grises](https://lunaverta.com/es/pdf-escala-de-grises/): Convierte un PDF en color a escala de grises para imprimir más barato y tener un archivo más pequeño. El texto sigue siendo buscable. Gratis y privado, no se sube nada.
+- [Reparar PDF](https://lunaverta.com/es/reparar-pdf/): Arregla PDF que no se abren o dan errores: LunaVerta lee lo que queda y escribe una copia limpia. Gratis y privado, no se sube nada.
+- [Editar datos del PDF](https://lunaverta.com/es/editar-metadatos-pdf/): Cambia el título, el autor, el asunto y las palabras clave guardados en un PDF, que se ven en las pestañas del navegador, los lectores y los resultados de búsqueda. Gratis y privado, no se sube nada.
+- [Extraer imágenes de un PDF](https://lunaverta.com/es/extraer-imagenes-pdf/): Guarda cada imagen de un PDF como un archivo propio, en su tamaño original. Gratis y privado, no se sube nada.
+- [Folleto y páginas por hoja](https://lunaverta.com/es/folleto-pdf/): Prepara un PDF para imprimirlo como folleto plegado, o con 2 o 4 páginas en cada hoja. Gratis y privado, no se sube nada.
+- [Recortar PDF y tamaño de página](https://lunaverta.com/es/recortar-pdf/): Recorta los márgenes blancos de cada página, o pon todas las páginas del mismo tamaño (A4 o Carta). Gratis y privado, no se sube nada.
+- [Encabezado y pie de página](https://lunaverta.com/es/encabezado-pie-pdf/): Pon el mismo texto arriba o abajo de cada página: "Confidencial", la fecha, el nombre del archivo, números de página. Gratis y privado, no se sube nada.
+- [PDF a texto](https://lunaverta.com/es/pdf-a-texto/): Extrae todo el texto de un PDF a un archivo de texto plano en tu navegador. Gratis y privado: tu PDF nunca se sube.
+
+## Outils (français)
+- [HEIC en JPG](https://lunaverta.com/fr/heic-en-jpg/): Convertissez les photos HEIC d'iPhone en JPG dans votre navigateur. Gratuit, rapide et privé : vos photos ne sont jamais envoyées. Fonctionne avec de nombreuses photos à la fois.
+- [Word en PDF](https://lunaverta.com/fr/word-en-pdf/): Convertissez des documents Word (DOCX) en PDF dans votre navigateur. Conserve les polices, tableaux, images, en-têtes et pieds de page. Gratuit et privé, sans envoi.
+- [Fusionner PDF](https://lunaverta.com/fr/fusionner-pdf/): Combinez plusieurs fichiers PDF (et images) en un seul PDF dans votre navigateur. Faites glisser pour choisir l'ordre. Gratuit et privé : rien n'est envoyé.
+- [Diviser PDF](https://lunaverta.com/fr/diviser-pdf/): Divisez un PDF en fichiers PDF séparés d'une page dans votre navigateur. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Compresser PDF](https://lunaverta.com/fr/compresser-pdf/): Réduisez la taille d'un PDF dans votre navigateur. Le texte reste consultable. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Protéger PDF](https://lunaverta.com/fr/proteger-pdf/): Ajoutez un mot de passe à un PDF dans votre navigateur avec un chiffrement AES-256. Gratuit et privé : ni le PDF ni le mot de passe ne quittent votre appareil.
+- [Déverrouiller PDF](https://lunaverta.com/fr/deverrouiller-pdf/): Retirez le mot de passe d'un PDF que vous pouvez ouvrir, directement dans votre navigateur. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [OCR : rendre un PDF consultable](https://lunaverta.com/fr/ocr-pdf/): Reconnaissez le texte des PDF scannés et des photos, en français, espagnol, anglais, allemand et langues nordiques, pour le rechercher et le copier. Gratuit et privé : fonctionne sur votre appareil.
+- [Supprimer les prix d'un PDF](https://lunaverta.com/fr/supprimer-prix-pdf/): Trouvez tous les prix d'un devis ou d'une facture et supprimez-les d'un coup, en gardant les mesures et autres détails. Gratuit et privé : sans envoi.
+- [Anonymiser PDF](https://lunaverta.com/fr/anonymiser-pdf/): Noircissez des noms, des numéros de sécurité sociale et d'autres textes confidentiels dans un PDF. Le texte est supprimé, pas seulement masqué. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Supprimer les métadonnées d'un PDF](https://lunaverta.com/fr/supprimer-metadonnees-pdf/): Retirez d'un PDF le nom de l'auteur, le logiciel, les dates, les pièces jointes et les scripts avant de le partager. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Modifier PDF](https://lunaverta.com/fr/modifier-pdf/): Modifiez des PDF dans votre navigateur : corrigez du texte, ajoutez du texte, remplissez des formulaires, réordonnez, faites pivoter et supprimez des pages. Gratuit et privé, sans envoi.
+- [Signer PDF](https://lunaverta.com/fr/signer-pdf/): Dessinez ou importez votre signature et placez-la sur un PDF dans votre navigateur. Gratuit et privé : ni le PDF ni votre signature ne quittent votre appareil.
+- [Supprimer des pages PDF](https://lunaverta.com/fr/supprimer-pages-pdf/): Retirez des pages d'un PDF dans votre navigateur. Voyez chaque page en miniature, supprimez celles dont vous n'avez pas besoin et enregistrez. Gratuit et privé, sans envoi.
+- [Faire pivoter un PDF](https://lunaverta.com/fr/pivoter-pdf/): Remettez les pages d'un PDF dans le bon sens dans votre navigateur. Faites pivoter une page ou toutes, puis enregistrez. Gratuit et privé, sans envoi.
+- [Numéroter les pages](https://lunaverta.com/fr/numeroter-pages-pdf/): Numérotez les pages d'un PDF dans votre navigateur. Choisissez la position et le style, comme 1, 2, 3 ou Page 1 sur 10. Gratuit et privé, sans envoi.
+- [Filigrane PDF](https://lunaverta.com/fr/filigrane-pdf/): Ajoutez un filigrane de texte comme Copie, Brouillon ou Confidentiel sur chaque page d'un PDF. Gratuit et privé, dans votre navigateur, sans envoi.
+- [Remplir un formulaire PDF](https://lunaverta.com/fr/remplir-formulaire-pdf/): Remplissez des formulaires PDF dans votre navigateur : tapez dans les champs, cochez les cases et enregistrez. Le formulaire reste remplissable. Gratuit et privé, sans envoi.
+- [PDF en JPG](https://lunaverta.com/fr/pdf-en-jpg/): Transformez chaque page d'un PDF en image JPG dans votre navigateur. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [PDF en PNG](https://lunaverta.com/fr/pdf-en-png/): Transformez chaque page d'un PDF en image PNG dans votre navigateur. Sans perte et net. Gratuit et privé, sans envoi.
+- [JPG en PDF](https://lunaverta.com/fr/jpg-en-pdf/): Transformez des images JPG, PNG et HEIC en PDF dans votre navigateur, une page par image. Gratuit et privé : rien n'est envoyé.
+- [PNG en JPG](https://lunaverta.com/fr/png-en-jpg/): Convertissez des images PNG en JPG dans votre navigateur et rendez-les bien plus légères. Gratuit et privé : rien n'est envoyé.
+- [WebP en JPG](https://lunaverta.com/fr/webp-en-jpg/): Convertissez des images WebP du web en JPG dans votre navigateur pour les ouvrir dans n'importe quel programme. Gratuit et privé, sans envoi.
+- [Supprimer la localisation des photos](https://lunaverta.com/fr/supprimer-localisation-photos/): Retirez la localisation GPS, les données de l'appareil et les autres données EXIF cachées des photos avant de les partager. La qualité reste la même. Gratuit, sans envoi.
+- [Excel en CSV](https://lunaverta.com/fr/excel-en-csv/): Convertissez des classeurs Excel (XLSX, XLS, ODS) en CSV dans votre navigateur, un CSV par feuille. Gratuit et privé : rien n'est envoyé.
+- [CSV en Excel](https://lunaverta.com/fr/csv-en-excel/): Convertissez des fichiers CSV et JSON en Excel (XLSX) dans votre navigateur. Gratuit et privé : rien n'est envoyé.
+- [Excel en PDF](https://lunaverta.com/fr/excel-en-pdf/): Transformez des feuilles Excel, CSV et ODS en un PDF soigné avec du vrai texte sélectionnable. Gratuit et privé : rien n'est envoyé.
+- [PDF en Excel](https://lunaverta.com/fr/pdf-en-excel/): Sortez les tableaux d'un PDF dans un classeur Excel, avec les montants en vrais nombres. Gratuit et privé : le PDF ne quitte jamais votre appareil.
+- [Compresser une vidéo](https://lunaverta.com/fr/compresser-video/): Rendez les vidéos de téléphone (MP4, MOV) bien plus légères dans votre navigateur, pour l'e-mail, une messagerie ou gagner de la place. Gratuit et privé : la vidéo ne quitte jamais votre appareil.
+- [PowerPoint en PDF](https://lunaverta.com/fr/powerpoint-en-pdf/): Transformez des diapositives PowerPoint (.pptx) en PDF dans votre navigateur, une diapositive par page. Gratuit et privé : rien n'est envoyé.
+- [Créer un PDF remplissable](https://lunaverta.com/fr/creer-pdf-remplissable/): Transformez n'importe quel PDF en formulaire que d'autres peuvent remplir : ajoutez des lignes de texte, des zones de texte et des cases à cocher. Gratuit et privé : rien n'est envoyé.
+- [Générateur de QR code](https://lunaverta.com/fr/generateur-qr-code/): Créez des QR codes pour des liens, le Wi-Fi et des cartes de contact. Gratuit, sans pistage et sans expiration : le code contient votre texte. Enregistrez en PNG ou SVG.
+- [Vidéo en GIF](https://lunaverta.com/fr/video-en-gif/): Créez un GIF animé à partir des premières secondes d'une vidéo (MP4, WebM, MOV) dans votre navigateur. Gratuit et privé, sans envoi.
+- [Vidéo en MP3](https://lunaverta.com/fr/video-en-mp3/): Extrayez le son d'une vidéo, ou convertissez WAV, M4A et autres fichiers audio en MP3 dans votre navigateur. Gratuit et privé, sans envoi.
+- [PDF en Word](https://lunaverta.com/fr/pdf-en-word/): Transformez un PDF en document Word modifiable, en gardant polices, couleurs, paragraphes et images. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Comparer deux PDF](https://lunaverta.com/fr/comparer-pdf/): Comparez deux versions d'un PDF et voyez chaque ligne ajoutée, supprimée ou modifiée, mot par mot. Gratuit et privé : rien n'est envoyé.
+- [Extraire des pages PDF](https://lunaverta.com/fr/extraire-pages-pdf/): Choisissez les pages dont vous avez besoin dans un PDF, comme 2-5 et 9, et enregistrez-les dans un nouveau PDF. Gratuit et privé : votre PDF n'est jamais envoyé.
+- [Compresser une image](https://lunaverta.com/fr/compresser-image/): Allégez photos et images pour l'e-mail et le web. Voyez la nouvelle taille avant d'enregistrer. Gratuit et privé : vos images ne sont jamais envoyées.
+- [Redimensionner une image](https://lunaverta.com/fr/redimensionner-image/): Redimensionnez photos et images à 75 %, 50 %, 25 % ou à une largeur exacte en pixels, plusieurs à la fois. Gratuit et privé : vos images ne sont jamais envoyées.
+- [Recadrer une image](https://lunaverta.com/fr/recadrer-image/): Recadrez une photo ou une image dans votre navigateur : carrée pour une photo de profil, 4:3, 16:9 ou n'importe quelle forme. Gratuit et privé : votre image n'est jamais envoyée.
+- [Scanner en PDF](https://lunaverta.com/fr/scanner-en-pdf/): Photographiez du papier avec votre téléphone et obtenez un PDF propre et droit, avec le texte consultable si vous le souhaitez. Gratuit et privé : les photos ne quittent jamais votre appareil.
+- [Fusion alternée](https://lunaverta.com/fr/fusion-alternee-pdf/): Vous avez scanné les rectos et les versos en deux piles ? Réunissez-les en un PDF dans le bon ordre. Gratuit et privé, rien n'est envoyé.
+- [Supprimer les pages blanches](https://lunaverta.com/fr/supprimer-pages-blanches-pdf/): Retirez les pages vides que laissent les scanners et l'impression recto verso dans un PDF. Gratuit et privé, rien n'est envoyé.
+- [Aplatir un formulaire PDF](https://lunaverta.com/fr/aplatir-pdf/): Transformez un formulaire PDF rempli en texte fixe qui ne peut plus être modifié, avant de l'envoyer ou de le signer. Gratuit et privé, rien n'est envoyé.
+- [PDF en niveaux de gris](https://lunaverta.com/fr/pdf-niveaux-de-gris/): Transformez un PDF couleur en niveaux de gris pour imprimer moins cher et alléger le fichier. Le texte reste consultable. Gratuit et privé, rien n'est envoyé.
+- [Réparer PDF](https://lunaverta.com/fr/reparer-pdf/): Réparez les PDF qui ne s'ouvrent pas ou affichent des erreurs : LunaVerta lit ce qui reste et écrit une copie propre. Gratuit et privé, rien n'est envoyé.
+- [Modifier les infos du PDF](https://lunaverta.com/fr/modifier-metadonnees-pdf/): Changez le titre, l'auteur, le sujet et les mots-clés enregistrés dans un PDF, visibles dans les onglets du navigateur, les lecteurs et les résultats de recherche. Gratuit et privé, rien n'est envoyé.
+- [Extraire les images d'un PDF](https://lunaverta.com/fr/extraire-images-pdf/): Enregistrez chaque image d'un PDF dans son propre fichier, à sa taille d'origine. Gratuit et privé, rien n'est envoyé.
+- [Livret et pages par feuille](https://lunaverta.com/fr/livret-pdf/): Préparez un PDF pour l'imprimer en livret plié, ou avec 2 ou 4 pages sur chaque feuille. Gratuit et privé, rien n'est envoyé.
+- [Recadrer PDF et format de page](https://lunaverta.com/fr/recadrer-pdf/): Rognez les marges blanches de chaque page, ou mettez toutes les pages au même format (A4 ou US Letter). Gratuit et privé, rien n'est envoyé.
+- [En-tête et pied de page](https://lunaverta.com/fr/en-tete-pied-de-page-pdf/): Mettez le même texte en haut ou en bas de chaque page : « Confidentiel », la date, le nom du fichier, les numéros de page. Gratuit et privé, rien n'est envoyé.
+- [PDF en texte](https://lunaverta.com/fr/pdf-en-texte/): Extrayez tout le texte d'un PDF dans un fichier texte brut, dans votre navigateur. Gratuit et privé : votre PDF n'est jamais envoyé.
+
 ## Verktøy (norsk)
 - [HEIC til JPG](https://lunaverta.com/no/heic-til-jpg/): Konverter HEIC-bilder fra iPhone til JPG i nettleseren. Gratis, raskt og privat: bildene dine lastes aldri opp. Fungerer med mange bilder på én gang.
 - [Word til PDF](https://lunaverta.com/no/word-til-pdf/): Konverter Word-dokumenter (DOCX) til PDF i nettleseren. Beholder skrifter, tabeller, bilder, topptekster og bunntekster. Gratis og privat, uten opplasting.
@@ -184,7 +292,7 @@ Key facts:
 - [Komprimer PDF](https://lunaverta.com/no/komprimer-pdf/): Reduser filstørrelsen på en PDF i nettleseren. Teksten forblir søkbar. Gratis og privat: PDF-en din lastes aldri opp.
 - [Beskytt PDF](https://lunaverta.com/no/beskytt-pdf-med-passord/): Legg til et passord på en PDF i nettleseren med AES-256-kryptering. Gratis og privat: PDF-en og passordet forlater aldri enheten din.
 - [Lås opp PDF](https://lunaverta.com/no/fjern-passord-fra-pdf/): Fjern passordet fra en PDF du kan åpne, rett i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
-- [OCR: gjør en PDF søkbar](https://lunaverta.com/no/gjor-pdf-sokbar/): Gjenkjenn teksten i skannede PDF-er og bilder, på norsk, engelsk, dansk, svensk og tysk, så den kan søkes i og kopieres. Gratis og privat: kjører på enheten din.
+- [OCR: gjør en PDF søkbar](https://lunaverta.com/no/gjor-pdf-sokbar/): Gjenkjenn teksten i skannede PDF-er og bilder, på norsk, engelsk, dansk, svensk, tysk, spansk og fransk, så den kan søkes i og kopieres. Gratis og privat: kjører på enheten din.
 - [Fjern priser fra PDF](https://lunaverta.com/no/fjern-priser-fra-pdf/): Finn alle priser i et tilbud eller en faktura og fjern dem på én gang, mens mål og andre opplysninger blir stående. Gratis og privat: uten opplasting.
 - [Sladd PDF](https://lunaverta.com/no/sladd-pdf/): Sladd navn, fødselsnumre og annen fortrolig tekst i en PDF. Teksten fjernes, den blir ikke bare dekket til. Gratis og privat: PDF-en din lastes aldri opp.
 - [Fjern metadata fra PDF](https://lunaverta.com/no/fjern-metadata-fra-pdf/): Fjern forfatternavn, program, datoer, vedlegg og skript fra en PDF før du deler den. Gratis og privat: PDF-en din lastes aldri opp.
@@ -238,7 +346,7 @@ Key facts:
 - [Komprimera PDF](https://lunaverta.com/sv/komprimera-pdf/): Minska filstorleken på en PDF i webbläsaren. Texten förblir sökbar. Gratis och privat: din PDF laddas aldrig upp.
 - [Skydda PDF](https://lunaverta.com/sv/skydda-pdf-med-losenord/): Lägg till ett lösenord på en PDF i webbläsaren med AES-256-kryptering. Gratis och privat: PDF:en och lösenordet lämnar aldrig din enhet.
 - [Lås upp PDF](https://lunaverta.com/sv/ta-bort-losenord-fran-pdf/): Ta bort lösenordet från en PDF som du kan öppna, direkt i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
-- [OCR: gör en PDF sökbar](https://lunaverta.com/sv/gor-pdf-sokbar/): Känn igen texten i skannade PDF-filer och foton, på svenska, engelska, danska, norska och tyska, så att den kan sökas och kopieras. Gratis och privat: körs på din enhet.
+- [OCR: gör en PDF sökbar](https://lunaverta.com/sv/gor-pdf-sokbar/): Känn igen texten i skannade PDF-filer och foton, på svenska, engelska, danska, norska, tyska, spanska och franska, så att den kan sökas och kopieras. Gratis och privat: körs på din enhet.
 - [Ta bort priser från PDF](https://lunaverta.com/sv/ta-bort-priser-fran-pdf/): Hitta alla priser i en offert eller faktura och ta bort dem på en gång, medan mått och andra uppgifter står kvar. Gratis och privat: utan uppladdning.
 - [Maskera PDF](https://lunaverta.com/sv/maskera-pdf/): Svärta namn, personnummer och annan konfidentiell text i en PDF. Texten tas bort, den döljs inte bara. Gratis och privat: din PDF laddas aldrig upp.
 - [Ta bort metadata från PDF](https://lunaverta.com/sv/ta-bort-metadata-fran-pdf/): Ta bort författarnamn, program, datum, bilagor och skript från en PDF innan du delar den. Gratis och privat: din PDF laddas aldrig upp.

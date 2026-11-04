@@ -9,17 +9,17 @@ import { GUIDES } from './guides.mjs';
 import { GUIDE_TEXT } from './guides-extra.mjs';
 for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) g[L] = texts[g.id];
 const { chromium } = createRequire(import.meta.url)('playwright');
-for (const L of ['sv', 'no', 'de']) { const x = (await import(`./lang/${L}.mjs`)).default; for (const tl of TOOLS) { const { slug, ...rest } = x.tools[tl.id]; tl.slug[L] = slug; tl[L] = rest; } }
+for (const L of ['sv', 'no', 'de', 'es', 'fr']) { const x = (await import(`./lang/${L}.mjs`)).default; for (const tl of TOOLS) { const { slug, ...rest } = x.tools[tl.id]; tl.slug[L] = slug; tl[L] = rest; } }
 
 const ROOT = new URL('../docs/', import.meta.url).pathname;
 const ctx = { window: {} };
 vm.runInNewContext(readFileSync(ROOT + 'assets/strings.js', 'utf8'), ctx);
-for (const L of ['sv', 'no', 'de']) vm.runInNewContext(readFileSync(ROOT + `assets/strings-${L}.js`, 'utf8'), ctx);
+for (const L of ['sv', 'no', 'de', 'es', 'fr']) vm.runInNewContext(readFileSync(ROOT + `assets/strings-${L}.js`, 'utf8'), ctx);
 const STR = ctx.window.LV_STR, t = (L, k) => STR[L][k] ?? STR.en[k];
-const LANGS = ['en', 'da', 'sv', 'no', 'de'];
-const GUIDE_WORD = { en: 'Guide', da: 'Vejledning', sv: 'Guide', no: 'Veiledning', de: 'Anleitung' };
-const MAKER = { en: 'A product by', da: 'Et produkt fra', sv: 'En produkt från', no: 'Et produkt fra', de: 'Ein Produkt von' };
-const WHERE = { en: 'Aarhus, Denmark', da: 'Aarhus, Danmark', sv: 'Aarhus, Danmark', no: 'Aarhus, Danmark', de: 'Aarhus, Dänemark' };
+const LANGS = ['en', 'da', 'sv', 'no', 'de', 'es', 'fr'];
+const GUIDE_WORD = { en: 'Guide', da: 'Vejledning', sv: 'Guide', no: 'Veiledning', de: 'Anleitung', es: 'Guía', fr: 'Guide' };
+const MAKER = { en: 'A product by', da: 'Et produkt fra', sv: 'En produkt från', no: 'Et produkt fra', de: 'Ein Produkt von', es: 'Un producto de', fr: 'Un produit de' };
+const WHERE = { en: 'Aarhus, Denmark', da: 'Aarhus, Danmark', sv: 'Aarhus, Danmark', no: 'Aarhus, Danmark', de: 'Aarhus, Dänemark', es: 'Aarhus, Dinamarca', fr: 'Aarhus, Danemark' };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const firstSentence = s => { const m = String(s).match(/^.{20,140}?[.!?](?=\s|$)/); return m ? m[0] : String(s).slice(0, 120); };
 

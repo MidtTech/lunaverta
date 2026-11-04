@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="color-scheme" content="light dark">
-<link rel="stylesheet" href="assets/app.min.css?v=841bede73f">
+<link rel="stylesheet" href="assets/app.min.css?v=51928acb0f">
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
@@ -24,7 +24,7 @@
     <div class="head-actions">
       <a class="btn sm" href="/" data-i18n="nav.converter">Converter</a>
       <div class="lang-switch" role="group" data-i18n-attr="aria-label:lang.label" aria-label="Language">
-        <button type="button" data-set-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="false" lang="da">DA</button><button type="button" data-set-lang="sv" aria-pressed="false" lang="sv">SV</button><button type="button" data-set-lang="no" aria-pressed="false" lang="no">NO</button><button type="button" data-set-lang="de" aria-pressed="false" lang="de">DE</button>
+        <button type="button" data-set-lang="en" aria-pressed="true" lang="en">EN</button><button type="button" data-set-lang="da" aria-pressed="false" lang="da">DA</button><button type="button" data-set-lang="sv" aria-pressed="false" lang="sv">SV</button><button type="button" data-set-lang="no" aria-pressed="false" lang="no">NO</button><button type="button" data-set-lang="de" aria-pressed="false" lang="de">DE</button><button type="button" data-set-lang="es" aria-pressed="false" lang="es">ES</button><button type="button" data-set-lang="fr" aria-pressed="false" lang="fr">FR</button>
       </div>
     </div>
   </header>
@@ -144,6 +144,52 @@
 </ul>
 <p><a class="btn primary" href="/de/">Mit einer Datei ausprobieren</a></p>
     </div>
+    <div data-lang="es" lang="es" hidden>
+<h1>Por qué no se sube nada</h1>
+<p class="lead">La mayoría de conversores online envían tu archivo a su servidor, lo procesan allí y te lo devuelven. LunaVerta no. El trabajo se hace en tu propio navegador, en tu propio dispositivo, así que tu archivo nunca sale de él.</p>
+<h2>Cómo funciona</h2>
+<p>Cuando abres LunaVerta, tu navegador descarga la propia aplicación: la página, sus scripts y algunas bibliotecas auxiliares. Son iguales para todo el mundo y no contienen nada sobre ti. Cuando abres un archivo, tu navegador lo lee en su propia memoria, la conversión se hace con el procesador de tu dispositivo y el resultado se guarda directamente en él.</p>
+<p>No hay ningún sitio adonde pueda ir un archivo. LunaVerta es un conjunto de archivos normales en un servidor web. No tenemos ningún servidor que reciba, guarde o procese archivos, ni ninguna cuenta a la que enviarlos.</p>
+<h2>Compruébalo tú mismo</h2>
+<p>No tienes por qué creernos sin más.</p>
+<ol>
+<li><b>Desconéctate.</b> Abre LunaVerta y luego apaga el wifi o activa el modo avión. Convierte o edita un archivo. Sigue funcionando, porque no hace falta enviar nada a ningún sitio. (Algunas herramientas descargan una biblioteca auxiliar la primera vez que se usan, así que prueba cada herramienta una vez con conexión.)</li>
+<li><b>Mira la red.</b> En un ordenador, pulsa F12 para abrir las herramientas de desarrollo y elige la pestaña Red. Ahora convierte un archivo. Verás cómo se descargan los propios archivos de LunaVerta, y nunca cómo se envía tu archivo.</li>
+<li><b>Lee las reglas que fija la página.</b> Cada página le dice al navegador que solo puede cargar cosas desde la dirección de LunaVerta y que no puede enviar formularios a ningún sitio. Lo verás como Content-Security-Policy en el código fuente de la página.</li>
+</ol>
+<h2>Por qué importa</h2>
+<p>Contratos, nóminas, documentos de identidad, informes médicos y presupuestos con precios son justo los archivos que la gente convierte, y justo los que no deberían estar en el servidor de un desconocido. Si el archivo nunca sale de tu dispositivo, no hay nada que se pueda filtrar, nada que borrar "al cabo de una hora" y ninguna condición en la que confiar.</p>
+<h2>Los límites, con sinceridad</h2>
+<ul>
+<li>El trabajo lo hace tu dispositivo, así que los archivos muy grandes dependen de cuánta memoria tenga. Un móvil antiguo puede atascarse con un PDF de 500 páginas que un portátil maneja sin problemas.</li>
+<li>Algunas herramientas descargan un complemento la primera vez que las usas, por ejemplo el reconocimiento de texto de un idioma. Es una descarga hacia ti, no una subida desde ti, y se guarda para la próxima vez.</li>
+<li>Como en cualquier web, el servidor ve que tu navegador ha pedido las páginas de LunaVerta. Nunca ve tus archivos. Más información en nuestra <a href="/privacy.html">página de privacidad</a>.</li>
+</ul>
+<p><a class="btn primary" href="/es/">Pruébalo con un archivo</a></p>
+    </div>
+    <div data-lang="fr" lang="fr" hidden>
+<h1>Pourquoi rien n'est envoyé</h1>
+<p class="lead">La plupart des convertisseurs en ligne envoient votre fichier sur leur serveur, le traitent là-bas et vous le renvoient. Pas LunaVerta. Le travail se fait dans votre propre navigateur, sur votre propre appareil : votre fichier ne le quitte jamais.</p>
+<h2>Comment ça marche</h2>
+<p>Quand vous ouvrez LunaVerta, votre navigateur télécharge l'application elle-même : la page, ses scripts et quelques bibliothèques. Ils sont identiques pour tout le monde et ne contiennent rien sur vous. Quand vous ouvrez un fichier, votre navigateur le lit dans sa propre mémoire, la conversion tourne sur le processeur de votre appareil, et le résultat est enregistré directement sur celui-ci.</p>
+<p>Un fichier n'a nulle part où aller. LunaVerta est un ensemble de simples fichiers sur un hébergeur web. Nous n'avons aucun serveur qui reçoit, stocke ou traite des fichiers, ni aucun compte vers lequel les envoyer.</p>
+<h2>Vérifiez par vous-même</h2>
+<p>Inutile de nous croire sur parole.</p>
+<ol>
+<li><b>Passez hors ligne.</b> Ouvrez LunaVerta, puis coupez le Wi-Fi ou activez le mode avion. Convertissez ou modifiez un fichier. Ça fonctionne toujours, car rien n'a besoin d'être envoyé. (Certains outils téléchargent une bibliothèque la première fois qu'ils servent : essayez donc chaque outil une fois en ligne.)</li>
+<li><b>Observez le réseau.</b> Sur un ordinateur, appuyez sur F12 pour ouvrir les outils de développement et choisissez l'onglet Réseau. Convertissez maintenant un fichier. Vous verrez les fichiers de LunaVerta être chargés, et jamais votre fichier être envoyé.</li>
+<li><b>Lisez les règles fixées par la page.</b> Chaque page indique au navigateur qu'il ne peut charger que depuis l'adresse de LunaVerta et ne peut envoyer de formulaires nulle part. Vous le verrez dans la Content-Security-Policy du code source de la page.</li>
+</ol>
+<h2>Pourquoi c'est important</h2>
+<p>Contrats, fiches de paie, pièces d'identité, courriers médicaux et devis chiffrés sont exactement les fichiers que l'on convertit, et exactement ceux qui ne devraient pas se trouver sur le serveur d'un inconnu. Quand le fichier ne quitte jamais votre appareil, il n'y a rien qui puisse fuiter, rien à supprimer « au bout d'une heure » et aucunes conditions auxquelles se fier.</p>
+<h2>Les limites, en toute honnêteté</h2>
+<ul>
+<li>C'est votre appareil qui travaille : les très gros fichiers dépendent donc de sa mémoire. Un vieux téléphone peut peiner sur un PDF de 500 pages qu'un ordinateur portable gère sans problème.</li>
+<li>Certains outils téléchargent un module la première fois que vous les utilisez, par exemple la reconnaissance de texte pour une langue. C'est un téléchargement vers vous, pas un envoi depuis vous, et il est gardé pour la prochaine fois.</li>
+<li>Comme pour tout site web, l'hébergeur voit que votre navigateur a demandé les pages de LunaVerta. Il ne voit jamais vos fichiers. Plus d'informations sur notre <a href="/privacy.html">page de confidentialité</a>.</li>
+</ul>
+<p><a class="btn primary" href="/fr/">Essayez avec un fichier</a></p>
+    </div>
   </main>
   <footer>
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">A product by</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Denmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
@@ -152,10 +198,12 @@
     <nav aria-label="Site"><a href="/" data-i18n="nav.converter">Converter</a><a href="mailto:lee@midttech.com?subject=LunaVerta" data-report data-i18n="report.link">Report a problem</a><a href="/guide/" data-i18n="nav.guides">Guides</a><a href="/no-upload.html" data-i18n="nav.noUpload">Why nothing is uploaded</a><a href="/privacy.html" data-i18n="nav.privacy">Privacy</a><a href="/licenses.html" data-i18n="nav.licenses">Open-source licenses</a></nav>
   </footer>
 </div>
-<script src="assets/strings.min.js?v=841bede73f"></script>
-<script src="assets/strings-sv.min.js?v=841bede73f"></script>
-<script src="assets/strings-no.min.js?v=841bede73f"></script>
-<script src="assets/strings-de.min.js?v=841bede73f"></script>
-<script src="assets/i18n.min.js?v=841bede73f"></script>
+<script src="assets/strings.min.js?v=51928acb0f"></script>
+<script src="assets/strings-sv.min.js?v=51928acb0f"></script>
+<script src="assets/strings-no.min.js?v=51928acb0f"></script>
+<script src="assets/strings-de.min.js?v=51928acb0f"></script>
+<script src="assets/strings-es.min.js?v=51928acb0f"></script>
+<script src="assets/strings-fr.min.js?v=51928acb0f"></script>
+<script src="assets/i18n.min.js?v=51928acb0f"></script>
 </body>
 </html>
