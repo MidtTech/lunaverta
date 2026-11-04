@@ -366,6 +366,7 @@ window.LV_STR.sv = {
   'nav.converter': 'Konverterare',
   'nav.privacy': 'Integritet',
   'nav.licenses': 'Licenser för öppen källkod',
+  'nav.source': 'Källkod',
   'notice.aria': 'Om cookies',
   'notice.text': 'LunaVerta använder inga cookies. Ditt språk och dina inställningar sparas bara på din enhet.',
   'notice.more': 'Läs mer',

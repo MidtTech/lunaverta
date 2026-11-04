@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Private file converter that runs entirely in the browser.",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "vendor": "node scripts/vendor.mjs",

@@ -108,14 +108,14 @@ ${group(g[3])}
 }
 function aboutSection(lang) {
   const L = LABELS[lang];
-  const last = L.facts.length - 1; // the last fact is who made it, linked to their site
+  const last = L.facts.length - 1; // the last fact is who made it, linked to their site; the one before is the source code, linked to GitHub
   return `  <section class="about" aria-labelledby="h-about">
     <div class="about-text">
       <h2 id="h-about">${esc(L.about)}</h2>
       <p>${esc(L.aboutText)}</p>
     </div>
     <dl class="facts">
-${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<a href="${COMPANY.url}" target="_blank" rel="noopener">${esc(v)}</a>` : esc(v)}</dd></div>`).join('\n')}
+${L.facts.map(([k, v], i) => `      <div><dt>${esc(k)}</dt><dd>${i === last ? `<a href="${COMPANY.url}" target="_blank" rel="noopener">${esc(v)}</a>` : i === last - 1 ? `<a href="https://github.com/MidtTech/lunaverta" rel="noopener">${esc(v)}</a>` : esc(v)}</dd></div>`).join('\n')}
     </dl>
   </section>`;
 }
@@ -186,6 +186,7 @@ function jsonLd(lang, page, faqItems) {
       applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any (runs in the browser)', browserRequirements: 'A modern web browser with JavaScript',
       offers: { '@type': 'Offer', price: '0', priceCurrency: CURRENCY[lang] || 'EUR' }, isAccessibleForFree: true, description: page.desc, publisher: { '@id': SITE + '/#org' },
       dateModified: DAY, image: page.tool ? ogFor(lang, page.tool.slug[lang]) : undefined, isPartOf: { '@id': SITE + '/#site' },
+      license: 'https://www.gnu.org/licenses/agpl-3.0.html', sameAs: 'https://github.com/MidtTech/lunaverta',
       featureList: page.tool ? undefined : TOOLS.map(tl => tl[lang].name) },
     { '@type': 'FAQPage', inLanguage: lang, mainEntity: faqItems.map(it => ({ '@type': 'Question', name: it.q, acceptedAnswer: { '@type': 'Answer', text: it.a.replace(/<[^>]+>/g, '') } })) }
   ];
@@ -322,6 +323,7 @@ LunaVerta is available in ${LANGS.map(L => `${ENGLISH_NAME[L] || META[L].name} (
 Key facts:
 ${LABELS.en.facts.map(([k, v]) => `- ${k}: ${v}`).join('\n')}
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
+- Source code: https://github.com/MidtTech/lunaverta (AGPL-3.0), so the no-upload claim can be checked
 - Not supported: converting between video formats (only making MP4/MOV videos smaller, GIFs, sound and still frames), and legacy .doc/.ppt files (save them as .docx/.pptx first)
 - Full details of every tool (steps and questions): ${SITE}/llms-full.txt
 

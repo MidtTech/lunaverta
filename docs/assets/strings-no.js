@@ -366,6 +366,7 @@ window.LV_STR.no = {
   'nav.converter': 'Konvertering',
   'nav.privacy': 'Personvern',
   'nav.licenses': 'Lisenser for åpen kildekode',
+  'nav.source': 'Kildekode',
   'notice.aria': 'Om informasjonskapsler',
   'notice.text': 'LunaVerta bruker ingen informasjonskapsler. Språket og innstillingene dine lagres bare på enheten din.',
   'notice.more': 'Les mer',

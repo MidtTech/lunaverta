@@ -366,6 +366,7 @@ window.LV_STR.de = {
   'nav.converter': 'Konverter',
   'nav.privacy': 'Datenschutz',
   'nav.licenses': 'Open-Source-Lizenzen',
+  'nav.source': 'Quellcode',
   'notice.aria': 'Über Cookies',
   'notice.text': 'LunaVerta verwendet keine Cookies. Deine Sprache und Einstellungen werden nur auf deinem Gerät gespeichert.',
   'notice.more': 'Mehr erfahren',

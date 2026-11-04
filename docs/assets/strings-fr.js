@@ -371,6 +371,7 @@ window.LV_STR.fr = {
   'nav.converter': 'Convertisseur',
   'nav.privacy': 'Confidentialité',
   'nav.licenses': 'Licences open source',
+  'nav.source': 'Code source',
   'notice.aria': 'À propos des cookies',
   'notice.text': 'LunaVerta n\'utilise pas de cookies. Votre langue et vos réglages sont stockés uniquement sur votre appareil.',
   'notice.more': 'En savoir plus',

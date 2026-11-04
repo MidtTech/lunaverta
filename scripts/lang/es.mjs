@@ -67,6 +67,7 @@ export default {
     "Idiomas",
     "Español, inglés, francés, alemán, danés, sueco y noruego"
    ],
+   ["Código fuente", "Código abierto (AGPL-3.0), en GitHub"],
    [
     "Hecho por",
     "Midt-Tech, Aarhus, Dinamarca (CVR 34256276)"

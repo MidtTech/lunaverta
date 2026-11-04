@@ -10,8 +10,10 @@ Key facts:
 - Account: Not needed
 - Works offline: Yes, after the first visit
 - Languages: English, Danish, Swedish, Norwegian, German, Spanish and French
+- Source code: Open source (AGPL-3.0), on GitHub
 - Made by: Midt-Tech, Aarhus, Denmark (CVR 34256276)
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
+- Source code: https://github.com/MidtTech/lunaverta (AGPL-3.0), so the no-upload claim can be checked
 - Not supported: converting between video formats (only making MP4/MOV videos smaller, GIFs, sound and still frames), and legacy .doc/.ppt files (save them as .docx/.pptx first)
 - Full details of every tool (steps and questions): https://lunaverta.com/llms-full.txt
 
