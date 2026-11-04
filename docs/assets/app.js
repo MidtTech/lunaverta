@@ -50,11 +50,13 @@ const OUT = {
   pdf: { k: '--c-doc' }, edit: { k: '--c-doc', tool: true }, redact: { k: '--c-doc', tool: true }, ocr: { k: '--c-doc', tool: true }, prices: { k: '--c-doc', tool: true }, merge: { k: '--c-doc', tool: true }, split: { k: '--c-doc', tool: true }, extract: { k: '--c-doc', tool: true }, shrink: { k: '--c-doc', tool: true }, protect: { k: '--c-doc', tool: true }, unlock: { k: '--c-doc', tool: true },
   html: { k: '--c-doc' }, md: { k: '--c-doc' }, txt: { k: '--c-doc' }, docx: { k: '--c-doc' }, compare: { k: '--c-doc', tool: true },
   xlsx: { k: '--c-data' }, csv: { k: '--c-data' }, json: { k: '--c-data' },
-  mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }, vshrink: { k: '--c-video', tool: true }
+  mp3: { k: '--c-audio' }, wav: { k: '--c-audio' }, vshrink: { k: '--c-video', tool: true },
+  altmerge: { k: '--c-doc', tool: true }, blank: { k: '--c-doc', tool: true }, flatten: { k: '--c-doc', tool: true }, grey: { k: '--c-doc', tool: true }, repair: { k: '--c-doc', tool: true },
+  meta: { k: '--c-doc', tool: true }, images: { k: '--c-image', tool: true }, nup: { k: '--c-doc', tool: true }, crop: { k: '--c-doc', tool: true }, headfoot: { k: '--c-doc', tool: true }
 };
 // Tools (merge, split, shrink, clean) are named in words; formats by extension.
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
-const ORDER = ['vshrink','edit','redact','ocr','merge','split','extract','shrink','protect','unlock','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','scan','clean'];
+const ORDER = ['vshrink','edit','redact','ocr','merge','altmerge','split','extract','shrink','protect','unlock','blank','flatten','grey','repair','meta','images','nup','crop','headfoot','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','scan','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
   [/presentationml/, 'slides'], [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
@@ -66,7 +68,7 @@ function kindOf(file) { return kindOfExt(ext(file.name)) || kindOfMime(file.type
 function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) if (re.test(t)) return k; return null; }
 // Tools kept out of the ring for a kind, but still used by their own pages
 // (Compress PDF, Remove PDF metadata, PDF to text, Remove prices).
-const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare', 'extract'], image: ['scan'] };
+const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare', 'extract', 'altmerge', 'blank', 'flatten', 'grey', 'repair', 'meta', 'images', 'nup', 'crop', 'headfoot'], image: ['scan'] };
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
@@ -1418,6 +1420,204 @@ async function slidesToPDF(file, progress = () => {}) {
   }
   return [{ name: base(file.name) + '.pdf', blob: pdf.output('blob') }];
 }
+// ---------- More PDF tools: each has its own page (alternate merge, blank pages, flatten, grey, repair,
+// details, pictures, booklet, crop and page size, header and footer) ----------
+// A small window of choices, built from a list: radio groups, tick boxes, text fields and selects.
+function askOptions(title, fields, okKey = 'opt.go', note = '') {
+  return new Promise(resolve => {
+    const d = document.createElement('dialog'); d.className = 'pw-dialog opt-dialog';
+    const row = f => {
+      if (f.type === 'radio') return `<fieldset class="opt-radio"><legend>${esc(f.label || '')}</legend>${f.options.map(([v, l, ds]) => `<label class="pw-show"><input type="radio" name="${f.id}" value="${v}"${v === f.value ? ' checked' : ''}> <span><b>${esc(l)}</b>${ds ? `<br><small class="pw-note">${esc(ds)}</small>` : ''}</span></label>`).join('')}</fieldset>`;
+      if (f.type === 'check') return `<label class="pw-show"><input type="checkbox" name="${f.id}"${f.value ? ' checked' : ''}> ${esc(f.label)}</label>`;
+      if (f.type === 'select') return `<label>${esc(f.label)}<select name="${f.id}">${f.options.map(([v, l]) => `<option value="${v}"${v === f.value ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
+      return `<label>${esc(f.label)}<input type="text" name="${f.id}" value="${esc(f.value || '')}" placeholder="${esc(f.ph || '')}" autocomplete="off"></label>`;
+    };
+    d.innerHTML = `<form method="dialog"><h2>${esc(title)}</h2>${note ? `<p class="pw-note">${esc(note)}</p>` : ''}${fields.map(row).join('')}
+      <div class="pw-btns"><button type="button" class="btn sm" value="cancel">${esc(T('pw.cancel'))}</button><button type="submit" class="btn sm primary" value="ok">${esc(T(okKey))}</button></div></form>`;
+    const form = d.querySelector('form'); let answer = null;
+    d.querySelector('[value="cancel"]').onclick = () => d.close();
+    form.onsubmit = e => {
+      e.preventDefault(); answer = {};
+      for (const f of fields) answer[f.id] = f.type === 'check' ? form.elements[f.id].checked : f.type === 'radio' ? (form.querySelector(`input[name="${f.id}"]:checked`) || {}).value : form.elements[f.id].value;
+      d.close();
+    };
+    d.addEventListener('close', () => { d.remove(); resolve(answer); });
+    document.body.appendChild(d); d.showModal();
+  });
+}
+const pdfOut = async (doc, name, note) => ({ name, blob: new Blob([await doc.save()], { type: 'application/pdf' }), ...(note || {}) });
+
+// Alternate merge: front pages and back pages scanned as two stacks become one document in the right order.
+// One file works too (all fronts first, then all backs).
+async function alternateMerge(files, o) {
+  await lib('pdflib');
+  const docs = await Promise.all(files.slice(0, 2).map(openPdfLib));
+  let fronts, backs;
+  if (docs.length === 1) { const n = docs[0].getPageCount(), h = Math.ceil(n / 2); fronts = [...Array(h).keys()].map(i => [0, i]); backs = [...Array(n - h).keys()].map(i => [0, h + i]); }
+  else { fronts = docs[0].getPageIndices().map(i => [0, i]); backs = docs[1].getPageIndices().map(i => [1, i]); }
+  if (o.reversed) backs.reverse();
+  const order = []; for (let i = 0; i < Math.max(fronts.length, backs.length); i++) { if (fronts[i]) order.push(fronts[i]); if (backs[i]) order.push(backs[i]); }
+  const out = await PDFLib.PDFDocument.create();
+  for (const [d, i] of order) out.addPage((await out.copyPages(docs[d], [i]))[0]);
+  return [await pdfOut(out, base(files[0].name) + '-merged.pdf')];
+}
+
+// Blank pages: a page counts as blank when almost nothing is printed on it (scanner noise and a bare page number are allowed).
+async function removeBlankPages(file, pdf, progress) {
+  await lib('pdflib');
+  const keep = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i), vp = page.getViewport({ scale: 60 / 72 });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const mx = Math.round(c.width * .04), my = Math.round(c.height * .04), d = ctx.getImageData(mx, my, c.width - 2 * mx, c.height - 2 * my).data;
+    let ink = 0; for (let k = 0; k < d.length; k += 4) if (d[k] * .3 + d[k + 1] * .59 + d[k + 2] * .11 < 200) ink++;
+    const words = (await page.getTextContent()).items.map(t => t.str).join('').replace(/[\s\d\-–.,/|]+/g, '');
+    if (ink / (d.length / 4) > .0015 || words.length > 0) keep.push(i - 1);
+    progress(i / pdf.numPages);
+  }
+  const removed = pdf.numPages - keep.length;
+  if (!removed) return [{ name: file.name, blob: file.slice(0, file.size, 'application/pdf'), noteKey: 'blank.none' }];
+  if (!keep.length) throw new Error(T('blank.all'));
+  const src = await openPdfLib(file), out = await PDFLib.PDFDocument.create();
+  (await out.copyPages(src, keep)).forEach(pg => out.addPage(pg));
+  return [await pdfOut(out, base(file.name) + '-no-blanks.pdf', { noteKey: 'blank.removed', noteVars: { n: removed } })];
+}
+
+// Flatten: filled-in form fields become ordinary, fixed text on the page.
+async function flattenPDF(file) {
+  const doc = await openPdfLib(file), form = doc.getForm(), n = form.getFields().length;
+  if (!n) return [{ name: file.name, blob: file.slice(0, file.size, 'application/pdf'), noteKey: 'flat.none' }];
+  try { form.updateFieldAppearances(); } catch (e) {}
+  form.flatten();
+  return [await pdfOut(doc, base(file.name) + '-flat.pdf', { noteKey: 'flat.done', noteVars: { n } })];
+}
+
+// Repair: qpdf reads damaged PDFs leniently and writes a clean copy.
+async function repairPDF(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const r = await qpdf(bytes, ['/in.pdf', '/out.pdf']);
+  if (r.out && r.out.length > 100) return [{ name: base(file.name) + '-repaired.pdf', blob: new Blob([r.out], { type: 'application/pdf' }), noteKey: r.rc === 3 ? 'repair.fixed' : 'repair.ok' }];
+  try { await lib('pdflib'); const d = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true, throwOnInvalidObject: false }); return [await pdfOut(d, base(file.name) + '-repaired.pdf', { noteKey: 'repair.fixed' })]; }
+  catch (e) { throw new Error(T('repair.fail')); }
+}
+
+// Details (title, author, subject, keywords): read for the window, written back exactly as typed.
+async function readPdfInfo(file) {
+  await lib('pdflib');
+  try { const d = await PDFLib.PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true, updateMetadata: false }); return { title: d.getTitle() || '', author: d.getAuthor() || '', subject: d.getSubject() || '', keywords: d.getKeywords() || '' }; }
+  catch (e) { return { title: '', author: '', subject: '', keywords: '' }; }
+}
+async function editMetadata(file, m) {
+  await lib('pdflib');
+  let doc; try { doc = await PDFLib.PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { updateMetadata: false }); } catch (e) { doc = await openPdfLib(file); }
+  doc.setTitle(m.title || '', { showInWindowTitleBar: !!m.title }); doc.setAuthor(m.author || ''); doc.setSubject(m.subject || '');
+  doc.setKeywords((m.keywords || '').split(/[,;]\s*/).filter(Boolean));
+  if (m.strip) { doc.setCreator(''); doc.setProducer(''); const info = doc.getInfoDict(); info.delete(PDFLib.PDFName.of('CreationDate')); info.delete(PDFLib.PDFName.of('ModDate')); }
+  return [await pdfOut(doc, file.name)];
+}
+
+// Pictures: every picture in the PDF saved as its own file (photos as JPG, the rest as PNG), in one .zip.
+async function extractImages(file, pdf, progress) {
+  const outs = [], seen = new Set(), b = base(file.name);
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i), ops = await page.getOperatorList();
+    let k = 0;
+    for (let j = 0; j < ops.fnArray.length; j++) {
+      if (ops.fnArray[j] !== pdfjsLib.OPS.paintImageXObject && ops.fnArray[j] !== pdfjsLib.OPS.paintJpegXObject) continue;
+      const name = ops.argsArray[j][0]; if (seen.has(name)) continue; seen.add(name);
+      const img = await new Promise(res => { const store = name.startsWith('g_') ? page.commonObjs : page.objs; try { store.get(name, res); } catch (e) { res(null); } setTimeout(() => res(null), 4000); });
+      if (!img || !img.width || img.width * img.height < 1600) continue; // tiny bits (lines, dots) are not pictures
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const ctx = c.getContext('2d');
+      if (img.bitmap) ctx.drawImage(img.bitmap, 0, 0);
+      else if (img.data) {
+        const id = ctx.createImageData(img.width, img.height), src = img.data, dst = id.data, px = img.width * img.height;
+        if (src.length === px * 4) dst.set(src);
+        else if (src.length === px * 3) for (let q = 0, r = 0; q < px; q++) { dst[r++] = src[q * 3]; dst[r++] = src[q * 3 + 1]; dst[r++] = src[q * 3 + 2]; dst[r++] = 255; }
+        else { const row = Math.ceil(img.width / 8); for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) { const on = (src[y * row + (x >> 3)] >> (7 - (x & 7))) & 1, v = on ? 255 : 0, r = (y * img.width + x) * 4; dst[r] = dst[r + 1] = dst[r + 2] = v; dst[r + 3] = 255; } }
+        ctx.putImageData(id, 0, 0);
+      } else continue;
+      k++;
+      const photo = img.width * img.height > 90000 && !(img.data && img.data.length === img.width * img.height * 4);
+      outs.push({ name: `${b}-p${i}-${k}.${photo ? 'jpg' : 'png'}`, blob: await canvasToBlob(c, photo ? 'image/jpeg' : 'image/png', .92) });
+    }
+    progress(i / pdf.numPages);
+  }
+  if (!outs.length) throw new Error(T('img.none'));
+  return outs;
+}
+
+// Booklet and several pages per sheet. Booklet: A4 sheets folded in the middle, pages in printing order
+// (print on both sides, flip on the short edge). 2 or 4 pages on one A4 side otherwise.
+async function nupPDF(file, mode) {
+  const src = await openPdfLib(file), out = await PDFLib.PDFDocument.create();
+  const pages = await out.embedPages(src.getPages());
+  const A4 = [595.28, 841.89], M = 14;
+  const place = (sheet, ep, x, y, w, h) => { if (!ep) return; const k = Math.min((w - 2 * M) / ep.width, (h - 2 * M) / ep.height); const pw = ep.width * k, ph = ep.height * k; sheet.drawPage(ep, { x: x + (w - pw) / 2, y: y + (h - ph) / 2, width: pw, height: ph }); };
+  if (mode === 'booklet') {
+    const n = Math.ceil(pages.length / 4) * 4, list = [...pages, ...Array(n - pages.length).fill(null)];
+    for (let i = 0; i < n / 2; i += 2) {
+      for (const [l, r] of [[list[n - 1 - i], list[i]], [list[i + 1], list[n - 2 - i]]]) {
+        const sh = out.addPage([A4[1], A4[0]]); place(sh, l, 0, 0, A4[1] / 2, A4[0]); place(sh, r, A4[1] / 2, 0, A4[1] / 2, A4[0]);
+      }
+    }
+  } else if (mode === '2') {
+    for (let i = 0; i < pages.length; i += 2) { const sh = out.addPage([A4[1], A4[0]]); place(sh, pages[i], 0, 0, A4[1] / 2, A4[0]); place(sh, pages[i + 1], A4[1] / 2, 0, A4[1] / 2, A4[0]); }
+  } else {
+    for (let i = 0; i < pages.length; i += 4) { const sh = out.addPage(A4), w = A4[0] / 2, h = A4[1] / 2; [[0, h], [w, h], [0, 0], [w, 0]].forEach(([x, y], k) => place(sh, pages[i + k], x, y, w, h)); }
+  }
+  return [await pdfOut(out, base(file.name) + (mode === 'booklet' ? '-booklet.pdf' : `-${mode}up.pdf`))];
+}
+
+// Crop: white margins trimmed automatically (the page shows only what is printed, plus a little room),
+// or every page put on one paper size (A4 or Letter), scaled to fit.
+async function cropPDF(file, pdf, mode, progress) {
+  const doc = await openPdfLib(file), pgs = doc.getPages();
+  if (mode === 'trim') {
+    for (let i = 0; i < pgs.length; i++) {
+      const page = await pdf.getPage(i + 1), vp = page.getViewport({ scale: 1 });
+      const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      const d = ctx.getImageData(0, 0, c.width, c.height).data; let x1 = c.width, y1 = c.height, x2 = -1, y2 = -1;
+      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) { const k = (y * c.width + x) * 4; if (d[k] < 245 || d[k + 1] < 245 || d[k + 2] < 245) { if (x < x1) x1 = x; if (x > x2) x2 = x; if (y < y1) y1 = y; if (y > y2) y2 = y; } }
+      if (x2 >= 0) {
+        const pad = 18, [ax, ay] = vp.convertToPdfPoint(Math.max(0, x1 - pad), Math.max(0, y1 - pad)), [bx, by] = vp.convertToPdfPoint(Math.min(c.width, x2 + pad), Math.min(c.height, y2 + pad));
+        const X = Math.min(ax, bx), Y = Math.min(ay, by); pgs[i].setCropBox(X, Y, Math.abs(bx - ax), Math.abs(by - ay)); pgs[i].setMediaBox(X, Y, Math.abs(bx - ax), Math.abs(by - ay));
+      }
+      progress((i + 1) / pgs.length);
+    }
+    return [await pdfOut(doc, base(file.name) + '-cropped.pdf')];
+  }
+  const size = mode === 'letter' ? [612, 792] : [595.28, 841.89], out = await PDFLib.PDFDocument.create(), eps = await out.embedPages(pgs);
+  eps.forEach((ep, i) => {
+    const rot = (pgs[i].getRotation().angle % 360 + 360) % 360, turned = rot === 90 || rot === 270, w = turned ? ep.height : ep.width, h = turned ? ep.width : ep.height;
+    const [W, H] = w > h ? [size[1], size[0]] : size, sh = out.addPage([W, H]), k = Math.min(W / w, H / h), pw = w * k, ph = h * k;
+    if (!turned) sh.drawPage(ep, { x: (W - pw) / 2, y: (H - ph) / 2, width: pw, height: ph });
+    else sh.drawPage(ep, { x: rot === 90 ? (W + pw) / 2 : (W - pw) / 2, y: rot === 90 ? (H - ph) / 2 : (H + ph) / 2, width: ph, height: pw, rotate: PDFLib.degrees(rot === 90 ? 90 : 270) });
+    progress((i + 1) / eps.length);
+  });
+  return [await pdfOut(out, base(file.name) + (mode === 'letter' ? '-letter.pdf' : '-a4.pdf'))];
+}
+
+// Header and footer: the same line at the top and/or bottom of every page, with {page}, {pages}, {date} and {name}.
+async function headerFooter(file, h) {
+  const doc = await openPdfLib(file), font = await doc.embedFont(PDFLib.StandardFonts.Helvetica), pgs = doc.getPages(), size = +h.size || 10;
+  const lg = document.documentElement.lang || 'en', date = new Date().toLocaleDateString(lg === 'en' ? 'en-GB' : lg === 'no' ? 'nb-NO' : lg);
+  const fill = t => String(t || '').replace(/\{page\}/g, '\u0001').replace(/\{pages\}/g, pgs.length).replace(/\{date\}/g, date).replace(/\{name\}/g, base(file.name));
+  pgs.forEach((pg, i) => {
+    if (h.skipFirst && i === 0) return;
+    const { x: bx, y: by, width: W, height: H } = pg.getCropBox();
+    for (const [txt, top] of [[h.header, true], [h.footer, false]]) {
+      const t = fill(txt).replace('\u0001', String(i + 1)).replace(new RegExp(WIN_ANSI.source, 'g'), '?'); if (!t.trim()) continue;
+      const w = font.widthOfTextAtSize(t, size), x = h.align === 'left' ? bx + 36 : h.align === 'right' ? bx + W - 36 - w : bx + (W - w) / 2;
+      pg.drawText(t, { x, y: top ? by + H - 24 - size * .8 : by + 22, size, font, color: PDFLib.rgb(.25, .25, .3) });
+    }
+  });
+  return [await pdfOut(doc, base(file.name) + '-header.pdf')];
+}
+
 // ---------- converters by kind ----------
 // ---------- PDF tools: merge, split, shrink ----------
 // Loads a PDF for changing. Many invoices are "protected" only against
@@ -1537,7 +1737,7 @@ async function splitPDF(file, progress) {
 // Redraw every page as a compact image with an invisible text layer, so the
 // smaller file can still be searched and copied from. Keeps the original if
 // that turns out smaller.
-async function shrinkPDF(file, pdf, progress) {
+async function shrinkPDF(file, pdf, progress, grey = false) {
   await lib('jspdf');
   let doc;
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -1545,6 +1745,7 @@ async function shrinkPDF(file, pdf, progress) {
     const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
     const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    if (grey) { const id = ctx.getImageData(0, 0, c.width, c.height), d = id.data; for (let k = 0; k < d.length; k += 4) { const v = Math.round(d[k] * .299 + d[k + 1] * .587 + d[k + 2] * .114); d[k] = d[k + 1] = d[k + 2] = v; } ctx.putImageData(id, 0, 0); }
     const w = vp1.width, h = vp1.height, orient = w > h ? 'l' : 'p';
     if (!doc) doc = await newPDF([w, h], orient); else doc.addPage([w, h], orient);
     doc.addImage(c.toDataURL('image/jpeg', .68), 'JPEG', 0, 0, w, h, undefined, 'FAST');
@@ -1561,6 +1762,7 @@ async function shrinkPDF(file, pdf, progress) {
     progress(i / pdf.numPages);
   }
   const blob = doc.output('blob');
+  if (grey) return [{ name: base(file.name) + '-grey.pdf', blob }];
   if (blob.size >= file.size * .95) return [{ name: file.name, blob: file.slice(0, file.size, 'application/pdf'), noteKey: 'shrink.kept' }];
   return [{ name: base(file.name) + '-small.pdf', blob, noteKey: 'shrink.saved', noteVars: { p: Math.round((1 - blob.size / file.size) * 100) } }];
 }
@@ -2151,12 +2353,21 @@ async function convertPDF(file, target, o, progress) {
   if (target === 'protect') return protectPDF(file, o.password);
   if (target === 'unlock') return unlockPDF(file, o.password);
   if (target === 'clean') return cleanPDF(file);
+  if (target === 'flatten') return flattenPDF(file);
+  if (target === 'repair') return repairPDF(file);
+  if (target === 'meta') return editMetadata(file, o.meta || {});
+  if (target === 'nup') return nupPDF(file, o.nup || 'booklet');
+  if (target === 'headfoot') return headerFooter(file, o.hf || {});
   await lib('pdfjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = VENDOR + 'pdf.worker.min.js';
   let pdf;
   try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false }).promise; }
   catch (e) { throw new Error(T(e && e.name === 'PasswordException' ? 'err.pdf.locked' : 'err.pdf.read')); }
   if (target === 'shrink') return shrinkPDF(file, pdf, progress);
+  if (target === 'grey') return shrinkPDF(file, pdf, progress, true);
+  if (target === 'blank') return removeBlankPages(file, pdf, progress);
+  if (target === 'images') return extractImages(file, pdf, progress);
+  if (target === 'crop') return cropPDF(file, pdf, o.crop || 'trim', progress);
   if (target === 'ocr') return ocrPDF(file, pdf, progress);
   const b = base(file.name), out = [], pad = String(pdf.numPages).length;
   if (target === 'docx') return pdfToWord(pdf, b, progress);
@@ -2692,6 +2903,36 @@ async function runBatch(files, target) {
   }
   if (target === 'scan') { openScanner(files.filter(f => kindOf(f) === 'image')); return; }
   if (target === 'vshrink') { o.vsize = await askVideoSize(); if (!o.vsize) return; }
+  if (target === 'meta') {
+    const first = files.find(f => kindOf(f) === 'pdf'); if (!first) return;
+    const cur = await readPdfInfo(first);
+    const a = await askOptions(T('meta.title'), [{ id: 'title', label: T('meta.t'), value: cur.title }, { id: 'author', label: T('meta.a'), value: cur.author }, { id: 'subject', label: T('meta.s'), value: cur.subject }, { id: 'keywords', label: T('meta.k'), value: cur.keywords, ph: T('meta.kPh') }, { id: 'strip', type: 'check', label: T('meta.strip'), value: true }], 'meta.ok');
+    if (!a) return; o.meta = a;
+  }
+  if (target === 'nup') {
+    const a = await askOptions(T('nup.title'), [{ id: 'mode', type: 'radio', value: 'booklet', options: [['booklet', T('nup.booklet'), T('nup.bookletD')], ['2', T('nup.2'), T('nup.2D')], ['4', T('nup.4'), T('nup.4D')]] }]);
+    if (!a) return; o.nup = a.mode;
+  }
+  if (target === 'crop') {
+    const a = await askOptions(T('crop.title'), [{ id: 'mode', type: 'radio', value: 'trim', options: [['trim', T('crop.trim'), T('crop.trimD')], ['a4', T('crop.a4'), T('crop.a4D')], ['letter', T('crop.letter'), T('crop.letterD')]] }]);
+    if (!a) return; o.crop = a.mode;
+  }
+  if (target === 'headfoot') {
+    const a = await askOptions(T('hf.title'), [{ id: 'header', label: T('hf.header'), ph: T('hf.headerPh') }, { id: 'footer', label: T('hf.footer'), value: T('hf.footerDef') },
+      { id: 'align', type: 'select', label: T('hf.align'), value: 'center', options: [['left', T('hf.left')], ['center', T('hf.center')], ['right', T('hf.right')]] },
+      { id: 'size', type: 'select', label: T('hf.size'), value: '10', options: [['8', '8 pt'], ['10', '10 pt'], ['12', '12 pt'], ['14', '14 pt']] }, { id: 'skipFirst', type: 'check', label: T('hf.skipFirst') }], 'opt.go', T('hf.note'));
+    if (!a || (!a.header.trim() && !a.footer.trim())) return; o.hf = a;
+  }
+  if (target === 'altmerge') {
+    // on its own page, the files added one after the other count together (fronts first, then backs)
+    const pdfs = (PRESET === 'altmerge' ? tray.map(t => t.file) : files).filter(f => kindOf(f) === 'pdf').slice(-2);
+    if (!pdfs.length) return;
+    const a = await askOptions(T('alt.title'), [{ id: 'reversed', type: 'check', label: T('alt.reversed'), value: true }], 'opt.go', pdfs.length >= 2 ? T('alt.two', { a: pdfs[0].name, b: pdfs[1].name }) : T('alt.one'));
+    if (!a) return;
+    const j = newJob(pdfs.length >= 2 ? `${pdfs[0].name} + ${pdfs[1].name}` : pdfs[0].name, 'altmerge');
+    schedule(async () => finishJob(j, await alternateMerge(pdfs, a))).catch(e => failJob(j, e));
+    return;
+  }
   if (target === 'imgedit') {
     o.img = await askImage(files.filter(f => kindOf(f) === 'image'));
     if (o.img === null) return;

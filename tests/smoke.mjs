@@ -475,6 +475,22 @@ await test('QR code generator makes a code for a link and for Wi-Fi', async () =
   await done(p);
 });
 
+await test('more PDF tools: alternate merge, blank pages, flatten, booklet order, header and footer', async () => {
+  const mk = async labels => { const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica); for (const l of labels) { const pg = d.addPage([595, 842]); if (l) pg.drawText(l, { x: 200, y: 600, size: 30, font: f }); } return Buffer.from(await d.save()); };
+  const run = async (url, files, before) => { const p = await page(url); await p.setInputFiles('#fileInput', files); if (before) { await p.waitForSelector('dialog[open]'); await before(p); await p.click('dialog[open] [value="ok"]'); } const out = await saveFirst(p); await done(p); return out; };
+  let o = await run('/alternate-merge-pdf/', [file('f.pdf', await mk(['F1', 'F2'])), file('b.pdf', await mk(['B2', 'B1']))], async () => {});
+  assert((await pdfText(o.buf)).replace(/\s+/g, '') === 'F1B1F2B2', 'order: ' + (await pdfText(o.buf)).replace(/\s+/g, ' '));
+  o = await run('/remove-blank-pages-from-pdf/', [file('x.pdf', await mk(['A', '', 'B', '']))]);
+  assert((await PDFDocument.load(o.buf)).getPageCount() === 2, 'blank pages left');
+  const fd = await PDFDocument.create(); fd.addPage([595, 842]); const tf = fd.getForm().createTextField('n'); tf.setText('Hello'); tf.addToPage(fd.getPage(0), { x: 50, y: 700, width: 200, height: 24 });
+  o = await run('/flatten-pdf/', [file('form.pdf', Buffer.from(await fd.save()))]);
+  assert((await PDFDocument.load(o.buf)).getForm().getFields().length === 0 && /Hello/.test(await pdfText(o.buf)), 'not flattened');
+  o = await run('/pdf-booklet/', [file('e.pdf', await mk(['P1', 'P2', 'P3', 'P4']))], async () => {});
+  assert((await pdfText(o.buf)).replace(/\s+/g, '').startsWith('P4P1P2P3'), 'booklet order: ' + (await pdfText(o.buf)).replace(/\s+/g, ' '));
+  o = await run('/add-header-footer-to-pdf/', [file('h.pdf', await mk(['Body', 'Body']))], async p => { await p.fill('dialog[open] input[name="header"]', 'Confidential'); });
+  assert(/Confidential/.test(await pdfText(o.buf)) && /page 2 of 2/.test(await pdfText(o.buf)), 'header/footer: ' + (await pdfText(o.buf)).replace(/\s+/g, ' ').slice(0, 120));
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

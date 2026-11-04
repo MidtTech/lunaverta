@@ -959,3 +959,10 @@ main[tabindex="-1"]:focus { outline: none; }
 .qr-logo-size { display: inline-flex !important; align-items: center; gap: 6px !important; font-weight: 400 !important; }
 .qr-logo-size[hidden] { display: none !important; }
 .qr-logo-size select { width: auto !important; padding: 6px 8px !important; }
+/* choice windows for the extra PDF tools */
+.opt-dialog { width: min(460px, calc(100vw - 32px)); }
+.opt-dialog fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; }
+.opt-dialog legend { padding: 0; margin-bottom: 6px; font-weight: 500; font-size: 14px; }
+.opt-dialog .pw-show { align-items: flex-start; }
+.opt-dialog .pw-show input { margin-top: 3px; }
+.opt-dialog select, .opt-dialog input[type="text"] { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }

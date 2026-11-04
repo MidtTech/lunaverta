@@ -56,6 +56,16 @@ Key facts:
 - [Resize image](https://lunaverta.com/resize-image/): Resize photos and pictures to 75%, 50%, 25% or an exact width in pixels, many at once. Free and private: your images are never uploaded.
 - [Crop image](https://lunaverta.com/crop-image/): Crop a photo or picture in your browser: square for a profile picture, 4:3, 16:9 or any shape. Free and private: your image is never uploaded.
 - [Scan to PDF](https://lunaverta.com/scan-to-pdf/): Take photos of paper with your phone and get a clean, straight PDF, with the text searchable if you like. Free and private: the photos never leave your device.
+- [Alternate merge](https://lunaverta.com/alternate-merge-pdf/): Scanned the front pages and the back pages as two stacks? Combine them into one PDF in the right order. Free and private, nothing is uploaded.
+- [Remove blank pages](https://lunaverta.com/remove-blank-pages-from-pdf/): Remove the empty pages that scanners and double-sided printing leave in a PDF. Free and private, nothing is uploaded.
+- [Flatten PDF form](https://lunaverta.com/flatten-pdf/): Turn a filled-in PDF form into fixed text that can no longer be changed, before you send or sign it. Free and private, nothing is uploaded.
+- [Greyscale PDF](https://lunaverta.com/greyscale-pdf/): Turn a colour PDF into greyscale for cheaper printing and a smaller file. The text stays searchable. Free and private, nothing is uploaded.
+- [Repair PDF](https://lunaverta.com/repair-pdf/): Fix PDFs that will not open or show errors: LunaVerta reads what is left and writes a clean copy. Free and private, nothing is uploaded.
+- [Edit PDF details](https://lunaverta.com/edit-pdf-metadata/): Change the title, author, subject and keywords stored in a PDF, which show in browser tabs, readers and search results. Free and private, nothing is uploaded.
+- [Extract images from PDF](https://lunaverta.com/extract-images-from-pdf/): Save every picture in a PDF as its own file, in its original size. Free and private, nothing is uploaded.
+- [Booklet & pages per sheet](https://lunaverta.com/pdf-booklet/): Arrange a PDF for printing as a folded booklet, or with 2 or 4 pages on each sheet. Free and private, nothing is uploaded.
+- [Crop PDF & page size](https://lunaverta.com/crop-pdf/): Trim the white margins of every page, or make all pages the same size (A4 or US Letter). Free and private, nothing is uploaded.
+- [Header & footer](https://lunaverta.com/add-header-footer-to-pdf/): Put the same text at the top or bottom of every page: "Confidential", the date, the file name, page numbers. Free and private, nothing is uploaded.
 - [PDF to text](https://lunaverta.com/pdf-to-text/): Extract all text from a PDF into a plain text file in your browser. Free and private: your PDF is never uploaded.
 
 ## Værktøjer (dansk)
@@ -100,6 +110,16 @@ Key facts:
 - [Skalér billede](https://lunaverta.com/da/skaler-billede/): Skalér fotos og billeder til 75 %, 50 %, 25 % eller en præcis bredde i pixels, mange på én gang. Gratis og privat: dine billeder bliver aldrig uploadet.
 - [Beskær billede](https://lunaverta.com/da/beskaer-billede/): Beskær et foto eller billede i din browser: kvadratisk til et profilbillede, 4:3, 16:9 eller en hvilken som helst form. Gratis og privat: dit billede bliver aldrig uploadet.
 - [Scan til PDF](https://lunaverta.com/da/scan-til-pdf/): Tag billeder af papir med telefonen, og få en pæn, lige PDF, gerne med søgbar tekst. Gratis og privat: billederne forlader aldrig din enhed.
+- [Flet forsider og bagsider](https://lunaverta.com/da/flet-forsider-og-bagsider/): Har du scannet forsiderne og bagsiderne som to bunker? Flet dem til én PDF i den rigtige rækkefølge. Gratis og privat, intet bliver uploadet.
+- [Fjern tomme sider](https://lunaverta.com/da/fjern-tomme-sider-fra-pdf/): Fjern de tomme sider, som scannere og dobbeltsidet print efterlader i en PDF. Gratis og privat, intet bliver uploadet.
+- [Lås PDF-formular fast](https://lunaverta.com/da/laas-pdf-formular-fast/): Gør en udfyldt PDF-formular til fast tekst, der ikke kan ændres, før du sender eller underskriver den. Gratis og privat, intet bliver uploadet.
+- [PDF i gråtoner](https://lunaverta.com/da/pdf-i-graatoner/): Lav en farve-PDF om til gråtoner til billigere print og en mindre fil. Teksten kan stadig søges i. Gratis og privat, intet bliver uploadet.
+- [Reparér PDF](https://lunaverta.com/da/reparer-pdf/): Ret PDF'er, der ikke vil åbne eller giver fejl: LunaVerta læser det, der er tilbage, og laver en ren kopi. Gratis og privat, intet bliver uploadet.
+- [Ret PDF-oplysninger](https://lunaverta.com/da/ret-pdf-oplysninger/): Ret titel, forfatter, emne og nøgleord i en PDF, som vises i faner, PDF-læsere og søgeresultater. Gratis og privat, intet bliver uploadet.
+- [Udtræk billeder fra PDF](https://lunaverta.com/da/udtraek-billeder-fra-pdf/): Gem hvert billede i en PDF som sin egen fil i den oprindelige størrelse. Gratis og privat, intet bliver uploadet.
+- [Hæfte og sider pr. ark](https://lunaverta.com/da/pdf-haefte/): Sæt en PDF op til print som et foldet hæfte, eller med 2 eller 4 sider på hvert ark. Gratis og privat, intet bliver uploadet.
+- [Beskær PDF og sidestørrelse](https://lunaverta.com/da/beskaer-pdf/): Fjern de hvide marginer på hver side, eller gør alle sider lige store (A4 eller US Letter). Gratis og privat, intet bliver uploadet.
+- [Sidehoved og sidefod](https://lunaverta.com/da/sidehoved-og-sidefod-i-pdf/): Sæt den samme tekst øverst eller nederst på hver side: "Fortroligt", datoen, filnavnet, sidetal. Gratis og privat, intet bliver uploadet.
 - [PDF til tekst](https://lunaverta.com/da/pdf-til-tekst/): Hent al tekst ud af en PDF til en almindelig tekstfil direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.
 
 ## Werkzeuge (Deutsch)
@@ -144,6 +164,16 @@ Key facts:
 - [Bildgröße ändern](https://lunaverta.com/de/bildgroesse-aendern/): Fotos und Bilder auf 75 %, 50 %, 25 % oder eine genaue Breite in Pixeln verkleinern, viele auf einmal. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
 - [Bild zuschneiden](https://lunaverta.com/de/bild-zuschneiden/): Ein Foto oder Bild im Browser zuschneiden: quadratisch fürs Profilbild, 4:3, 16:9 oder in beliebiger Form. Kostenlos und privat: Dein Bild wird nie hochgeladen.
 - [Dokument scannen](https://lunaverta.com/de/dokument-scannen/): Fotografiere Papier mit dem Handy und erhalte ein sauberes, gerades PDF, auf Wunsch mit durchsuchbarem Text. Kostenlos und privat: Die Fotos verlassen nie dein Gerät.
+- [PDF-Seiten abwechselnd mischen](https://lunaverta.com/de/pdf-seiten-abwechselnd-mischen/): Vorder- und Rückseiten als zwei Stapel gescannt? Füge sie in der richtigen Reihenfolge zu einem PDF zusammen. Kostenlos und privat, nichts wird hochgeladen.
+- [Leere Seiten entfernen](https://lunaverta.com/de/leere-seiten-aus-pdf-entfernen/): Entferne die leeren Seiten, die Scanner und beidseitiger Druck in einem PDF hinterlassen. Kostenlos und privat, nichts wird hochgeladen.
+- [PDF-Formular fixieren](https://lunaverta.com/de/pdf-formular-fixieren/): Mach ein ausgefülltes PDF-Formular zu festem Text, der nicht mehr geändert werden kann, bevor du es verschickst oder unterschreibst. Kostenlos und privat, nichts wird hochgeladen.
+- [PDF in Graustufen](https://lunaverta.com/de/pdf-in-graustufen/): Wandle ein farbiges PDF in Graustufen um, für günstigeren Druck und eine kleinere Datei. Der Text bleibt durchsuchbar. Kostenlos und privat, nichts wird hochgeladen.
+- [PDF reparieren](https://lunaverta.com/de/pdf-reparieren/): Repariere PDFs, die sich nicht öffnen lassen oder Fehler zeigen: LunaVerta liest, was übrig ist, und schreibt eine saubere Kopie. Kostenlos und privat, nichts wird hochgeladen.
+- [PDF-Eigenschaften bearbeiten](https://lunaverta.com/de/pdf-eigenschaften-bearbeiten/): Ändere Titel, Autor, Thema und Stichwörter eines PDFs, die in Tabs, PDF-Readern und Suchergebnissen erscheinen. Kostenlos und privat, nichts wird hochgeladen.
+- [Bilder aus PDF extrahieren](https://lunaverta.com/de/bilder-aus-pdf-extrahieren/): Speichere jedes Bild aus einem PDF als eigene Datei in Originalgröße. Kostenlos und privat, nichts wird hochgeladen.
+- [Broschüre und Seiten pro Blatt](https://lunaverta.com/de/pdf-broschuere/): Bereite ein PDF zum Drucken als gefaltete Broschüre vor, oder mit 2 oder 4 Seiten auf jedem Blatt. Kostenlos und privat, nichts wird hochgeladen.
+- [PDF zuschneiden & Seitengröße](https://lunaverta.com/de/pdf-zuschneiden/): Entferne die weißen Ränder jeder Seite oder bring alle Seiten auf dieselbe Größe (A4 oder US Letter). Kostenlos und privat, nichts wird hochgeladen.
+- [Kopf- und Fußzeile](https://lunaverta.com/de/kopfzeile-fusszeile-pdf/): Setze denselben Text oben oder unten auf jede Seite: "Vertraulich", das Datum, den Dateinamen, Seitenzahlen. Kostenlos und privat, nichts wird hochgeladen.
 - [PDF in Text](https://lunaverta.com/de/pdf-in-text/): Den gesamten Text eines PDFs im Browser in eine einfache Textdatei extrahieren. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 
 ## Verktøy (norsk)
@@ -188,6 +218,16 @@ Key facts:
 - [Endre størrelse på bilde](https://lunaverta.com/no/endre-storrelse-pa-bilde/): Endre størrelse på bilder til 75 %, 50 %, 25 % eller en nøyaktig bredde i piksler, mange på én gang. Gratis og privat: bildene dine lastes aldri opp.
 - [Beskjær bilde](https://lunaverta.com/no/beskjaer-bilde/): Beskjær et bilde i nettleseren: kvadratisk til et profilbilde, 4:3, 16:9 eller hvilken som helst form. Gratis og privat: bildet ditt lastes aldri opp.
 - [Skann til PDF](https://lunaverta.com/no/skann-til-pdf/): Ta bilder av papir med mobilen og få en pen, rett PDF, gjerne med søkbar tekst. Gratis og privat: bildene forlater aldri enheten din.
+- [Flett PDF-sider](https://lunaverta.com/no/flett-pdf-sider/): Har du skannet forsidene og baksidene som to bunker? Flett dem til én PDF i riktig rekkefølge. Gratis og privat, ingenting lastes opp.
+- [Fjern tomme sider](https://lunaverta.com/no/fjern-tomme-sider-fra-pdf/): Fjern de tomme sidene som skannere og tosidig utskrift etterlater i en PDF. Gratis og privat, ingenting lastes opp.
+- [Flat ut PDF-skjema](https://lunaverta.com/no/flat-ut-pdf-skjema/): Gjør et utfylt PDF-skjema om til fast tekst som ikke kan endres, før du sender eller signerer det. Gratis og privat, ingenting lastes opp.
+- [PDF i gråtoner](https://lunaverta.com/no/pdf-i-gratoner/): Gjør en farge-PDF om til gråtoner for billigere utskrift og en mindre fil. Teksten kan fortsatt søkes i. Gratis og privat, ingenting lastes opp.
+- [Reparer PDF](https://lunaverta.com/no/reparer-pdf/): Fiks PDF-er som ikke vil åpnes eller viser feil: LunaVerta leser det som er igjen, og lager en ren kopi. Gratis og privat, ingenting lastes opp.
+- [Endre PDF-egenskaper](https://lunaverta.com/no/endre-pdf-egenskaper/): Endre tittel, forfatter, emne og nøkkelord i en PDF, som vises i faner, PDF-lesere og søkeresultater. Gratis og privat, ingenting lastes opp.
+- [Hent ut bilder fra PDF](https://lunaverta.com/no/hent-ut-bilder-fra-pdf/): Lagre hvert bilde i en PDF som sin egen fil i original størrelse. Gratis og privat, ingenting lastes opp.
+- [Hefte og sider per ark](https://lunaverta.com/no/pdf-hefte/): Sett opp en PDF for utskrift som et brettet hefte, eller med 2 eller 4 sider på hvert ark. Gratis og privat, ingenting lastes opp.
+- [Beskjær PDF og sidestørrelse](https://lunaverta.com/no/beskjaer-pdf/): Fjern de hvite margene på hver side, eller gjør alle sidene like store (A4 eller US Letter). Gratis og privat, ingenting lastes opp.
+- [Topptekst og bunntekst](https://lunaverta.com/no/topptekst-og-bunntekst-i-pdf/): Sett den samme teksten øverst eller nederst på hver side: "Konfidensielt", datoen, filnavnet, sidetall. Gratis og privat, ingenting lastes opp.
 - [PDF til tekst](https://lunaverta.com/no/pdf-til-tekst/): Hent ut all tekst fra en PDF til en vanlig tekstfil i nettleseren. Gratis og privat: PDF-en din lastes aldri opp.
 
 ## Verktyg (svenska)
@@ -232,6 +272,16 @@ Key facts:
 - [Ändra storlek på bild](https://lunaverta.com/sv/andra-storlek-pa-bild/): Ändra storlek på foton och bilder till 75 %, 50 %, 25 % eller en exakt bredd i pixlar, många på en gång. Gratis och privat: dina bilder laddas aldrig upp.
 - [Beskär bild](https://lunaverta.com/sv/beskar-bild/): Beskär ett foto eller en bild i webbläsaren: kvadratisk för en profilbild, 4:3, 16:9 eller valfri form. Gratis och privat: din bild laddas aldrig upp.
 - [Skanna till PDF](https://lunaverta.com/sv/skanna-till-pdf/): Fota papper med mobilen och få en snygg, rak PDF, gärna med sökbar text. Gratis och privat: fotona lämnar aldrig din enhet.
+- [Varva PDF-sidor](https://lunaverta.com/sv/varva-pdf-sidor/): Har du skannat framsidorna och baksidorna som två buntar? Varva dem till en PDF i rätt ordning. Gratis och privat, inget laddas upp.
+- [Ta bort tomma sidor](https://lunaverta.com/sv/ta-bort-tomma-sidor-fran-pdf/): Ta bort de tomma sidor som skannrar och dubbelsidig utskrift lämnar i en PDF. Gratis och privat, inget laddas upp.
+- [Platta till PDF-formulär](https://lunaverta.com/sv/platta-till-pdf-formular/): Gör ett ifyllt PDF-formulär till fast text som inte kan ändras, innan du skickar eller signerar det. Gratis och privat, inget laddas upp.
+- [PDF i gråskala](https://lunaverta.com/sv/pdf-i-graskala/): Gör om en färg-PDF till gråskala för billigare utskrift och en mindre fil. Texten går fortfarande att söka i. Gratis och privat, inget laddas upp.
+- [Reparera PDF](https://lunaverta.com/sv/reparera-pdf/): Laga PDF:er som inte vill öppnas eller visar fel: LunaVerta läser det som finns kvar och gör en ren kopia. Gratis och privat, inget laddas upp.
+- [Ändra PDF-egenskaper](https://lunaverta.com/sv/andra-pdf-egenskaper/): Ändra titel, författare, ämne och nyckelord i en PDF, som visas i flikar, PDF-läsare och sökresultat. Gratis och privat, inget laddas upp.
+- [Extrahera bilder ur PDF](https://lunaverta.com/sv/extrahera-bilder-ur-pdf/): Spara varje bild i en PDF som en egen fil i originalstorlek. Gratis och privat, inget laddas upp.
+- [Häfte och sidor per ark](https://lunaverta.com/sv/pdf-hafte/): Ställ upp en PDF för utskrift som ett vikt häfte, eller med 2 eller 4 sidor på varje ark. Gratis och privat, inget laddas upp.
+- [Beskär PDF och sidstorlek](https://lunaverta.com/sv/beskar-pdf/): Ta bort de vita marginalerna på varje sida, eller gör alla sidor lika stora (A4 eller US Letter). Gratis och privat, inget laddas upp.
+- [Sidhuvud och sidfot](https://lunaverta.com/sv/sidhuvud-och-sidfot-i-pdf/): Sätt samma text överst eller nederst på varje sida: "Konfidentiellt", datumet, filnamnet, sidnummer. Gratis och privat, inget laddas upp.
 - [PDF till text](https://lunaverta.com/sv/pdf-till-text/): Ta ut all text ur en PDF till en vanlig textfil i webbläsaren. Gratis och privat: din PDF laddas aldrig upp.
 
 ## Guides
