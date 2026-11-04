@@ -139,7 +139,7 @@ function howtoSection(lang, tool) {
     ${key ? videoFigure(lang, key, t(lang, 'howto.caption')) : ''}
     <ol>
 ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
-    </ol>${GUIDE_INDEX[lang] && GUIDES[0][lang] ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}: <a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
+    </ol>${GUIDE_INDEX[lang] && GUIDES[0][lang] ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}${lang === 'fr' ? ' : ' : ': '}<a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
   </section>`;
 }
 
@@ -172,14 +172,20 @@ ${RECIPE_IDS.map(([id]) => `      <li><button type="button" data-recipe="${id}">
 }
 
 // ---------- structured data ----------
+const DAY = new Date().toISOString().slice(0, 10); // the build date, used as dateModified
+// The price is 0 everywhere; the currency follows the page's country, which also tells search engines who the page is for.
+const CURRENCY = { en: 'EUR', da: 'DKK', sv: 'SEK', no: 'NOK', de: 'EUR', es: 'EUR', fr: 'EUR' };
+const ENGLISH_NAME = { en: 'English', da: 'Danish', sv: 'Swedish', no: 'Norwegian', de: 'German', es: 'Spanish', fr: 'French' };
 const org = { '@type': 'Organization', '@id': SITE + '/#org', name: COMPANY.name, url: COMPANY.url, email: COMPANY.email, vatID: 'DK' + COMPANY.cvr,
-  address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country } };
+  address: { '@type': 'PostalAddress', addressLocality: COMPANY.city, addressCountry: COMPANY.country },
+  areaServed: 'Worldwide', knowsLanguage: LANGS, brand: { '@type': 'Brand', name: 'LunaVerta' } };
 function jsonLd(lang, page, faqItems) {
   const graph = [org,
     { '@type': 'WebSite', '@id': SITE + '/#site', name: 'LunaVerta', url: SITE + '/', inLanguage: LANGS, publisher: { '@id': SITE + '/#org' } },
     { '@type': 'WebApplication', name: page.tool ? `LunaVerta · ${page.tool[lang].name}` : 'LunaVerta', url: page.url, inLanguage: lang,
       applicationCategory: 'UtilitiesApplication', operatingSystem: 'Any (runs in the browser)', browserRequirements: 'A modern web browser with JavaScript',
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'DKK' }, isAccessibleForFree: true, description: page.desc, publisher: { '@id': SITE + '/#org' },
+      offers: { '@type': 'Offer', price: '0', priceCurrency: CURRENCY[lang] || 'EUR' }, isAccessibleForFree: true, description: page.desc, publisher: { '@id': SITE + '/#org' },
+      dateModified: DAY, image: page.tool ? ogFor(lang, page.tool.slug[lang]) : undefined, isPartOf: { '@id': SITE + '/#site' },
       featureList: page.tool ? undefined : TOOLS.map(tl => tl[lang].name) },
     { '@type': 'FAQPage', inLanguage: lang, mainEntity: faqItems.map(it => ({ '@type': 'Question', name: it.q, acceptedAnswer: { '@type': 'Answer', text: it.a.replace(/<[^>]+>/g, '') } })) }
   ];
@@ -275,12 +281,14 @@ for (const lang of GLANGS) {
     <h1>${esc(d.h1)}</h1>
     <p class="lead">${esc(d.lead)}</p>
 ${body}
-    <p><a class="btn primary" href="${tool}">${esc(I.open)}: ${esc(TOOLS.find(x => x.id === g.tool)[lang].name)}</a></p>
+    <p><a class="btn primary" href="${tool}">${esc(I.open)}${lang === 'fr' ? ' : ' : ': '}${esc(TOOLS.find(x => x.id === g.tool)[lang].name)}</a></p>
     <h2>${esc(I.all)}</h2>
-    <ul>${others}</ul>`;
+    <ul class="guide-more">${others}</ul>`;
     const steps = (d.body.find(b => b.ol) || { ol: [] }).ol.map((x, i) => ({ '@type': 'HowToStep', position: i + 1, text: x.replace(/<[^>]+>/g, '') }));
     const pg = { path: gPath(lang, d.slug), og: 'guide-' + d.slug, title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L, g[L].slug)])) };
-    const ld = [{ '@type': 'HowTo', name: d.h1, description: d.desc, inLanguage: lang, step: steps },
+    const ld = [{ '@type': 'Article', headline: d.h1, description: d.desc, inLanguage: lang, dateModified: DAY, mainEntityOfPage: SITE + pg.path,
+        image: ogFor(lang, pg.og), author: { '@id': SITE + '/#org' }, publisher: { '@id': SITE + '/#org' }, about: { '@type': 'WebApplication', name: 'LunaVerta · ' + TOOLS.find(x => x.id === g.tool)[lang].name, url: SITE + tool } },
+      { '@type': 'HowTo', name: d.h1, description: d.desc, inLanguage: lang, step: steps },
       { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: LABELS[lang].home, item: url(lang) }, { '@type': 'ListItem', position: 2, name: I.guides, item: SITE + gPath(lang) }, { '@type': 'ListItem', position: 3, name: d.h1, item: SITE + pg.path }] }];
     guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });
   }
@@ -294,7 +302,7 @@ ${body}
 for (const p of guidePages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, p.html); }
 
 // ---------- sitemap.xml (with language alternates) ----------
-const today = new Date().toISOString().slice(0, 10);
+const today = DAY;
 const staticPages = [{ loc: SITE + '/no-upload.html' }, { loc: SITE + '/privacy.html' }, { loc: SITE + '/licenses.html' }];
 writeFileSync('docs/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
@@ -309,12 +317,13 @@ writeFileSync('docs/llms.txt', `# LunaVerta
 
 > ${LABELS.en.aboutText}
 
-LunaVerta is available in ${LANGS.map(L => `${{ en: 'English', da: 'Danish', sv: 'Swedish', no: 'Norwegian', de: 'German' }[L] || META[L].name} (${url(L)})`).join(', ')}. It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
+LunaVerta is available in ${LANGS.map(L => `${ENGLISH_NAME[L] || META[L].name} (${url(L)})`).join(', ')}. It converts images (HEIC, JPG, PNG, WebP, AVIF, GIF, BMP, SVG), PDF, Word (DOCX), Markdown, text, HTML, spreadsheets (XLSX, XLS, ODS, CSV, TSV, JSON), audio (MP3, WAV, OGG, FLAC, M4A, AAC) and video (MP4, WebM, MOV). It also edits PDFs (correct text, add text, fill in forms, reorder, rotate and delete pages), merges, splits and compresses PDFs, and removes GPS location and other hidden data from photos without changing the image.
 
 Key facts:
 ${LABELS.en.facts.map(([k, v]) => `- ${k}: ${v}`).join('\n')}
 - Privacy: no uploads, no cookies, no tracking, no ads; fonts and libraries are self-hosted
-- Not supported: video-to-video re-encoding (e.g. to MP4) and legacy .doc/.ppt files
+- Not supported: converting between video formats (only making MP4/MOV videos smaller, GIFs, sound and still frames), and legacy .doc/.ppt files (save them as .docx/.pptx first)
+- Full details of every tool (steps and questions): ${SITE}/llms-full.txt
 
 ## Tools (English)
 ${TOOLS.map(tl => `- [${tl.en.name}](${url('en', tl.slug.en)}): ${tl.en.desc}`).join('\n')}
@@ -326,7 +335,7 @@ ${EXTRA.map(x => `
 ${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl[x.code].desc}`).join('\n')}
 `).join('')}
 ## Guides
-${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)}) · [${g.da.h1}](${SITE}${gPath('da', g.da.slug)})`).join('\n')}
+${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)})` + GLANGS.filter(L => L !== 'en').map(L => ` · [${g[L].h1}](${SITE}${gPath(L, g[L].slug)})`).join('')).join('\n')}
 
 ## About
 - [Why nothing is uploaded](${SITE}/no-upload.html): how files are processed on the device, and how to check it yourself
@@ -370,4 +379,42 @@ for (const p of [...pages, ...guidePages]) writeFileSync(p.file, bust(readFileSy
 for (const f of ['docs/privacy.html', 'docs/licenses.html', 'docs/no-upload.html', 'docs/404.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
 writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`)
   .replace(/'assets\/([\w-]+)(?:\.min)?\.(js|css)'/g, (m, n, x) => `'assets/${minName(n + '.' + x)}'`));
+// ---------- llms-full.txt: every tool and guide in full (English), for AI assistants that want the details ----------
+const plain = x => String(x).replace(/<[^>]+>/g, '').replace(/\{(?:t:[a-z-]+|tool|merge|compress)\}/g, '').replace(/\s+/g, ' ').trim();
+writeFileSync('docs/llms-full.txt', `# LunaVerta: full reference
+
+> ${LABELS.en.aboutText}
+
+This file describes every LunaVerta tool and guide in full. The short version is ${SITE}/llms.txt. Every tool page also exists in ${LANGS.filter(L => L !== 'en').map(L => ENGLISH_NAME[L]).join(', ')}; the addresses are listed in llms.txt.
+
+## How LunaVerta works
+- Files are opened, converted and saved by the browser on the user's own device. LunaVerta has no server that receives files, so nothing is uploaded. This can be checked by going offline or watching the browser's network tab.
+- No account, no cookies, no tracking, no ads. Free to use.
+- Works offline after the first visit; some tools fetch a helper library (for example OCR language data) the first time they are used.
+- Large files are limited only by the memory of the user's device.
+- Made and run by ${COMPANY.name}, ${COMPANY.city}, Denmark (CVR ${COMPANY.cvr}). Contact: ${COMPANY.email}.
+
+## Tools
+${TOOLS.map(tl => { const d = tl.en; return `
+### ${d.name}
+${url('en', tl.slug.en)}
+
+${d.lead}
+
+Steps:
+${d.steps.map((x, i) => `${i + 1}. ${plain(x)}`).join('\n')}
+${d.faq && d.faq.length ? `
+Questions:
+${d.faq.map(([q, an]) => `- ${q} ${plain(an)}`).join('\n')}` : ''}`; }).join('\n')}
+
+## Guides
+${GUIDES.map(g => { const d = g.en; return `
+### ${d.h1}
+${SITE}${gPath('en', d.slug)}
+
+${d.lead}
+
+${d.body.map(b => typeof b === 'string' ? plain(b) : b.h ? `${b.h}:` : (b.ol || b.ul).map((x, i) => `${b.ol ? (i + 1) + '.' : '-'} ${plain(x)}`).join('\n')).join('\n')}`; }).join('\n')}
+`);
+
 console.log(`Wrote ${pages.length} pages, sitemap.xml and llms.txt · ${label7}`);

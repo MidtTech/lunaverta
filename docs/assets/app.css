@@ -902,6 +902,7 @@ html.ed-open .welcome-card { display: none; }
 .guide-list a:hover, .guide-list a:focus-visible { border-color: var(--accent); }
 .guide-list span { color: var(--muted); font-size: 14px; line-height: 1.45; }
 .prose.guide .crumbs { margin-bottom: 4px; }
+.prose .guide-more li { padding: 5px 0; }
 .howto-guide { margin: 10px 0 0; font-size: 15px; }
 /* "Install as an app" (only shown when the browser offers it) */
 .install-app { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--raised); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
