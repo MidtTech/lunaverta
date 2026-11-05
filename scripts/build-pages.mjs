@@ -9,6 +9,8 @@ import { join, dirname } from 'node:path';
 import vm from 'node:vm';
 import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-content.mjs';
 import { GUIDES, GUIDE_INDEX } from './guides.mjs';
+import { icon } from './icons.mjs';
+import { KEYWORDS } from './tool-keywords.mjs';
 import { GUIDE_TEXT, GUIDE_INDEX_EXTRA } from './guides-extra.mjs';
 Object.assign(GUIDE_INDEX, GUIDE_INDEX_EXTRA);
 for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) { if (!texts[g.id]) throw new Error(`${L}: no guide ${g.id}`); g[L] = texts[g.id]; }
@@ -78,7 +80,7 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
 }
 // All tools, grouped by what they work on, so the list can be scanned.
 const TOOL_GROUPS = [
-  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'sign-pdf', 'fill-pdf-form', 'flatten-pdf', 'make-fillable-pdf', 'redact-pdf', 'remove-prices', 'merge-pdf', 'alternate-merge-pdf', 'split-pdf', 'extract-pages', 'delete-pages', 'remove-blank-pages', 'rotate-pdf', 'crop-pdf', 'compress-pdf', 'greyscale-pdf', 'page-numbers', 'pdf-booklet', 'watermark-pdf', 'pdf-header-footer', 'protect-pdf', 'unlock-pdf', 'repair-pdf', 'ocr', 'clean-pdf', 'edit-pdf-metadata', 'compare-pdf', 'pdf-to-word', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'extract-images-from-pdf', 'pdf-to-text']],
+  ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'merge-pdf', 'compress-pdf', 'sign-pdf', 'split-pdf', 'redact-pdf', 'pdf-to-word', 'protect-pdf', 'fill-pdf-form', 'flatten-pdf', 'make-fillable-pdf', 'remove-prices', 'alternate-merge-pdf', 'extract-pages', 'delete-pages', 'remove-blank-pages', 'rotate-pdf', 'crop-pdf', 'greyscale-pdf', 'page-numbers', 'pdf-booklet', 'watermark-pdf', 'pdf-header-footer', 'unlock-pdf', 'repair-pdf', 'ocr', 'clean-pdf', 'edit-pdf-metadata', 'compare-pdf', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'extract-images-from-pdf', 'pdf-to-text']],
   ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location', 'qr-code-generator']],
   ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'powerpoint-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
   ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['compress-video', 'video-to-gif', 'video-to-mp3']]
@@ -87,15 +89,23 @@ function toolsSection(lang, currentId) {
   const L = LABELS[lang];
   const grouped = new Set(TOOL_GROUPS.flatMap(g => g[3]));
   const rest = TOOLS.filter(tl => !grouped.has(tl.id)).map(tl => tl.id);
-  const group = ([key, col, name, ids]) => `      <section class="tg tg-${key}" style="--k:var(${col})">
+  const FOLD = 8; // on a phone, long groups show this many tools and a "Show all" button
+  const words = tl => [tl[lang].name, tl[lang].h1, tl[lang].desc, tl.en.name, KEYWORDS[tl.id] || ''].join(' ');
+  const group = ([key, col, name, ids]) => { const fold = ids.length > FOLD && !ids.slice(FOLD).includes(currentId); return `      <section class="tg tg-${key}${fold ? ' folded' : ''}" style="--k:var(${col})">
         <h3>${esc(name[lang] || extra(lang).groups[key])} <small>${ids.length}</small></h3>
         <ul class="tool-grid">
-${ids.map(id => TOOLS.find(x => x.id === id)).filter(Boolean).map(tl => `          <li><a href="${path(lang, tl.slug[lang])}"${tl.id === currentId ? ' aria-current="page"' : ''}>${esc(tl[lang].name)}</a></li>`).join('\n')}
-        </ul>
-      </section>`;
+${ids.map(id => TOOLS.find(x => x.id === id)).filter(Boolean).map(tl => `          <li data-k="${esc(words(tl))}"><a href="${path(lang, tl.slug[lang])}"${tl.id === currentId ? ' aria-current="page"' : ''}>${icon(tl.id)}<span>${esc(tl[lang].name)}</span></a></li>`).join('\n')}
+        </ul>${fold ? `
+        <button type="button" class="tg-more" aria-expanded="false">${esc(t(lang, 'tools.more').replace('{n}', ids.length))}</button>` : ''}
+      </section>`; };
   const g = TOOL_GROUPS.map(x => x[0] === 'pdf' && rest.length ? [x[0], x[1], x[2], [...x[3], ...rest]] : x);
   return `  <nav class="tools" aria-labelledby="h-tools">
     <h2 id="h-tools">${esc(L.tools)}</h2>
+    <div class="tool-find" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="toolFind" autocomplete="off" spellcheck="false" placeholder="${esc(t(lang, 'tools.find'))}" aria-label="${esc(t(lang, 'tools.find'))}" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
+    </div>
+    <p class="tool-none" id="toolNone" hidden data-i18n="tools.none">${esc(t(lang, 'tools.none'))}</p>
     <div class="tool-groups">
 ${group(g[0])}
 ${group(g[1])}
@@ -156,7 +166,7 @@ function popularSection(lang) {
   return `  <nav class="pop" aria-labelledby="h-pop">
     <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><span class="pop-links"><button type="button" class="pop-watch" data-howto="${lang}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>${esc(t(lang, 'howto.watch'))}</button><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></span></h2>
     <ul class="pop-grid">
-${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${ico}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang] || extra(lang).popular[id])}</span></a></li>`; }).join('\n')}
+${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${icon(id, 'pi')}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang] || extra(lang).popular[id])}</span></a></li>`; }).join('\n')}
     </ul>
   </nav>`;
 }

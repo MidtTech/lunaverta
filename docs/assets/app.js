@@ -3673,4 +3673,37 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 const net = $('net');
 const showNet = () => { net.hidden = navigator.onLine; };
 addEventListener('online', showNet); addEventListener('offline', showNet); showNet();
+
+// ---------- the list of all tools: search as you type, and "Show all" for long groups on phones ----------
+// Every tool in the list carries its name, description and extra search words (in all languages) in data-k,
+// so "smaller", "signature" or "flette" find the right tool even when its name says something else.
+document.querySelectorAll('.tg-more').forEach(b => b.addEventListener('click', () => {
+  const g = b.closest('.tg'); g.classList.remove('folded'); b.remove();
+  const next = g.querySelectorAll('.tool-grid li')[8]; if (next) next.querySelector('a').focus();
+}));
+const find = $('toolFind');
+if (find) {
+  const fold = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss').replace(/œ/g, 'oe');
+  const nav = find.closest('.tools'), none = $('toolNone');
+  const items = [...nav.querySelectorAll('.tool-grid li')].map(li => ({ li, words: fold(li.dataset.k || li.textContent).split(/[^a-z0-9]+/).filter(Boolean) }));
+  const groups = [...nav.querySelectorAll('.tg')];
+  const run = () => {
+    const q = fold(find.value).split(/[^a-z0-9]+/).filter(Boolean);
+    nav.classList.toggle('searching', q.length > 0);
+    let hits = 0;
+    for (const it of items) { const ok = !q.length || q.every(w => it.words.some(x => x.startsWith(w))); it.li.hidden = !ok; if (ok) hits++; }
+    for (const g of groups) {
+      const n = g.querySelectorAll('.tool-grid li:not([hidden])').length, small = g.querySelector('h3 small');
+      g.hidden = q.length > 0 && !n;
+      if (small) { small.dataset.n = small.dataset.n || small.textContent; small.textContent = q.length ? n : small.dataset.n; }
+    }
+    none.hidden = hits > 0;
+  };
+  find.addEventListener('input', run);
+  find.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && find.value) { find.value = ''; run(); e.preventDefault(); }
+    if (e.key === 'Enter') { const first = nav.querySelector('.tool-grid li:not([hidden]) a'); if (first && find.value.trim()) { e.preventDefault(); location.href = first.href; } }
+  });
+  if (find.value) run(); // the browser may restore the text when going back
+}
 })();

@@ -968,3 +968,37 @@ main[tabindex="-1"]:focus { outline: none; }
 .opt-dialog .pw-show { align-items: flex-start; }
 .opt-dialog .pw-show input { margin-top: 3px; }
 .opt-dialog select, .opt-dialog input[type="text"] { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
+
+/* ---------- tool list: icons, search, folding on phones ---------- */
+.tool-find { position: relative; max-width: 520px; }
+.tool-find svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; margin-top: -9px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+.tool-find input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px 12px 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); }
+.tool-find input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.tool-find input::placeholder { color: var(--muted); }
+.tool-none { margin: 0; color: var(--muted); }
+.tools.searching .tool-groups { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.tools.searching .tg-pdf { grid-column: auto; }
+.tools.searching .tg-stack { display: contents; }
+.tools.searching .tg-pdf .tool-grid { columns: auto; }
+.tg .tool-grid a { justify-content: flex-start; gap: 10px; }
+.tg .tool-grid a > span { flex: 1; }
+.tg .tool-grid .ti { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--k); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tg .tool-grid a[aria-current="page"] .ti, .tg .tool-grid a:hover .ti { stroke: var(--accent); }
+.tg-more { display: none; margin: 4px 0 2px; padding: 9px 0; border: 0; background: none; color: var(--accent); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.tg-more:hover { text-decoration: underline; }
+@media (max-width: 600px) {
+  .tg.folded .tool-grid li:nth-child(n+9) { display: none; }
+  .tools.searching .tg.folded .tool-grid li:nth-child(n+9):not([hidden]) { display: block; }
+  .tg.folded .tg-more { display: block; }
+  .tools.searching .tg-more { display: none; }
+}
+.pop-ico .pi { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- phones: less repetition in the drop area, a tidier footer ---------- */
+@media (max-width: 600px) {
+  .dock-hint .dock-sub strong { display: none; }
+  .wrap > footer nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; width: 100%; }
+  .wrap > footer nav a { padding: 9px 0; font-size: 14px; border-top: 1px solid var(--line); }
+  .about .facts div { flex-direction: column; gap: 2px; }
+  .about .facts dd { text-align: left; }
+}

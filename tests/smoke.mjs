@@ -493,6 +493,19 @@ await test('more PDF tools: alternate merge, blank pages, flatten, booklet order
   assert(/Confidential/.test(await pdfText(o.buf)) && /page 2 of 2/.test(await pdfText(o.buf)), 'header/footer: ' + (await pdfText(o.buf)).replace(/\s+/g, ' ').slice(0, 120));
 });
 
+await test('the tool search finds tools by other words, and "Show all" opens long groups on a phone', async () => {
+  const p = await page('/da/', { viewport: { width: 390, height: 844 } });
+  const visible = () => p.evaluate(() => [...document.querySelectorAll('.tool-grid li')].filter(li => li.offsetParent).map(li => li.textContent.trim()));
+  assert((await visible()).length < 40, 'long groups are not folded');
+  for (const b of await p.$$('.tg-more')) await b.click();
+  assert((await visible()).length === 52, 'Show all did not open the group');
+  await p.fill('#toolFind', 'signature');
+  assert((await visible()).join('|') === 'Underskriv PDF', 'search: ' + (await visible()).join('|'));
+  await p.fill('#toolFind', 'zzzz');
+  assert(await p.isVisible('#toolNone'), 'no "nothing found" message');
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);
