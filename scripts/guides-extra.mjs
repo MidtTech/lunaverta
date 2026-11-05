@@ -360,3 +360,7 @@ export const GUIDE_TEXT = {
 import { GUIDE_INDEX_ESFR, GUIDE_TEXT_ESFR } from './guides-esfr.mjs';
 Object.assign(GUIDE_INDEX_EXTRA, GUIDE_INDEX_ESFR);
 Object.assign(GUIDE_TEXT, GUIDE_TEXT_ESFR);
+
+// The other languages of the guides in guides-more.mjs.
+import { MORE } from './guides-more.mjs';
+for (const g of MORE) for (const L of ['sv', 'no', 'de', 'es', 'fr']) GUIDE_TEXT[L][g.id] = g[L];

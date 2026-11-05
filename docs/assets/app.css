@@ -1019,3 +1019,7 @@ main[tabindex="-1"]:focus { outline: none; }
 .bz-list li { margin: 6px 0; }
 .bz-custom { margin: 28px 0; padding: 22px 24px; border-radius: 16px; background: var(--accent-soft); }
 .bz-custom h2 { margin-top: 0; }
+.dock-sample { margin: 0; font-size: 14.5px; }
+.dock-sample .linkish { color: var(--accent); font-weight: 600; }
+.promo-video { margin: 22px 0; max-width: 440px; }
+.promo-video video { width: 100%; height: auto; display: block; border-radius: 16px; background: var(--surface); box-shadow: 0 12px 32px rgba(21, 26, 45, .14); }

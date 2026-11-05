@@ -155,6 +155,7 @@ ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
 }
 
 // The six tools most people come for, as big shortcuts on the front page.
+const SAMPLE = { 'redact-pdf': 'pay', 'remove-prices': 'quote', 'edit-pdf': 'quote', 'sign-pdf': 'quote', 'pdf-to-excel': 'quote', 'pdf-to-word': 'quote', 'protect-pdf': 'quote', 'clean-pdf': 'quote', 'watermark-pdf': 'quote', 'page-numbers': 'quote', 'pdf-header-footer': 'quote', 'greyscale-pdf': 'quote' };
 const POPULAR = [
   ['edit-pdf', 'PDF', '--c-doc', { en: 'Fix text directly', da: 'Ret tekst direkte' }],
   ['redact-pdf', '■■', '--ink', { en: 'Remove text for good', da: 'Fjern tekst permanent' }],
@@ -233,6 +234,9 @@ function render(lang, page) {
   const preset = page.tool ? page.tool.preset : '';
   const dock = !page.tool ? ''
     : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : preset === 'compare' ? L.dockCompare : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dockDo[preset] ? L.dockAct.replace('{d}', esc(L.dockDo[preset])) : L.dock.replace('{t}', esc(label(lang, preset === 'docx' ? 'Word' : preset)))}</p>`;
+  // A made-up file to try the tool with, for visitors who don't have a PDF at hand
+  const sk = page.tool && SAMPLE[page.tool.id], sf = sk && (lang === 'da' ? { quote: 'tilbud.pdf', pay: 'loenseddel.pdf' } : { quote: 'quote-en.pdf', pay: 'payslip-en.pdf' })[sk];
+  const sample = sf ? `\n          <p class="dock-sample"><button type="button" class="linkish" data-sample="/samples/${sf}" data-i18n="sample.try">${esc(t(lang, 'sample.try'))}</button></p>` : '';
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),
     ALTERNATES: [...LANGS.map(L => `<link rel="alternate" hreflang="${L}" href="${page.alts[L]}">`), `<link rel="alternate" hreflang="x-default" href="${page.alts.en}">`].join('\n'),
@@ -240,7 +244,7 @@ function render(lang, page) {
     OG_LOCALE: META[lang].og, OG_LOCALE_ALT: LANGS.filter(L => L !== lang).map(L => META[L].og).join('">\n<meta property="og:locale:alternate" content="'),
     LANG_MENU: langMenu(lang, page), LANG_STRINGS: extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : '',
     JSONLD: jsonLd(lang, page, faq.items).replace(/</g, '\\u003c'),
-    HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock, REFGRID: refGrid(lang),
+    HERO: hero, PRESET: preset, MODE: (page.tool && page.tool.mode) || '', DOCK_HINT: dock + sample, REFGRID: refGrid(lang),
     // the coffee button (MobilePay) on every page; the English text says it only works in Denmark
     COFFEE: `    <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Buy us a coffee</span></button>\n`,
     POPULAR: page.tool ? '' : popularSection(lang), RECIPES: page.tool ? '' : recipesSection(lang),
@@ -320,6 +324,7 @@ for (const lang of GLANGS) {
     <h1>${esc(B.h1)}</h1>
     <p class="lead">${esc(B.lead)}</p>
     <p><a class="btn primary" href="${path(lang)}">${esc(B.try)}</a></p>
+    <figure class="promo-video"><video controls muted playsinline preload="none" width="720" height="720" aria-label="${esc(B.h1)}" poster="/videos/promo-owners-${lang === 'da' ? 'da' : 'en'}.jpg${vv(`promo-owners-${lang === 'da' ? 'da' : 'en'}.jpg`)}"><source src="/videos/promo-owners-${lang === 'da' ? 'da' : 'en'}.mp4${vv(`promo-owners-${lang === 'da' ? 'da' : 'en'}.mp4`)}" type="video/mp4"></video></figure>
     <section class="bz-calc" aria-labelledby="bz-calc-h" data-lang="${lang === 'en' ? 'en-GB' : lang === 'no' ? 'nb-NO' : lang}" data-cur="${esc(B.calc.cur)}">
       <h2 id="bz-calc-h">${esc(B.calc.h)}</h2>
       <div class="bz-row"><label>${esc(B.calc.employees)}<input id="bzN" type="number" inputmode="numeric" min="1" max="100000" value="10"></label>
@@ -337,7 +342,7 @@ for (const lang of GLANGS) {
     <section class="bz-custom"><h2>${esc(B.custom.h)}</h2><p>${esc(B.custom.text)}</p><p><a class="btn primary" href="mailto:${COMPANY.email}?subject=${encodeURIComponent('LunaVerta · ' + B.nav)}">${esc(B.custom.btn)}</a></p></section>
     <h2>${esc(LABELS[lang].faqTool.replace('{name}', 'LunaVerta'))}</h2>
 ${B.faq.map(([q, a]) => `    <details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}`;
-  const pg = { path: bPath(lang), title: B.title, desc: B.desc, alts: Object.fromEntries(GLANGS.map(L => [L, bPath(L)])) };
+  const pg = { og: 'business', path: bPath(lang), title: B.title, desc: B.desc, alts: Object.fromEntries(GLANGS.map(L => [L, bPath(L)])) };
   const ld = [{ '@type': 'WebPage', name: B.h1, description: B.desc, inLanguage: lang, url: SITE + pg.path, dateModified: DAY, publisher: { '@id': SITE + '/#org' } },
     { '@type': 'FAQPage', inLanguage: lang, mainEntity: B.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
   guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld, '\n<script src="/assets/business.js"></script>', 'business'), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });

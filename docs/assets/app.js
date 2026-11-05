@@ -3228,6 +3228,17 @@ $('fileInput').onchange = e => {
   const r = $('pick').getBoundingClientRect();
   afterAdd(added, Math.min(innerWidth / 2, r.left + r.width / 2), Math.min(innerHeight / 2 + 40, r.bottom + 170));
 };
+// "Try it with a sample file": a made-up PDF from this site, opened as if the visitor had chosen it
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-sample]'); if (!b) return;
+  b.disabled = true;
+  try {
+    const r = await fetch(b.dataset.sample); if (!r.ok) throw new Error(r.status);
+    const file = new File([await r.blob()], b.dataset.sample.split('/').pop(), { type: 'application/pdf' });
+    const added = addFiles([file]);
+    if (added.length) { const p = $('pick').getBoundingClientRect(); afterAdd(added, Math.min(innerWidth / 2, p.left + p.width / 2), Math.min(innerHeight / 2 + 40, p.bottom + 170)); }
+  } catch (err) { toast(T('job.failed')); } finally { b.disabled = false; }
+});
 // Paste files or screenshots straight in
 addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { addFiles(f); toast(T('toast.pasted', { n: f.length })); } });
 

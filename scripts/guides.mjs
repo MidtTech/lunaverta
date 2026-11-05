@@ -255,3 +255,7 @@ export const GUIDES = [
     }
   }
 ];
+
+// Two more guides live in guides-more.mjs (all languages); English and Danish join the list here.
+import { MORE } from './guides-more.mjs';
+for (const g of MORE) GUIDES.push({ id: g.id, tool: g.tool, en: g.en, da: g.da });

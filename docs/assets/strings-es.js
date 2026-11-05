@@ -382,6 +382,8 @@ window.LV_STR.es = {
   'nav.privacy': 'Privacidad',
   'nav.licenses': 'Licencias de código abierto',
   'nav.source': 'Código fuente',
+  'feedback.link': '¿Cómo usas LunaVerta?',
+  'sample.try': 'Pruébalo con un archivo de ejemplo',
   'nav.business': 'Para empresas',
   'tools.find': 'Busca una herramienta, p. ej. unir',
   'tools.none': 'Ninguna herramienta coincide. Prueba otra palabra, o suelta tu archivo en la página y elige en el anillo.',

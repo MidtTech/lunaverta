@@ -888,3 +888,38 @@ Scanned PDFs:
 A scan is a picture of paper, so there is no text to read. Run it through OCR: make a PDF searchable first, then convert the result to Word.
 What does not carry over:
 Complicated layouts, such as text in many columns, tables drawn with lines, or text on top of pictures, may need some tidying in Word afterwards.
+
+### PDF too big to upload? Make it fit the limit
+https://lunaverta.com/guide/pdf-too-big-to-upload/
+
+Government portals, job sites and insurance claims often refuse files over a few megabytes, and the error message rarely helps. Here is how to get under the limit.
+
+Step by step:
+1. Open Compress PDF and choose the PDF.
+2. Every page is redrawn more compactly. The text stays searchable.
+3. You see how much smaller it became. Click Save and try the upload again.
+Still too big? Split it:
+Open Split PDF and choose Parts small enough for e-mail. Type the portal's limit in MB, and LunaVerta makes parts that each stay under it. Most forms let you add several files.
+Scans and photos are the usual culprits:
+- A colour scan of black text can become much smaller in greyscale.
+- Photos of paper taken with a phone are big. Scan to PDF straightens them and makes one compact PDF.
+Check the format too:
+Many portals only accept PDF. Turn Word documents into PDF with Word to PDF and photos into PDF with JPG to PDF.
+
+### Combine scanned pages into one PDF
+https://lunaverta.com/guide/combine-scanned-pages-into-one-pdf/
+
+Scanners and phone apps often give you one file per page, or all the fronts and then all the backs. Here is how to end up with one tidy PDF, in the right order.
+
+Step by step:
+1. Open Merge PDF and choose all the scanned files at once. Pictures (JPG, PNG, HEIC) work too.
+2. Drag the files into the right order.
+3. Click Merge and save the combined PDF.
+Fronts and backs scanned as two stacks?:
+Use Alternate merge: choose the file with the fronts, then the one with the backs, and LunaVerta puts them together page by page, even when the backs are in reverse order.
+Tidy it up:
+- Double-sided scans are full of empty backs. Remove blank pages takes them out.
+- Make the text searchable and copyable with OCR.
+- Too big to send? Use Compress PDF.
+Only paper?:
+Take photos with your phone in Scan to PDF. The pages are straightened and become one PDF straight away.

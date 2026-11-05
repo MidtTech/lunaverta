@@ -509,6 +509,13 @@ await test('Remove sensitive finds international phone numbers and ID numbers', 
   await done(p);
 });
 
+await test('"Try it with a sample file" opens a made-up PDF in the tool', async () => {
+  const p = await page('/da/anonymiser-pdf/');
+  await p.click('[data-sample]');
+  await p.waitForSelector('#edFindCats button', { timeout: 20000 });
+  await done(p);
+});
+
 await test('the tool search finds tools by other words, and "Show all" opens long groups on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const visible = () => p.evaluate(() => [...document.querySelectorAll('.tool-grid li')].filter(li => li.offsetParent).map(li => li.textContent.trim()));

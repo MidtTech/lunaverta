@@ -377,6 +377,8 @@ window.LV_STR.de = {
   'nav.privacy': 'Datenschutz',
   'nav.licenses': 'Open-Source-Lizenzen',
   'nav.source': 'Quellcode',
+  'feedback.link': 'Wie nutzt du LunaVerta?',
+  'sample.try': 'Mit einer Beispieldatei ausprobieren',
   'nav.business': 'Für Unternehmen',
   'tools.find': 'Werkzeug finden, z. B. zusammenfügen',
   'tools.none': 'Kein Werkzeug passt. Versuch ein anderes Wort oder zieh deine Datei auf die Seite und wähl im Ring.',

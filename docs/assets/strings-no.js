@@ -377,6 +377,8 @@ window.LV_STR.no = {
   'nav.privacy': 'Personvern',
   'nav.licenses': 'Lisenser for åpen kildekode',
   'nav.source': 'Kildekode',
+  'feedback.link': 'Hvordan bruker du LunaVerta?',
+  'sample.try': 'Prøv med en eksempelfil',
   'nav.business': 'For bedrifter',
   'tools.find': 'Finn et verktøy, f.eks. slå sammen',
   'tools.none': 'Ingen verktøy passer. Prøv et annet ord, eller slipp filen på siden og velg i ringen.',

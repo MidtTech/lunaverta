@@ -7,6 +7,7 @@ import vm from 'node:vm';
 import { TOOLS } from './site-content.mjs';
 import { GUIDES } from './guides.mjs';
 import { GUIDE_TEXT } from './guides-extra.mjs';
+import { BUSINESS } from './business.mjs';
 for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) g[L] = texts[g.id];
 const { chromium } = createRequire(import.meta.url)('playwright');
 for (const L of ['sv', 'no', 'de', 'es', 'fr']) { const x = (await import(`./lang/${L}.mjs`)).default; for (const tl of TOOLS) { const { slug, ...rest } = x.tools[tl.id]; tl.slug[L] = slug; tl[L] = rest; } }
@@ -46,6 +47,8 @@ const page = (L, h1, sub, chip) => `<!doctype html><meta charset="utf-8"><style>
 
 const jobs = [];
 for (const L of LANGS) for (const tl of TOOLS) jobs.push({ L, file: `${ROOT}og/${L}/${tl.slug[L]}.jpg`, html: page(L, tl[L].h1, firstSentence(tl[L].desc), tl[L].name) });
+const BZ_CHIP = { en: 'No licences · No uploads', da: '21.600 kr./år → 0 kr.', sv: 'Inga licenser · Ingen uppladdning', no: 'Ingen lisenser · Ingen opplasting', de: 'Keine Lizenzen · Kein Upload', es: 'Sin licencias · Sin subidas', fr: 'Sans licences · Sans envoi' };
+for (const L of LANGS) jobs.push({ L, file: `${ROOT}og/${L}/business.jpg`, html: page(L, BUSINESS[L].h1, firstSentence(BUSINESS[L].lead), BZ_CHIP[L]) });
 for (const L of LANGS) for (const g of GUIDES) jobs.push({ L, file: `${ROOT}og/${L}/guide-${g[L].slug}.jpg`, html: page(L, g[L].h1, firstSentence(g[L].lead), GUIDE_WORD[L]) });
 
 const b = await chromium.launch();
