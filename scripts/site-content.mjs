@@ -91,11 +91,11 @@ export const TOOLS = [
     en: { name: 'Split PDF', title: 'Split PDF into pages · Free, private, no upload', desc: 'Split a PDF into separate one-page PDF files in your browser. Free and private: your PDF is never uploaded.',
       h1: 'Split a PDF into single pages', lead: 'Turn every page of a PDF into its own PDF file. Handy when you only need to send one page. Nothing is uploaded.',
       steps: ['Choose a PDF, or drop it on the page.', 'LunaVerta splits it into one PDF per page.', 'Save the pages, which come together in a .zip.'],
-      faq: [['Can I pick only some pages?', 'Use Edit to delete the pages you don\'t need, or split and keep the files you want.'], ['Do the pages keep their quality?', 'Yes. Pages are copied as they are, with text, images and links.']] },
+      faq: [['Can I split into bigger parts, for example for e-mail?', 'Yes. Choose every few pages, for example every 2 pages, or parts small enough for e-mail and type the largest size per part in MB.'], ['Can I pick only some pages?', 'Use Edit to delete the pages you don\'t need, or split and keep the files you want.'], ['Do the pages keep their quality?', 'Yes. Pages are copied as they are, with text, images and links.']] },
     da: { name: 'Del PDF', title: 'Del PDF op i sider · Gratis og privat, uden upload', desc: 'Del en PDF op i separate PDF-filer med én side hver, direkte i din browser. Gratis og privat: din PDF bliver aldrig uploadet.',
       h1: 'Del en PDF op i enkelte sider', lead: 'Lav hver side i en PDF om til sin egen PDF-fil. Praktisk, når du kun skal sende én side. Intet bliver uploadet.',
       steps: ['Vælg en PDF, eller slip den på siden.', 'LunaVerta deler den op i én PDF pr. side.', 'Gem siderne, som samles i en .zip.'],
-      faq: [['Kan jeg vælge bestemte sider?', 'Brug Redigér til at slette de sider, du ikke skal bruge, eller del op og behold de filer, du vil have.'], ['Bevarer siderne kvaliteten?', 'Ja. Siderne kopieres, som de er, med tekst, billeder og links.']] } },
+      faq: [['Kan jeg dele i større dele, fx til mail?', 'Ja. Vælg for hver X sider, fx hver 2. side, eller dele små nok til mail, og skriv den største størrelse pr. del i MB.'], ['Kan jeg vælge bestemte sider?', 'Brug Redigér til at slette de sider, du ikke skal bruge, eller del op og behold de filer, du vil have.'], ['Bevarer siderne kvaliteten?', 'Ja. Siderne kopieres, som de er, med tekst, billeder og links.']] } },
 
   { id: 'compress-pdf', preset: 'shrink', slug: { en: 'compress-pdf', da: 'komprimer-pdf' },
     en: { name: 'Compress PDF', title: 'Compress PDF · Make PDFs smaller, no upload', desc: 'Reduce the file size of a PDF in your browser. Text stays searchable. Free and private: your PDF is never uploaded.',

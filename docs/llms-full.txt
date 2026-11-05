@@ -66,6 +66,7 @@ Steps:
 3. Save the pages, which come together in a .zip.
 
 Questions:
+- Can I split into bigger parts, for example for e-mail? Yes. Choose every few pages, for example every 2 pages, or parts small enough for e-mail and type the largest size per part in MB.
 - Can I pick only some pages? Use Edit to delete the pages you don't need, or split and keep the files you want.
 - Do the pages keep their quality? Yes. Pages are copied as they are, with text, images and links.
 

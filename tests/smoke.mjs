@@ -489,8 +489,24 @@ await test('more PDF tools: alternate merge, blank pages, flatten, booklet order
   assert((await PDFDocument.load(o.buf)).getForm().getFields().length === 0 && /Hello/.test(await pdfText(o.buf)), 'not flattened');
   o = await run('/pdf-booklet/', [file('e.pdf', await mk(['P1', 'P2', 'P3', 'P4']))], async () => {});
   assert((await pdfText(o.buf)).replace(/\s+/g, '').startsWith('P4P1P2P3'), 'booklet order: ' + (await pdfText(o.buf)).replace(/\s+/g, ' '));
+  o = await run('/split-pdf/', [file('s.pdf', await mk(['1', '2', '3', '4', '5']))], async p => { await p.check('dialog[open] input[value="n"]'); await p.fill('dialog[open] input[name="n"]', '2'); });
+  const JSZip = createRequire(import.meta.url)('jszip'), zip = await JSZip.loadAsync(o.buf), parts = Object.keys(zip.files).filter(n => n.endsWith('.pdf'));
+  assert(parts.length === 3, 'split every 2 pages: ' + parts.join(', '));
   o = await run('/add-header-footer-to-pdf/', [file('h.pdf', await mk(['Body', 'Body']))], async p => { await p.fill('dialog[open] input[name="header"]', 'Confidential'); });
   assert(/Confidential/.test(await pdfText(o.buf)) && /page 2 of 2/.test(await pdfText(o.buf)), 'header/footer: ' + (await pdfText(o.buf)).replace(/\s+/g, ' ').slice(0, 120));
+});
+
+await test('Remove sensitive finds international phone numbers and ID numbers', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica), pg = d.addPage([595, 842]);
+  ['Phone: +44 20 7946 0000', 'Mobile 07700 900123', 'NI number: AB 12 34 56 C', 'SSN 123-45-6789', 'Total $1,257.84 for 24 pcs'].forEach((l, i) => pg.drawText(l, { x: 60, y: 760 - i * 30, size: 14, font: f }));
+  const p = await page('/redact-pdf/');
+  await p.setInputFiles('#fileInput', file('people.pdf', Buffer.from(await d.save())));
+  await p.waitForSelector('#edFindCats button', { timeout: 20000 }); await p.waitForTimeout(2500);
+  const counts = await p.evaluate(() => [...document.querySelectorAll('#edFindCats button')].map(b => b.textContent.replace(/\s+/g, ' ')));
+  const n = re => +((counts.find(c => re.test(c)) || '').match(/(\d+)/) || [0, 0])[1];
+  assert(n(/Phone/) === 2, 'phones: ' + counts.join(' | '));
+  assert(n(/ID numbers/) === 2, 'ID numbers: ' + counts.join(' | '));
+  await done(p);
 });
 
 await test('the tool search finds tools by other words, and "Show all" opens long groups on a phone', async () => {

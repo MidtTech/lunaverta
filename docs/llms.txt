@@ -406,6 +406,7 @@ Key facts:
 - [Turn a PDF into Word and keep the layout](https://lunaverta.com/guide/pdf-to-word-keep-layout/) · [Lav en PDF om til Word og behold layoutet](https://lunaverta.com/da/guide/pdf-til-word-behold-layout/) · [Gör om en PDF till Word och behåll layouten](https://lunaverta.com/sv/guider/pdf-till-word-behall-layouten/) · [Gjør en PDF om til Word og behold oppsettet](https://lunaverta.com/no/veiledninger/pdf-til-word-behold-oppsettet/) · [PDF in Word umwandeln und das Layout behalten](https://lunaverta.com/de/anleitungen/pdf-in-word-layout-behalten/) · [Convertir un PDF a Word conservando el formato](https://lunaverta.com/es/guias/pdf-a-word-conservando-el-formato/) · [Convertir un PDF en Word en gardant la mise en page](https://lunaverta.com/fr/guides/pdf-en-word-en-gardant-la-mise-en-page/)
 
 ## About
+- [For business](https://lunaverta.com/business/): what PDF licences cost, what LunaVerta covers and doesn't, GDPR, self-hosting
 - [Why nothing is uploaded](https://lunaverta.com/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](https://lunaverta.com/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](https://lunaverta.com/licenses.html)

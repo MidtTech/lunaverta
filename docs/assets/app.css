@@ -1002,3 +1002,20 @@ main[tabindex="-1"]:focus { outline: none; }
   .about .facts div { flex-direction: column; gap: 2px; }
   .about .facts dd { text-align: left; }
 }
+
+/* ---------- the "For business" page ---------- */
+.prose.business { max-width: 980px; }
+.bz-calc { margin: 28px 0; padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.bz-calc h2 { margin-top: 0; }
+.bz-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.bz-row label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+.bz-row input { font: inherit; font-size: 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); width: 100%; }
+.bz-out { font-size: 20px; margin: 16px 0 6px; }
+.bz-out output { font: 700 34px var(--f-display); color: var(--ink); }
+.bz-out b { color: var(--accent); white-space: nowrap; }
+.bz-note { font-size: 13.5px; margin: 0; }
+.bz-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px 32px; }
+.bz-list { padding-left: 1.2em; }
+.bz-list li { margin: 6px 0; }
+.bz-custom { margin: 28px 0; padding: 22px 24px; border-radius: 16px; background: var(--accent-soft); }
+.bz-custom h2 { margin-top: 0; }

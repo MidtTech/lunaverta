@@ -103,8 +103,10 @@ async function thumb(pg) {
 }
 function renderGrid() {
   S.view = 'grid';
-  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
+  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edReverse">${esc(T('ed.reverse'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
   $('#edAdd').onclick = () => $('#edAddInput').click();
+  // Reverse the order of the pages, e.g. a stack that was scanned upside down (undo brings it back)
+  $('#edReverse').onclick = () => { S.pages.reverse(); S.dirty = true; renderGrid(); };
   $('#edFind').onclick = openFind;
   wireUndo();
   const body = $('#edBody');
@@ -1440,11 +1442,14 @@ const CATS = {
   prices: /(?:(?:kr\.?|DKK|EUR|€|\$|£|SEK|NOK|USD)\s?-?\d[\d.  ]*(?:,\d{1,2}|,-)?|-?(?:\d{1,3}(?:[.  ]\d{3})+|\d+),(?:\d{2}|-)(?:\s?(?:kr\.?|DKK|EUR|€))?|\d{1,3}(?:,\d{3})+\.\d{2}|-?\d[\d.  ]*\s?(?:kr\.?|DKK|EUR|€)(?![A-Za-zÆØÅæøå]))/gi,
   priceText: null, // found by findPriceText: labels, terms and notes about money
   // Danish CPR (ddmmyy-xxxx), Norwegian fødselsnummer (ddmmyy xxxxx) and Swedish personnummer ((yy)yymmdd-xxxx)
-  // … plus German Sozialversicherungsnummer (12 345678 A 123) and Steuer-ID (12 345 678 901, or 11 digits after "Steuer-ID"/"IdNr")
-  cpr: /\b(?:(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4,5}|(?:19|20)?\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[-+]\d{4}|\d{2}\s?(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}\s?[A-Z]\s?\d{3}|[1-9]\d\s\d{3}\s\d{3}\s\d{3}|\d{8}[-\s]?[A-HJ-NP-TV-Z]|[XYZ][-\s]?\d{7}[-\s]?[A-HJ-NP-TV-Z]|\d{2}\/\d{7,8}\/\d{2}|[12]\s?\d{2}\s?(?:0[1-9]|1[0-2]|[2-9]\d)\s?(?:\d{2}|2[AB])\s?\d{3}\s?\d{3}(?:\s?\d{2})?)\b|(?<=(?:Steuer-?ID|Steuer-?Identifikationsnummer|Identifikationsnummer|IdNr\.?)\s*:?\s*)[1-9]\d{10}\b/gi,
+  // … plus German Sozialversicherungsnummer (12 345678 A 123) and Steuer-ID (12 345 678 901, or 11 digits after "Steuer-ID"/"IdNr"),
+  // Spanish DNI/NIE and Seguridad Social, French NIR, UK National Insurance (QQ 12 34 56 C) and US SSN (123-45-6789)
+  cpr: /\b(?:(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}[-\s]?\d{4,5}|(?:19|20)?\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[-+]\d{4}|\d{2}\s?(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])\d{2}\s?[A-Z]\s?\d{3}|[1-9]\d\s\d{3}\s\d{3}\s\d{3}|\d{8}[-\s]?[A-HJ-NP-TV-Z]|[XYZ][-\s]?\d{7}[-\s]?[A-HJ-NP-TV-Z]|\d{2}\/\d{7,8}\/\d{2}|[12]\s?\d{2}\s?(?:0[1-9]|1[0-2]|[2-9]\d)\s?(?:\d{2}|2[AB])\s?\d{3}\s?\d{3}(?:\s?\d{2})?)\b|\b[A-CEGHJ-PR-TW-Z]{2}\s?\d{2}\s?\d{2}\s?\d{2}\s?[A-D]\b|\b(?!000|666|9\d\d)\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b|(?<=(?:Steuer-?ID|Steuer-?Identifikationsnummer|Identifikationsnummer|IdNr\.?)\s*:?\s*)[1-9]\d{10}\b/gi,
   accounts: /\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,4})?\b|\b(?:\d{4}[\s-]){3}\d{4}\b|\b\d{4}[\s-]\d{6,10}\b/g,
   emails: /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,
-  phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)/g,
+  // Danish/Norwegian 8 digits; anything written internationally (+44 20 7946 0000); the usual national
+  // formats in the UK, France, Germany, Sweden, Spain and the US; and any number right after "Tel"/"Phone"/"Tlf".
+  phones: /(?<!\d\s?)(?:\+45\s?)?\b\d{2}\s?\d{2}\s?\d{2}\s?\d{2}\b(?!\s?\d)|\+\d{1,3}[\s.-]?(?:\(0\)\s?)?\d{1,4}(?:[\s.-]?\d{2,4}){2,4}\b|\b0[1-9](?:[\s.]\d{2}){4}\b|\b0\d{2,4}\s\d{3,4}\s?\d{3,4}\b|\b0\d{2,4}[/-]\d{4,8}\b|\b0\d{1,3}-\d{2,3}\s?\d{2}\s?\d{2}\b|\b[6789]\d{2}\s\d{3}\s\d{3}\b|\(\d{3}\)\s?\d{3}-\d{4}\b|\b\d{3}-\d{3}-\d{4}\b|(?<=\b(?:tlf|tel|telefon|phone|mobil|mobile|cell|téléphone|teléfono|móvil|handy)\.?\s*(?:nr\.?|no\.?)?\s*:?\s*)\+?\d[\d\s().\/-]{5,16}\d/gi,
   addresses: /\b[A-ZÆØÅ][a-zæøåé]+(?:vej|gade|allé|alle|vænge|plads|torv|stræde|parken|boulevard|have|toften|bakken|høj|vang|park|sti|gyde)\s\d{1,4}[A-Za-z]?(?:,?\s?\d{1,2}\.?\s?(?:th|tv|mf)\.?)?|(?<![\d./-])\b(?:[1-9]\d{3})\s(?:[A-ZÆØÅ][a-zæøå]+)(?:\s[A-ZÆØÅ][a-zæøå]+)?(?=\s|,|$)|\b[A-ZÆØÅ]{3,}(?:VEJ|GADE|ALLÉ|ALLE|VÆNGE|PLADS|TORV|STRÆDE|PARKEN|BOULEVARD|HAVE|BAKKEN|VANG|PARK)\s\d{1,4}[A-Z]?(?:,?\s?\d{1,2}\.?\s?(?:TH|TV|MF)\.?)?|(?<![\d./-])\b[1-9]\d{3}\s{1,2}[A-ZÆØÅ]{3,}(?:\s[A-ZÆØÅ]{1,3}\b)?/g,
   dates: /(?<![\d./-])(?:0?[1-9]|[12]\d|3[01])([./-])(?:0?[1-9]|1[0-2])\1(?:\d{4}|\d{2})(?![\d./-]?\d)|\b\d{1,2}\.?\s(?:januar|februar|marts|april|maj|juni|juli|august|september|oktober|november|december|january|february|march|may|june|july|october)\s\d{4}\b/gi,
   refs: /(?<=(?:ordre|faktura|kunde|tilbuds?|sags|order|invoice|customer|quote)\s?(?:nr\.?|nummer|no\.?|#)?\s?:?\s?)\d[\d-]{3,}/gi

@@ -1723,14 +1723,27 @@ async function extractPages(file, ranges, progress) {
   progress(1);
   return [{ name: `${base(file.name)}-${T('ex.name')}.pdf`, blob: new Blob([await out.save()], { type: 'application/pdf' }), noteKey: 'ex.kept', noteVars: { n: idx.length, total: n } }];
 }
-async function splitPDF(file, progress) {
-  const src = await openPdfLib(file), n = src.getPageCount(), pad = String(n).length, b = base(file.name), outs = [];
+// Split: one file per page, a file for every N pages, or parts that stay under a size (for e-mail).
+// For the size, each page's own size is measured and pages are grouped while the sum stays under the limit;
+// pages share fonts and pictures, so the real parts come out a little smaller than the sum.
+async function splitPDF(file, progress, o = {}) {
+  const src = await openPdfLib(file), n = src.getPageCount(), b = base(file.name), outs = [];
   src.getPages().forEach(keepUsedImages);
-  for (let i = 0; i < n; i++) {
-    const one = await PDFLib.PDFDocument.create();
-    one.addPage((await one.copyPages(src, [i]))[0]);
-    outs.push({ name: `${b}-${String(i + 1).padStart(pad, '0')}.pdf`, blob: new Blob([await one.save()], { type: 'application/pdf' }) });
-    progress((i + 1) / n);
+  const save = async idx => { const d = await PDFLib.PDFDocument.create(); (await d.copyPages(src, idx)).forEach(pg => d.addPage(pg)); return d.save(); };
+  let groups;
+  if (o.mode === 'n') { const k = Math.max(1, parseInt(o.n, 10) || 1); groups = []; for (let i = 0; i < n; i += k) groups.push([...Array(Math.min(k, n - i)).keys()].map(j => i + j)); }
+  else if (o.mode === 'size') {
+    const limit = Math.max(0.1, parseFloat(String(o.mb).replace(',', '.')) || 10) * 1024 * 1024, sizes = [];
+    for (let i = 0; i < n; i++) { sizes.push((await save([i])).length); progress(0.5 * (i + 1) / n); }
+    groups = []; let cur = [], sum = 0;
+    for (let i = 0; i < n; i++) { if (cur.length && sum + sizes[i] > limit) { groups.push(cur); cur = []; sum = 0; } cur.push(i); sum += sizes[i]; }
+    if (cur.length) groups.push(cur);
+  } else groups = [...Array(n).keys()].map(i => [i]);
+  const pad = String(groups.length).length, single = groups.every(g => g.length === 1);
+  for (const [k, g] of groups.entries()) {
+    const name = single ? `${b}-${String(g[0] + 1).padStart(String(n).length, '0')}.pdf` : `${b}-${String(k + 1).padStart(pad, '0')}-p${g[0] + 1}-${g[g.length - 1] + 1}.pdf`;
+    outs.push({ name, blob: new Blob([await save(g)], { type: 'application/pdf' }) });
+    progress((o.mode === 'size' ? 0.5 : 0) + (o.mode === 'size' ? 0.5 : 1) * (k + 1) / groups.length);
   }
   return outs;
 }
@@ -2348,7 +2361,7 @@ async function openScanner(files) {
   show();
 }
 async function convertPDF(file, target, o, progress) {
-  if (target === 'split') return splitPDF(file, progress);
+  if (target === 'split') return splitPDF(file, progress, o.split);
   if (target === 'extract') return extractPages(file, o.pages, progress);
   if (target === 'protect') return protectPDF(file, o.password);
   if (target === 'unlock') return unlockPDF(file, o.password);
@@ -2908,6 +2921,11 @@ async function runBatch(files, target) {
     const cur = await readPdfInfo(first);
     const a = await askOptions(T('meta.title'), [{ id: 'title', label: T('meta.t'), value: cur.title }, { id: 'author', label: T('meta.a'), value: cur.author }, { id: 'subject', label: T('meta.s'), value: cur.subject }, { id: 'keywords', label: T('meta.k'), value: cur.keywords, ph: T('meta.kPh') }, { id: 'strip', type: 'check', label: T('meta.strip'), value: true }], 'meta.ok');
     if (!a) return; o.meta = a;
+  }
+  if (target === 'split') {
+    const a = await askOptions(T('split.title'), [{ id: 'mode', type: 'radio', value: 'each', options: [['each', T('split.each'), T('split.eachD')], ['n', T('split.n'), T('split.nD')], ['size', T('split.size'), T('split.sizeD')]] },
+      { id: 'n', label: T('split.nLabel'), value: '2' }, { id: 'mb', label: T('split.mbLabel'), value: '10' }]);
+    if (!a) return; o.split = a;
   }
   if (target === 'nup') {
     const a = await askOptions(T('nup.title'), [{ id: 'mode', type: 'radio', value: 'booklet', options: [['booklet', T('nup.booklet'), T('nup.bookletD')], ['2', T('nup.2'), T('nup.2D')], ['4', T('nup.4'), T('nup.4D')]] }]);

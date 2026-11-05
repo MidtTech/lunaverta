@@ -11,6 +11,7 @@ import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-
 import { GUIDES, GUIDE_INDEX } from './guides.mjs';
 import { icon } from './icons.mjs';
 import { KEYWORDS } from './tool-keywords.mjs';
+import { BUSINESS } from './business.mjs';
 import { GUIDE_TEXT, GUIDE_INDEX_EXTRA } from './guides-extra.mjs';
 Object.assign(GUIDE_INDEX, GUIDE_INDEX_EXTRA);
 for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) { if (!texts[g.id]) throw new Error(`${L}: no guide ${g.id}`); g[L] = texts[g.id]; }
@@ -245,7 +246,7 @@ function render(lang, page) {
     POPULAR: page.tool ? '' : popularSection(lang), RECIPES: page.tool ? '' : recipesSection(lang),
     REFSUM: esc(t(lang, 'ref.sum', { n: new Set(Object.values(KINDS).flatMap(k => k.exts)).size, m: new Set(Object.values(KINDS).flatMap(k => k.targets)).size })),
     HOWTO: page.tool ? howtoSection(lang, page.tool) : '', FAQ: faq.html, TOOLS: toolsSection(lang, page.tool && page.tool.id), ABOUT: aboutSection(lang),
-    GUIDES_URL: path(lang, GUIDE_INDEX[lang].slug), NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
+    GUIDES_URL: path(lang, GUIDE_INDEX[lang].slug), BUSINESS_URL: path(lang, BUSINESS[lang].slug), NOSCRIPT: esc(L.noscript), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };
   let html = template.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m));
   return fillTexts(html, lang);
@@ -266,7 +267,7 @@ const headPart = template.slice(0, template.indexOf('<body>'));
 const headerPart = template.slice(template.indexOf('<div class="wrap">'), template.indexOf('</header>') + '</header>'.length)
   .replace(/<nav class="head-nav"[\s\S]*?<\/nav>/, `<nav class="head-nav" aria-label="Sections"><a href="{{HOME}}#h-tools" data-i18n="nav.tools">All tools</a><a href="{{GUIDES}}">{{GUIDES_LABEL}}</a></nav>`);
 const footerPart = template.slice(template.indexOf('  <footer>'), template.indexOf('</footer>') + '</footer>'.length);
-function guideHtml(lang, g, main, ld) {
+function guideHtml(lang, g, main, ld, script = '', cls = 'guide') {
   const alts = g.alts;
   const vals = {
     LANG: lang, TITLE: esc(g.title), DESC: esc(g.desc), CANONICAL: SITE + g.path, HOME: path(lang), GUIDES: gPath(lang), GUIDES_LABEL: esc(GUIDE_INDEX[lang].guides),
@@ -275,9 +276,9 @@ function guideHtml(lang, g, main, ld) {
     LANG_MENU: `<details class="lang-menu"><summary><span class="sr-only" data-i18n="lang.label">Language</span> <span lang="${lang}">${lang.toUpperCase()}</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></summary>
           <ul>${GLANGS.map(L => `<li><a href="${alts[L]}" hreflang="${L}" lang="${L}" data-set-lang="${L}"${L === lang ? ' aria-current="true"' : ''}><b>${L.toUpperCase()}</b>${esc(META[L].name)}</a></li>`).join('')}</ul></details>`,
     JSONLD: JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, ...ld] }).replace(/</g, '\\u003c'),
-    COFFEE: '', GUIDES_URL: gPath(lang), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
+    COFFEE: '', GUIDES_URL: gPath(lang), BUSINESS_URL: path(lang, BUSINESS[lang].slug), VERSION: '{{VERSION}}', BUILD_DATE: '{{BUILD_DATE}}'
   };
-  const html = `${headPart}<body>\n<a class="skip" href="#main" data-i18n="skip">Skip to content</a>\n${headerPart}\n  <main class="prose guide" id="main" tabindex="-1">\n${main}\n  </main>\n${footerPart}\n</div>\n<script src="/assets/strings.js"></script>${extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : ''}\n<script src="/assets/i18n.js"></script>\n</body>\n</html>\n`;
+  const html = `${headPart}<body>\n<a class="skip" href="#main" data-i18n="skip">Skip to content</a>\n${headerPart}\n  <main class="prose ${cls}" id="main" tabindex="-1">\n${main}\n  </main>\n${footerPart}\n</div>\n<script src="/assets/strings.js"></script>${extra(lang) ? `\n<script src="/assets/strings-${lang}.js"></script>` : ''}\n<script src="/assets/i18n.js"></script>${script}\n</body>\n</html>\n`;
   return fillTexts(html.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m)), lang);
 }
 const guidePages = [];
@@ -309,6 +310,37 @@ ${body}
     <p class="lead">${esc(I.lead)}</p>
     <ul class="guide-list">${GUIDES.map(g => `<li><a href="${gPath(lang, g[lang].slug)}"><b>${esc(g[lang].h1)}</b><span>${esc(g[lang].lead)}</span></a></li>`).join('')}</ul>`;
   guidePages.push({ file: `docs${idx.path}index.html`, html: guideHtml(lang, idx, main, [{ '@type': 'CollectionPage', name: I.h1, inLanguage: lang, url: SITE + idx.path }]), url: SITE + idx.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + idx.alts[L]])) });
+}
+// ---------- the "For business" page in every language ----------
+const bPath = lang => path(lang, BUSINESS[lang].slug);
+for (const lang of GLANGS) {
+  const B = BUSINESS[lang]; if (!B) continue;
+  const ul = items => `<ul class="bz-list">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  const main = `    <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(LABELS[lang].home)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(B.nav)}</span></nav>
+    <h1>${esc(B.h1)}</h1>
+    <p class="lead">${esc(B.lead)}</p>
+    <p><a class="btn primary" href="${path(lang)}">${esc(B.try)}</a></p>
+    <section class="bz-calc" aria-labelledby="bz-calc-h" data-lang="${lang === 'en' ? 'en-GB' : lang === 'no' ? 'nb-NO' : lang}" data-cur="${esc(B.calc.cur)}">
+      <h2 id="bz-calc-h">${esc(B.calc.h)}</h2>
+      <div class="bz-row"><label>${esc(B.calc.employees)}<input id="bzN" type="number" inputmode="numeric" min="1" max="100000" value="10"></label>
+      <label>${esc(B.calc.price)} (${esc(B.calc.cur)})<input id="bzP" type="number" inputmode="decimal" min="0" step="any" value="${B.calc.price0}"></label></div>
+      <p class="bz-out"><output id="bzOut" for="bzN bzP">${(10 * B.calc.price0 * 12).toLocaleString(lang === 'en' ? 'en-GB' : lang === 'no' ? 'nb-NO' : lang)} ${esc(B.calc.cur)}</output> <span>${esc(B.calc.year)}</span> → <b>LunaVerta: 0 ${esc(B.calc.cur)}</b></p>
+      <p class="muted bz-note">${esc(B.calc.note)}</p>
+    </section>
+    <div class="bz-two">
+      <section><h2>${esc(B.covers.h)}</h2>${ul(B.covers.items)}</section>
+      <section><h2>${esc(B.not.h)}</h2>${ul(B.not.items)}<p class="muted">${esc(B.not.note)}</p></section>
+    </div>
+    <h2>${esc(B.gdpr.h)}</h2>${ul(B.gdpr.items)}
+    <h2>${esc(B.roll.h)}</h2>
+    <p>${esc(B.roll.text)}</p>
+    <section class="bz-custom"><h2>${esc(B.custom.h)}</h2><p>${esc(B.custom.text)}</p><p><a class="btn primary" href="mailto:${COMPANY.email}?subject=${encodeURIComponent('LunaVerta · ' + B.nav)}">${esc(B.custom.btn)}</a></p></section>
+    <h2>${esc(LABELS[lang].faqTool.replace('{name}', 'LunaVerta'))}</h2>
+${B.faq.map(([q, a]) => `    <details class="faq-item"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n')}`;
+  const pg = { path: bPath(lang), title: B.title, desc: B.desc, alts: Object.fromEntries(GLANGS.map(L => [L, bPath(L)])) };
+  const ld = [{ '@type': 'WebPage', name: B.h1, description: B.desc, inLanguage: lang, url: SITE + pg.path, dateModified: DAY, publisher: { '@id': SITE + '/#org' } },
+    { '@type': 'FAQPage', inLanguage: lang, mainEntity: B.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }];
+  guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld, '\n<script src="/assets/business.js"></script>', 'business'), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });
 }
 for (const p of guidePages) { mkdirSync(dirname(p.file), { recursive: true }); writeFileSync(p.file, p.html); }
 
@@ -350,6 +382,7 @@ ${TOOLS.map(tl => `- [${tl[x.code].name}](${url(x.code, tl.slug[x.code])}): ${tl
 ${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)})` + GLANGS.filter(L => L !== 'en').map(L => ` · [${g[L].h1}](${SITE}${gPath(L, g[L].slug)})`).join('')).join('\n')}
 
 ## About
+- [For business](${SITE}${bPath('en')}): what PDF licences cost, what LunaVerta covers and doesn't, GDPR, self-hosting
 - [Why nothing is uploaded](${SITE}/no-upload.html): how files are processed on the device, and how to check it yourself
 - [Privacy](${SITE}/privacy.html): what is (not) stored and who is behind LunaVerta
 - [Open-source licenses](${SITE}/licenses.html)

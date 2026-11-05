@@ -51,6 +51,10 @@ npm run serve        # http://localhost:8080
 
 Service workers only run on `localhost` or HTTPS, so open it through the server rather than as a file.
 
+### Host it yourself
+
+LunaVerta is a folder of static files. To run it on your own server or intranet, run `npm run build` and serve the `docs/` folder with any web server over HTTPS. There is no backend, database or configuration.
+
 ### Project layout
 
 ```

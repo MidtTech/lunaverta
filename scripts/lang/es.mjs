@@ -170,7 +170,7 @@ export default {
     "LunaVerta lo divide en un PDF por página.",
     "Guarda las páginas, que vienen juntas en un .zip."
    ],
-   "faq": [
+   "faq": [["¿Puedo dividir en partes más grandes, por ejemplo para el correo?", "Sí. Elige cada X páginas, por ejemplo cada 2, o partes lo bastante pequeñas para el correo, y escribe el tamaño máximo por parte en MB."],
     [
      "¿Puedo elegir solo algunas páginas?",
      "Usa Editar para eliminar las páginas que no necesites, o divide y quédate con los archivos que quieras."
