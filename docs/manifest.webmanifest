@@ -1,7 +1,7 @@
 {
   "name": "LunaVerta",
   "short_name": "LunaVerta",
-  "description": "Private file converter. Images, PDFs, documents, spreadsheets, audio and video, converted on your device.",
+  "description": "Free PDF editor and file converter that runs in your browser. Edit, sign, merge, compress and redact PDFs, and convert images, Word, Excel, audio and video. Nothing is uploaded.",
   "id": "/",
   "start_url": "./",
   "scope": "./",
@@ -42,18 +42,46 @@
   ],
   "screenshots": [
     {
-      "src": "icons/screenshot-wide.png",
-      "sizes": "1280x800",
-      "type": "image/png",
+      "src": "icons/screen-wide-ring.webp",
+      "sizes": "1600x900",
+      "type": "image/webp",
       "form_factor": "wide",
-      "label": "Converting files with the format ring"
+      "label": "Drop a file and pick a format from the ring"
     },
     {
-      "src": "icons/screenshot-phone.png",
-      "sizes": "800x1600",
-      "type": "image/png",
+      "src": "icons/screen-wide-redact.webp",
+      "sizes": "1600x900",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Remove ID numbers, bank details and e-mails from a PDF for good"
+    },
+    {
+      "src": "icons/screen-wide-edit.webp",
+      "sizes": "1600x900",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Edit text right inside a PDF"
+    },
+    {
+      "src": "icons/screen-phone-home.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
       "form_factor": "narrow",
-      "label": "LunaVerta on a phone"
+      "label": "Convert and edit files without uploading them"
+    },
+    {
+      "src": "icons/screen-phone-ring.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Pick a format from the ring"
+    },
+    {
+      "src": "icons/screen-phone-tools.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "52 tools, with search"
     }
   ],
   "file_handlers": [
@@ -198,5 +226,54 @@
         }
       ]
     }
-  }
+  },
+  "dir": "ltr",
+  "orientation": "any",
+  "shortcuts": [
+    {
+      "name": "Edit PDF",
+      "url": "/edit-pdf/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Merge PDF",
+      "url": "/merge-pdf/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Compress PDF",
+      "url": "/compress-pdf/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Remove sensitive information",
+      "short_name": "Redact PDF",
+      "url": "/redact-pdf/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }
