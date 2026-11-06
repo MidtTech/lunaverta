@@ -585,6 +585,35 @@ await test('files waiting to be merged show their first page and can be moved ea
   await done(p);
 });
 
+await test('results say how much smaller they got, and a locked PDF offers Unlock instead of a dead end', async () => {
+  let p = await page('/compress-image/');
+  await p.setInputFiles('#fileInput', jpg('photo.jpg', await photo()));
+  await p.waitForSelector('.img-dialog'); await p.click('.img-dialog [value="ok"]');
+  const st = p.locator('.row.done .state').first(); await st.waitFor({ timeout: 60000 });
+  assert(/→ .*% smaller/.test(await st.innerText()), 'no saving shown: ' + await st.innerText());
+  await done(p);
+  p = await page('/compress-pdf/');
+  await p.setInputFiles('#fileInput', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'locked.pdf'));
+  await p.waitForSelector('.row.err .unlock', { timeout: 60000 });
+  await p.click('.row.err .unlock');
+  await p.waitForSelector('dialog[open] input[type="password"]', { timeout: 10000 });
+  p.errors = []; await done(p);
+});
+
+await test('the search at the top finds a tool, and "Clear everything" empties the page', async () => {
+  let p = await page('/da/');
+  await p.fill('#topFind', 'underskrift');
+  await p.waitForSelector('#topHits a');
+  assert(/Underskriv PDF/.test(await p.innerText('#topHits')), 'top search: ' + await p.innerText('#topHits'));
+  await p.press('#topFind', 'Enter'); await p.waitForURL(/underskriv/);
+  await done(p);
+  p = await page('/compress-pdf/');
+  await p.setInputFiles('#fileInput', file('a.pdf', OLD)); await p.waitForSelector('.row.done');
+  await p.click('#clearAll'); await p.waitForSelector('dialog[open]'); await p.click('dialog[open] [value="ok"]');
+  await p.waitForFunction(() => !document.querySelector('.row') && !document.querySelector('#tray .chip'));
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

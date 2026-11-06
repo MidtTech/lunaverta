@@ -42,7 +42,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.min.css?v=6c29e1f931">
+<link rel="stylesheet" href="/assets/app.min.css?v=9f9f99510e">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"},"areaServed":"Worldwide","knowsLanguage":["en","da","de","es","fr","no","sv"],"brand":{"@type":"Brand","name":"LunaVerta"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","es","fr","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta","url":"https://lunaverta.com/sv/","inLanguage":"sv","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"SEK"},"isAccessibleForFree":true,"description":"Konvertera bilder, PDF, Word, Excel, ljud och video i webbläsaren. Redigera, slå ihop och komprimera PDF. Gratis, utan uppladdning, konto eller cookies.","publisher":{"@id":"https://lunaverta.com/#org"},"dateModified":"2026-11-06","isPartOf":{"@id":"https://lunaverta.com/#site"},"license":"https://www.gnu.org/licenses/agpl-3.0.html","sameAs":"https://github.com/MidtTech/lunaverta","featureList":["HEIC till JPG","Word till PDF","Slå ihop PDF","Dela PDF","Komprimera PDF","Skydda PDF","Lås upp PDF","OCR: gör en PDF sökbar","Ta bort priser från PDF","Maskera PDF","Ta bort metadata från PDF","Redigera PDF","Signera PDF","Ta bort PDF-sidor","Rotera PDF","Lägg till sidnummer","Vattenstämpel på PDF","Fyll i PDF-formulär","PDF till JPG","PDF till PNG","JPG till PDF","PNG till JPG","WebP till JPG","Ta bort platsinformation från foton","Excel till CSV","CSV till Excel","Excel till PDF","PDF till Excel","Komprimera video","PowerPoint till PDF","Gör en ifyllbar PDF","QR-kodgenerator","Video till GIF","Video till MP3","PDF till Word","Jämför två PDF-filer","Extrahera PDF-sidor","Komprimera bild","Ändra storlek på bild","Beskär bild","Skanna till PDF","Varva PDF-sidor","Ta bort tomma sidor","Platta till PDF-formulär","PDF i gråskala","Reparera PDF","Ändra PDF-egenskaper","Extrahera bilder ur PDF","Häfte och sidor per ark","Beskär PDF och sidstorlek","Sidhuvud och sidfot","PDF till text"]},{"@type":"FAQPage","inLanguage":"sv","mainEntity":[{"@type":"Question","name":"Laddas mina filer upp någonstans?","acceptedAnswer":{"@type":"Answer","text":"Nej. LunaVerta har ingen server som tar emot filer. Varje konvertering körs i din webbläsare, på din enhet, och resultatet sparas direkt på din enhet."}},{"@type":"Question","name":"Fungerar det offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Efter ditt första besök sparas appen på din enhet. Hjälpprogram för PDF, Word, Excel, MP3 och HEIC sparas första gången du använder dem och fungerar sedan också offline."}},{"@type":"Question","name":"Kan jag installera det?","acceptedAnswer":{"@type":"Answer","text":"I Chrome, Edge och andra Chromium-webbläsare klickar du på installationsikonen längst till höger i adressfältet. När det är installerat kan du öppna filer med LunaVerta från din filhanterare. På iPhone och iPad väljer du Dela och sedan Lägg till på hemskärmen."}},{"@type":"Question","name":"Finns det en storleksgräns?","acceptedAnswer":{"@type":"Answer","text":"Bara din enhets minne. Stora videor och långt ljud tar längre tid och kräver mer minne, så konvertera några åt gången."}},{"@type":"Question","name":"Vad kostar det?","acceptedAnswer":{"@type":"Answer","text":"Ingenting. Det finns inga konton, ingen reklam, inga cookies och inga spårare."}},{"@type":"Question","name":"Varför är det gratis?","acceptedAnswer":{"@type":"Answer","text":"Eftersom allt körs på din egen enhet har LunaVerta nästan inga driftskostnader: det finns inga servrar som tar emot, lagrar eller bearbetar filer. Därför kan det vara gratis utan reklam, utan konton och utan att sälja data. LunaVerta görs av Midt-Tech i Aarhus som ett användbart verktyg och ett exempel på vad vi bygger. Om det sparar dig tid får du gärna bjuda oss på en kaffe (MobilePay, än så länge bara i Danmark)."}},{"@type":"Question","name":"Kommer LunaVerta att förbli gratis?","acceptedAnswer":{"@type":"Answer","text":"Ja, det är planen. LunaVerta kostar väldigt lite att driva, så det finns ingen anledning att ta betalt i dag. Om du tycker att det är användbart och vill stötta arbetet får du gärna bjuda oss på en kaffe. När plattformen växer kan vissa funktioner senare erbjudas som en del av en frivillig prenumeration, men det finns inga sådana planer just nu."}},{"@type":"Question","name":"Kan det ta bort platsen från mina foton?","acceptedAnswer":{"@type":"Answer","text":"Ja. Välj Rensa för ett foto, så tar LunaVerta bort GPS-positionen, kamerauppgifterna och andra dolda uppgifter utan att spara om bilden, så kvaliteten blir densamma."}},{"@type":"Question","name":"Kan jag redigera en PDF?","acceptedAnswer":{"@type":"Answer","text":"Ja. Välj Redigera för en PDF för att ändra ordning på, rotera eller ta bort sidor, lägga till sidor från andra PDF-filer, rätta befintlig text, skriva ny text på en sida och fylla i PDF:ens formulärfält. Resultatet sparas som en ny PDF."}}]}]}
 </script>
@@ -78,10 +78,11 @@
       </div>
       <div class="dock" id="dock">
         <div class="dock-hint">
-          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></span>
+          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
           <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Välj filer</button>
           <p class="dock-or"><span data-i18n="drop.or">eller dra dem hit</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">för att klistra in</span></p>
           
+          <p class="dock-sample"><button type="button" class="linkish" data-sample="/samples/quote-en.pdf" data-i18n="sample.try">Prova med en exempelfil</button></p>
           <p class="privacy-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="trust.up">Inget laddas upp</span><i aria-hidden="true">·</i><span data-i18n="trust.off">Fungerar offline</span><i aria-hidden="true">·</i><a href="https://github.com/MidtTech/lunaverta" data-i18n="trust.src">Öppen källkod</a></p>
           <input type="file" id="fileInput" multiple hidden>
         </div>
@@ -128,10 +129,16 @@
       <div class="manifest-foot">
         <button class="btn" id="saveAll" type="button" disabled data-i18n="out.saveAll">Spara alla som .zip</button>
         <button class="btn ghost" id="clearOut" type="button" disabled data-i18n="out.clear">Rensa listan</button>
+        <button class="btn ghost clear-all" id="clearAll" type="button" data-i18n="clear.btn">Rensa allt</button>
       </div>
     </section>
   </main>
 
+  <div class="top-find" role="search" aria-label="Hitta ett verktyg, t.ex. slå ihop" data-i18n-attr="aria-label:tools.find">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" id="topFind" autocomplete="off" spellcheck="false" placeholder="Hitta ett verktyg, t.ex. slå ihop" aria-label="Hitta ett verktyg, t.ex. slå ihop" aria-controls="topHits" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
+    <ul class="top-hits" id="topHits" hidden></ul>
+  </div>
   <nav class="pop" aria-labelledby="h-pop">
     <h2 id="h-pop"><span data-i18n="pop.h">Populära verktyg</span> <small data-i18n="pop.sub">Ett klick öppnar rätt verktyg</small><span class="pop-links"><button type="button" class="pop-watch" data-howto="sv"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>Se hur det fungerar</button><a class="pop-all" href="#h-tools">Se alla 52 verktyg ↓</a></span></h2>
     <ul class="pop-grid">
@@ -143,12 +150,22 @@
       <li><a href="/sv/pdf-till-jpg/"><span class="pop-ico" style="--k:var(--c-image)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="m21 16-5.5-5.5L5 20"/></svg></span><b>PDF till JPG</b><span>Varje sida som en bild</span></a></li>
     </ul>
   </nav>
+  <section class="recipes" aria-labelledby="h-rec">
+    <h2 id="h-rec"><span data-i18n="recipe.h">Flera steg med ett klick</span> <small data-i18n="recipe.sub">Vanliga uppgifter på en gång</small></h2>
+    <ul class="rec-grid">
+      <li><button type="button" data-recipe="photos-pdf"><span class="pop-ico" style="--k:var(--c-image)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h8l4 4v14H6z"/><path d="M12 9v7m0 0-2.5-2.5M12 16l2.5-2.5"/></svg></span><b data-i18n="recipe.photos-pdf.t">Bilder → en PDF för e-post</b><span data-i18n="recipe.photos-pdf.d">Bilder eller foton av papper blir en PDF, liten nog att bifoga.</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">Starta</span> →</span></button></li>
+      <li><button type="button" data-recipe="share-photos"><span class="pop-ico" style="--k:var(--c-image)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 9.8-4.6M18 10c0 1.6-.5 3.2-1.3 4.6"/><path d="M3 3l18 18"/></svg></span><b data-i18n="recipe.share-photos.t">Bilder redo att dela</b><span data-i18n="recipe.share-photos.d">Mindre JPG-filer utan plats, kamerauppgifter eller datum. iPhone-HEIC fungerar också.</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">Starta</span> →</span></button></li>
+      <li><button type="button" data-recipe="pdf-send"><span class="pop-ico" style="--k:var(--c-doc)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></span><b data-i18n="recipe.pdf-send.t">PDF redo att skicka</b><span data-i18n="recipe.pdf-send.d">Dolda uppgifter som författare och program tas bort, sedan görs filen mindre.</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">Starta</span> →</span></button></li>
+      <li><button type="button" data-recipe="scan-search"><span class="pop-ico" style="--k:var(--c-doc)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 10h8M8 14h5"/></svg></span><b data-i18n="recipe.scan-search.t">Skanning → sökbar och liten</b><span data-i18n="recipe.scan-search.d">En skannad PDF får riktig text som du kan söka i och kopiera, och blir mindre.</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">Starta</span> →</span></button></li>
+      <li><button type="button" data-recipe="docs-one-pdf"><span class="pop-ico" style="--k:var(--c-doc)" aria-hidden="true"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4v4a4 4 0 0 0 4 4h3M19 4v4a4 4 0 0 1-4 4h-3v8"/><path d="m9 17 3 3 3-3"/></svg></span><b data-i18n="recipe.docs-one-pdf.t">Dokument → en PDF</b><span data-i18n="recipe.docs-one-pdf.d">Word-filer, bilder och PDF:er sammanfogade till en PDF, i den ordning du väljer dem.</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">Starta</span> →</span></button></li>
+    </ul>
+  </section>
 
 
 
   <nav class="tools" aria-labelledby="h-tools">
     <h2 id="h-tools">Alla verktyg</h2>
-    <div class="tool-find" role="search">
+    <div class="tool-find" role="search" aria-labelledby="h-tools">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" id="toolFind" autocomplete="off" spellcheck="false" placeholder="Hitta ett verktyg, t.ex. slå ihop" aria-label="Hitta ett verktyg, t.ex. slå ihop" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
     </div>
@@ -233,17 +250,6 @@
     </div>
   </nav>
 
-  <section class="recipes" aria-labelledby="h-rec">
-    <h2 id="h-rec"><span data-i18n="recipe.h">Flera steg med ett klick</span> <small data-i18n="recipe.sub">Vanliga uppgifter på en gång</small></h2>
-    <ul class="rec-grid">
-      <li><button type="button" data-recipe="photos-pdf"><b data-i18n="recipe.photos-pdf.t">Bilder → en PDF för e-post</b><span data-i18n="recipe.photos-pdf.d">Bilder eller foton av papper blir en PDF, liten nog att bifoga.</span></button></li>
-      <li><button type="button" data-recipe="share-photos"><b data-i18n="recipe.share-photos.t">Bilder redo att dela</b><span data-i18n="recipe.share-photos.d">Mindre JPG-filer utan plats, kamerauppgifter eller datum. iPhone-HEIC fungerar också.</span></button></li>
-      <li><button type="button" data-recipe="pdf-send"><b data-i18n="recipe.pdf-send.t">PDF redo att skicka</b><span data-i18n="recipe.pdf-send.d">Dolda uppgifter som författare och program tas bort, sedan görs filen mindre.</span></button></li>
-      <li><button type="button" data-recipe="scan-search"><b data-i18n="recipe.scan-search.t">Skanning → sökbar och liten</b><span data-i18n="recipe.scan-search.d">En skannad PDF får riktig text som du kan söka i och kopiera, och blir mindre.</span></button></li>
-      <li><button type="button" data-recipe="docs-one-pdf"><b data-i18n="recipe.docs-one-pdf.t">Dokument → en PDF</b><span data-i18n="recipe.docs-one-pdf.d">Word-filer, bilder och PDF:er sammanfogade till en PDF, i den ordning du väljer dem.</span></button></li>
-    </ul>
-  </section>
-
   <section class="faq" aria-labelledby="h-faq">
     <h2 id="h-faq">Frågor</h2>
     <div class="faq-list">
@@ -301,11 +307,16 @@
     </dl>
   </section>
 
+  <aside class="mt-box" aria-labelledby="h-mt">
+    <h2 id="h-mt" data-i18n="mt.h">Har ditt företag en filuppgift som tar för lång tid?</h2>
+    <p data-i18n="mt.p">Midt-Tech, företaget bakom LunaVerta, bygger också verktyg som sköter återkommande uppgifter och sparar timmar av manuellt arbete.</p>
+    <a class="btn" href="https://midttech.com/" target="_blank" rel="noopener" data-i18n="mt.go">Prata med Midt-Tech</a>
+  </aside>
   <footer>
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">En produkt från</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Danmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Bjud oss på en kaffe</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Inga cookies · inget konto · ingen reklam</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+6c29e1f · 2026-11-06">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+9f9f995 · 2026-11-06">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Rapportera ett fel</a><a href="mailto:lee@midttech.com?subject=LunaVerta%20feedback" data-i18n="feedback.link">Hur använder du LunaVerta?</a><a href="/sv/guider/" data-i18n="nav.guides">Guider</a><a href="/sv/foretag/" data-i18n="nav.business">För företag</a><a href="/no-upload.html" data-i18n="nav.noUpload">Varför inget laddas upp</a><a href="/privacy.html" data-i18n="nav.privacy">Integritet</a><a href="/licenses.html" data-i18n="nav.licenses">Licenser för öppen källkod</a><a href="https://github.com/MidtTech/lunaverta" rel="noopener" data-i18n="nav.source">Källkod</a></nav>
   </footer>
 </div>
@@ -314,9 +325,9 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Välj ett format"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta konverterar filer med JavaScript i din webbläsare. Slå på JavaScript för att använda det.</p></noscript>
-<script src="/assets/strings.min.js?v=6c29e1f931"></script>
-<script src="/assets/strings-sv.min.js?v=6c29e1f931"></script>
-<script src="/assets/i18n.min.js?v=6c29e1f931"></script>
-<script src="/assets/app.min.js?v=6c29e1f931"></script>
+<script src="/assets/strings.min.js?v=9f9f99510e"></script>
+<script src="/assets/strings-sv.min.js?v=9f9f99510e"></script>
+<script src="/assets/i18n.min.js?v=9f9f99510e"></script>
+<script src="/assets/app.min.js?v=9f9f99510e"></script>
 </body>
 </html>

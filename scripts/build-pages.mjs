@@ -103,7 +103,7 @@ ${ids.map(id => TOOLS.find(x => x.id === id)).filter(Boolean).map(tl => `       
   const g = TOOL_GROUPS.map(x => x[0] === 'pdf' && rest.length ? [x[0], x[1], x[2], [...x[3], ...rest]] : x);
   return `  <nav class="tools" aria-labelledby="h-tools">
     <h2 id="h-tools">${esc(L.tools)}</h2>
-    <div class="tool-find" role="search">
+    <div class="tool-find" role="search" aria-labelledby="h-tools">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" id="toolFind" autocomplete="off" spellcheck="false" placeholder="${esc(t(lang, 'tools.find'))}" aria-label="${esc(t(lang, 'tools.find'))}" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
     </div>
@@ -166,7 +166,12 @@ const POPULAR = [
   ['pdf-to-jpg', 'IMG', '--c-image', { en: 'Every page as a picture', da: 'Hver side som billede' }]
 ];
 function popularSection(lang) {
-  return `  <nav class="pop" aria-labelledby="h-pop">
+  return `  <div class="top-find" role="search" aria-label="${esc(t(lang, 'tools.find'))}" data-i18n-attr="aria-label:tools.find">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="search" id="topFind" autocomplete="off" spellcheck="false" placeholder="${esc(t(lang, 'tools.find'))}" aria-label="${esc(t(lang, 'tools.find'))}" aria-controls="topHits" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
+    <ul class="top-hits" id="topHits" hidden></ul>
+  </div>
+  <nav class="pop" aria-labelledby="h-pop">
     <h2 id="h-pop"><span data-i18n="pop.h">${esc(t(lang, 'pop.h'))}</span> <small data-i18n="pop.sub">${esc(t(lang, 'pop.sub'))}</small><span class="pop-links"><button type="button" class="pop-watch" data-howto="${lang}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></svg>${esc(t(lang, 'howto.watch'))}</button><a class="pop-all" href="#h-tools">${esc(t(lang, 'pop.all', { n: TOOLS.length }))} ↓</a></span></h2>
     <ul class="pop-grid">
 ${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id); return `      <li><a href="${path(lang, tl.slug[lang])}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${icon(id, 'pi')}</span><b>${esc(tl[lang].name)}</b><span>${esc(line[lang] || extra(lang).popular[id])}</span></a></li>`; }).join('\n')}
@@ -174,12 +179,12 @@ ${POPULAR.map(([id, ico, col, line]) => { const tl = TOOLS.find(x => x.id === id
   </nav>`;
 }
 
-const RECIPE_IDS = [['photos-pdf'], ['share-photos'], ['pdf-send'], ['scan-search'], ['docs-one-pdf']];
+const RECIPE_IDS = [['photos-pdf', 'images-to-pdf', '--c-image'], ['share-photos', 'remove-photo-location', '--c-image'], ['pdf-send', 'clean-pdf', '--c-doc'], ['scan-search', 'ocr', '--c-doc'], ['docs-one-pdf', 'merge-pdf', '--c-doc']];
 function recipesSection(lang) {
   return `\n  <section class="recipes" aria-labelledby="h-rec">
     <h2 id="h-rec"><span data-i18n="recipe.h">${esc(t(lang, 'recipe.h'))}</span> <small data-i18n="recipe.sub">${esc(t(lang, 'recipe.sub'))}</small></h2>
     <ul class="rec-grid">
-${RECIPE_IDS.map(([id]) => `      <li><button type="button" data-recipe="${id}"><b data-i18n="recipe.${id}.t">${esc(t(lang, 'recipe.' + id + '.t'))}</b><span data-i18n="recipe.${id}.d">${esc(t(lang, 'recipe.' + id + '.d'))}</span></button></li>`).join('\n')}
+${RECIPE_IDS.map(([id, ico, col]) => `      <li><button type="button" data-recipe="${id}"><span class="pop-ico" style="--k:var(${col})" aria-hidden="true">${icon(ico, 'pi')}</span><b data-i18n="recipe.${id}.t">${esc(t(lang, 'recipe.' + id + '.t'))}</b><span data-i18n="recipe.${id}.d">${esc(t(lang, 'recipe.' + id + '.d'))}</span><span class="rec-go" aria-hidden="true"><span data-i18n="recipe.start">${esc(t(lang, 'recipe.start'))}</span> →</span></button></li>`).join('\n')}
     </ul>
   </section>`;
 }
@@ -224,7 +229,7 @@ function render(lang, page) {
   const L = LABELS[lang];
   const hero = page.tool
     ? `  <section class="hero" aria-labelledby="h-page">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(L.home)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(page.tool[lang].name)}</span></nav>
+    <div class="hero-top"><nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(L.home)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(page.tool[lang].name)}</span></nav><button type="button" class="copy-link" id="copyLink" data-i18n="link.copy">${esc(t(lang, 'link.copy'))}</button></div>
     <h1 id="h-page">${esc(page.tool[lang].h1)}</h1>
     <p class="lead">${esc(page.tool[lang].lead)}</p>
   </section>`
@@ -236,7 +241,7 @@ function render(lang, page) {
   const dock = !page.tool ? ''
     : `<p class="dock-sub">${preset === 'merge' ? L.dockMerge : preset === 'compare' ? L.dockCompare : (preset === 'edit' || preset === 'redact' || preset === 'prices') ? L.dockEdit : L.dockDo[preset] ? L.dockAct.replace('{d}', esc(L.dockDo[preset])) : L.dock.replace('{t}', esc(label(lang, preset === 'docx' ? 'Word' : preset)))}</p>`;
   // A made-up file to try the tool with, for visitors who don't have a PDF at hand
-  const sk = page.tool && SAMPLE[page.tool.id], sf = sk && (lang === 'da' ? { quote: 'tilbud.pdf', pay: 'loenseddel.pdf' } : { quote: 'quote-en.pdf', pay: 'payslip-en.pdf' })[sk];
+  const sk = page.tool ? SAMPLE[page.tool.id] : 'quote', sf = sk && (lang === 'da' ? { quote: 'tilbud.pdf', pay: 'loenseddel.pdf' } : { quote: 'quote-en.pdf', pay: 'payslip-en.pdf' })[sk];
   const sample = sf ? `\n          <p class="dock-sample"><button type="button" class="linkish" data-sample="/samples/${sf}" data-i18n="sample.try">${esc(t(lang, 'sample.try'))}</button></p>` : '';
   const vals = {
     LANG: lang, TITLE: esc(page.title), DESC: esc(page.desc), CANONICAL: page.url, HOME: path(lang),

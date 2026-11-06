@@ -42,7 +42,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/ibm-plex-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/assets/app.min.css?v=6c29e1f931">
+<link rel="stylesheet" href="/assets/app.min.css?v=9f9f99510e">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://lunaverta.com/#org","name":"Midt-Tech","url":"https://midttech.com/","email":"lee@midttech.com","vatID":"DK34256276","address":{"@type":"PostalAddress","addressLocality":"Aarhus","addressCountry":"DK"},"areaServed":"Worldwide","knowsLanguage":["en","da","de","es","fr","no","sv"],"brand":{"@type":"Brand","name":"LunaVerta"}},{"@type":"WebSite","@id":"https://lunaverta.com/#site","name":"LunaVerta","url":"https://lunaverta.com/","inLanguage":["en","da","de","es","fr","no","sv"],"publisher":{"@id":"https://lunaverta.com/#org"}},{"@type":"WebApplication","name":"LunaVerta · Beskär PDF och sidstorlek","url":"https://lunaverta.com/sv/beskar-pdf/","inLanguage":"sv","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (runs in the browser)","browserRequirements":"A modern web browser with JavaScript","offers":{"@type":"Offer","price":"0","priceCurrency":"SEK"},"isAccessibleForFree":true,"description":"Ta bort de vita marginalerna på varje sida, eller gör alla sidor lika stora (A4 eller US Letter). Gratis och privat, inget laddas upp.","publisher":{"@id":"https://lunaverta.com/#org"},"dateModified":"2026-11-06","image":"https://lunaverta.com/og/sv/beskar-pdf.jpg?v=147f1b54","isPartOf":{"@id":"https://lunaverta.com/#site"},"license":"https://www.gnu.org/licenses/agpl-3.0.html","sameAs":"https://github.com/MidtTech/lunaverta"},{"@type":"FAQPage","inLanguage":"sv","mainEntity":[{"@type":"Question","name":"Tas något bort när marginalerna försvinner?","acceptedAnswer":{"@type":"Answer","text":"Nej. Marginalerna döljs, de raderas inte, så innehållet och kvaliteten är desamma."}},{"@type":"Question","name":"Vad händer med sidor med annan form?","acceptedAnswer":{"@type":"Answer","text":"De skalas för att passa pappersstorleken utan att sträckas; breda sidor vänds till liggande."}},{"@type":"Question","name":"Laddas mina filer upp någonstans?","acceptedAnswer":{"@type":"Answer","text":"Nej. LunaVerta har ingen server som tar emot filer. Varje konvertering körs i din webbläsare, på din enhet, och resultatet sparas direkt på din enhet."}},{"@type":"Question","name":"Fungerar det offline?","acceptedAnswer":{"@type":"Answer","text":"Ja. Efter ditt första besök sparas appen på din enhet. Hjälpprogram för PDF, Word, Excel, MP3 och HEIC sparas första gången du använder dem och fungerar sedan också offline."}},{"@type":"Question","name":"Vad kostar det?","acceptedAnswer":{"@type":"Answer","text":"Ingenting. Det finns inga konton, ingen reklam, inga cookies och inga spårare."}},{"@type":"Question","name":"Varför är det gratis?","acceptedAnswer":{"@type":"Answer","text":"Eftersom allt körs på din egen enhet har LunaVerta nästan inga driftskostnader: det finns inga servrar som tar emot, lagrar eller bearbetar filer. Därför kan det vara gratis utan reklam, utan konton och utan att sälja data. LunaVerta görs av Midt-Tech i Aarhus som ett användbart verktyg och ett exempel på vad vi bygger. Om det sparar dig tid får du gärna bjuda oss på en kaffe (MobilePay, än så länge bara i Danmark)."}},{"@type":"Question","name":"Kommer LunaVerta att förbli gratis?","acceptedAnswer":{"@type":"Answer","text":"Ja, det är planen. LunaVerta kostar väldigt lite att driva, så det finns ingen anledning att ta betalt i dag. Om du tycker att det är användbart och vill stötta arbetet får du gärna bjuda oss på en kaffe. När plattformen växer kan vissa funktioner senare erbjudas som en del av en frivillig prenumeration, men det finns inga sådana planer just nu."}}]},{"@type":"HowTo","name":"Beskär en PDF eller rätta sidstorleken","inLanguage":"sv","totalTime":"PT1M","step":[{"@type":"HowToStep","position":1,"text":"Välj en PDF eller släpp den på sidan."},{"@type":"HowToStep","position":2,"text":"Välj Ta bort vita marginaler, Gör alla sidor A4 eller Gör alla sidor US Letter."},{"@type":"HowToStep","position":3,"text":"Spara den nya PDF:en."}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Start","item":"https://lunaverta.com/sv/"},{"@type":"ListItem","position":2,"name":"Beskär PDF och sidstorlek","item":"https://lunaverta.com/sv/beskar-pdf/"}]}]}
 </script>
@@ -65,7 +65,7 @@
   </header>
 
   <section class="hero" aria-labelledby="h-page">
-    <nav class="crumbs" aria-label="Breadcrumb"><a href="/sv/">Start</a> <span aria-hidden="true">›</span> <span aria-current="page">Beskär PDF och sidstorlek</span></nav>
+    <div class="hero-top"><nav class="crumbs" aria-label="Breadcrumb"><a href="/sv/">Start</a> <span aria-hidden="true">›</span> <span aria-current="page">Beskär PDF och sidstorlek</span></nav><button type="button" class="copy-link" id="copyLink" data-i18n="link.copy">Kopiera länk</button></div>
     <h1 id="h-page">Beskär en PDF eller rätta sidstorleken</h1>
     <p class="lead">Ta bort de tomma marginalerna så att innehållet fyller sidan, eller lägg alla sidor på samma pappersstorlek när en PDF blandar storlekar. Inget laddas upp.</p>
   </section>
@@ -79,7 +79,7 @@
       </div>
       <div class="dock" id="dock">
         <div class="dock-hint">
-          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></span>
+          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
           <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Välj filer</button>
           <p class="dock-or"><span data-i18n="drop.or">eller dra dem hit</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">för att klistra in</span></p>
           <p class="dock-sub"><strong>Välj filer eller släpp dem var som helst på sidan.</strong> De beskurna eller ändrade i storlek på din egen enhet. Välj gärna många på en gång och spara dem tillsammans som en .zip. Inget laddas upp.</p>
@@ -129,6 +129,7 @@
       <div class="manifest-foot">
         <button class="btn" id="saveAll" type="button" disabled data-i18n="out.saveAll">Spara alla som .zip</button>
         <button class="btn ghost" id="clearOut" type="button" disabled data-i18n="out.clear">Rensa listan</button>
+        <button class="btn ghost clear-all" id="clearAll" type="button" data-i18n="clear.btn">Rensa allt</button>
       </div>
     </section>
   </main>
@@ -147,7 +148,7 @@
 
   <nav class="tools" aria-labelledby="h-tools">
     <h2 id="h-tools">Alla verktyg</h2>
-    <div class="tool-find" role="search">
+    <div class="tool-find" role="search" aria-labelledby="h-tools">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input type="search" id="toolFind" autocomplete="off" spellcheck="false" placeholder="Hitta ett verktyg, t.ex. slå ihop" aria-label="Hitta ett verktyg, t.ex. slå ihop" data-i18n-attr="placeholder:tools.find;aria-label:tools.find">
     </div>
@@ -231,7 +232,6 @@
     </div>
   </nav>
 
-
   <section class="faq" aria-labelledby="h-faq">
     <h2 id="h-faq">Frågor om Beskär PDF och sidstorlek</h2>
     <div class="faq-list">
@@ -287,11 +287,16 @@
     </dl>
   </section>
 
+  <aside class="mt-box" aria-labelledby="h-mt">
+    <h2 id="h-mt" data-i18n="mt.h">Har ditt företag en filuppgift som tar för lång tid?</h2>
+    <p data-i18n="mt.p">Midt-Tech, företaget bakom LunaVerta, bygger också verktyg som sköter återkommande uppgifter och sparar timmar av manuellt arbete.</p>
+    <a class="btn" href="https://midttech.com/" target="_blank" rel="noopener" data-i18n="mt.go">Prata med Midt-Tech</a>
+  </aside>
   <footer>
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">En produkt från</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Danmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
     <button type="button" class="coffee" data-coffee><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.2 1 1.4 1 2.6M12 3c0 1.2 1 1.4 1 2.6"/></svg><span data-i18n="coffee.btn">Bjud oss på en kaffe</span></button>
     <span class="foot-promise" data-i18n="foot.promise">Inga cookies · inget konto · ingen reklam</span>
-    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+6c29e1f · 2026-11-06">CVR 34256276</span></span>
+    <span>LunaVerta · <span data-i18n="foot.tag">Gratis, privat filkonvertering</span> · <span id="buildVer" title="Version v1.0.0+9f9f995 · 2026-11-06">CVR 34256276</span></span>
     <nav aria-label="Site"><a href="mailto:lee@midttech.com" data-report data-i18n="report.link">Rapportera ett fel</a><a href="mailto:lee@midttech.com?subject=LunaVerta%20feedback" data-i18n="feedback.link">Hur använder du LunaVerta?</a><a href="/sv/guider/" data-i18n="nav.guides">Guider</a><a href="/sv/foretag/" data-i18n="nav.business">För företag</a><a href="/no-upload.html" data-i18n="nav.noUpload">Varför inget laddas upp</a><a href="/privacy.html" data-i18n="nav.privacy">Integritet</a><a href="/licenses.html" data-i18n="nav.licenses">Licenser för öppen källkod</a><a href="https://github.com/MidtTech/lunaverta" rel="noopener" data-i18n="nav.source">Källkod</a></nav>
   </footer>
 </div>
@@ -300,9 +305,9 @@
 <div id="ring" role="menu" data-i18n-attr="aria-label:ring.aria" aria-label="Välj ett format"><svg viewBox="0 0 320 320" id="ringSvg"></svg><div class="ring-tip" id="ringTip" aria-hidden="true"></div></div>
 <div id="toast" role="status"><span class="toast-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span><span class="toast-msg"></span></div>
 <noscript><p style="padding:16px">LunaVerta konverterar filer med JavaScript i din webbläsare. Slå på JavaScript för att använda det.</p></noscript>
-<script src="/assets/strings.min.js?v=6c29e1f931"></script>
-<script src="/assets/strings-sv.min.js?v=6c29e1f931"></script>
-<script src="/assets/i18n.min.js?v=6c29e1f931"></script>
-<script src="/assets/app.min.js?v=6c29e1f931"></script>
+<script src="/assets/strings.min.js?v=9f9f99510e"></script>
+<script src="/assets/strings-sv.min.js?v=9f9f99510e"></script>
+<script src="/assets/i18n.min.js?v=9f9f99510e"></script>
+<script src="/assets/app.min.js?v=9f9f99510e"></script>
 </body>
 </html>

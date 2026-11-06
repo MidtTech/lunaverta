@@ -3038,7 +3038,7 @@ async function runBatch(files, target) {
     if (!canMerge(ok.map(x => x.kind))) { toast(T('toast.mergeTwo')); return; }
     const j = newJob(`${ok.length} ${T('job.files')}`, 'merge');
     j.label = T('merge.name') + '.pdf'; j.srcLabel = 'PDF';
-    schedule(async () => finishJob(j, [{ name: T('merge.name') + '.pdf', blob: await mergeToPDF(ok.map(x => x.f), o, p => setProgress(j, p)) }])).catch(e => failJob(j, e));
+    track(j, async () => [{ name: T('merge.name') + '.pdf', blob: await mergeToPDF(ok.map(x => x.f), o, p => setProgress(j, p)) }]);
     return;
   }
   if (skipped) toast(T('toast.skipped', { n: skipped, t: label(target) }));
@@ -3048,28 +3048,35 @@ async function runBatch(files, target) {
   if (target === 'pdf' && o.merge && imgs.length > 1) {
     const j = newJob(`${imgs.length} images`, 'pdf');
     j.label = 'images-merged.pdf';
-    schedule(async () => {
+    track(j, async () => {
       const cs = [];
       for (let i = 0; i < imgs.length; i++) {
         const { img, w, h } = await decodeImage(imgs[i].f);
         cs.push(drawToCanvas(img, w, h, o.maxDim || 2480, '#fff'));
         setProgress(j, (i + 1) / imgs.length * .8);
       }
-      await finishJob(j, [{ name: 'images-merged.pdf', blob: await imagesToPDF(cs, o.quality) }]);
-    }).catch(e => failJob(j, e));
+      return [{ name: 'images-merged.pdf', blob: await imagesToPDF(cs, o.quality) }];
+    });
   }
   for (const x of ok) {
     if (target === 'pdf' && o.merge && imgs.length > 1 && x.kind === 'image') continue;
-    const j = newJob(x.f.name, target);
-    schedule(async () => {
-      const outs = await CONVERT[x.kind](x.f, target, o, p => setProgress(j, p));
-      if (!outs || !outs.length) throw new Error(T('job.empty'));
-      await finishJob(j, outs);
-    }).catch(e => failJob(j, e));
+    const j = newJob(x.f.name, target); j.src = x.f;
+    track(j, () => CONVERT[x.kind](x.f, target, o, p => setProgress(j, p)));
   }
+}
+// Runs a job, and keeps how it was run, so a failed file can be tried again with the same
+// settings (the other files in the batch keep their results).
+function track(j, run) {
+  j.retry = () => { j.status = 'working'; j.error = ''; j.progress = 0; renderJob(j); updateFoot(); track(j, run); };
+  return schedule(async () => {
+    const outs = await run();
+    if (!outs || !outs.length) throw new Error(T('job.empty'));
+    await finishJob(j, outs);
+  }).catch(e => failJob(j, e));
 }
 function setProgress(j, p) { j.progress = p; const bar = j.el && j.el.querySelector('.bar'); if (bar) { bar.style.strokeDashoffset = 100.5 * (1 - p); j.el.querySelector('.ring-progress').classList.remove('spin'); } const st = j.el && j.el.querySelector('.state'); if (st) st.textContent = Math.round(p * 100) + '%'; }
 
+const SHRINKS = new Set(['shrink', 'vshrink', 'imgedit', 'grey', 'clean', 'jpg', 'webp']);
 function renderJob(j, isNew) {
   if (!j.el) { j.el = document.createElement('div'); }
   const el = j.el;
@@ -3080,17 +3087,21 @@ function renderJob(j, isNew) {
   if (j.status === 'working') thumb = `<svg class="ring-progress spin" viewBox="0 0 36 36" aria-hidden="true"><circle class="trk" cx="18" cy="18" r="16"/><circle class="bar" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="${100.5 * (1 - Math.max(.25, j.progress))}"/></svg>`;
   else if (j.url || j.preview) thumb = `<img src="${j.url || j.preview}" alt=""${j.preview ? ' class="page"' : ''}>`;
   else thumb = esc(j.status === 'err' ? '!' : OUT[j.target].tool ? (ext(name) || 'pdf') : j.target);
-  const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : T('job.converting')) : j.status === 'done' ? fmtSize(j.out.blob.size) : '';
+  // Tools that make files smaller say how much: 8.4 MB → 2.1 MB · 75 % smaller
+  const pct = j.status === 'done' && j.src && SHRINKS.has(j.target) && !/\.zip$/i.test(j.out.name) ? Math.round(100 * (1 - j.out.blob.size / j.src.size)) : 0;
+  const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : T('job.converting')) : j.status === 'done' ? (pct >= 1 ? T('job.smaller', { a: fmtSize(j.src.size), b: fmtSize(j.out.blob.size), p: pct }) : fmtSize(j.out.blob.size)) : '';
   const note = [j.noteKey ? T(j.noteKey, j.noteVars) : '', j.pages ? T('job.pages', { n: j.pages }) : ''].filter(Boolean).join(' · ');
   const next = j.status === 'done' ? nextSteps(j) : [];
   el.innerHTML = `<div class="thumb">${thumb}</div>
     <div class="info"><span class="fn" title="${esc(name)}">${esc(name)}</span>
     <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(label(j.target))}</b></span><span class="state">${esc(state)}</span>${note ? `<span>${esc(note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
-    <div class="acts">${j.status === 'done' ? `${canShareFiles ? `<button class="btn sm ghost share" type="button">${esc(T('job.share'))}</button>` : ''}<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>
+    <div class="acts">${j.status === 'done' ? `${canShareFiles ? `<button class="btn sm ghost share" type="button">${esc(T('job.share'))}</button>` : ''}<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `${j.error === T('err.pdf.locked') && j.src && j.target !== 'unlock' ? `<button class="btn sm unlock" type="button">${esc(T('tgt.unlock'))}</button>` : j.retry ? `<button class="btn sm retry" type="button">${esc(T('job.retry'))}</button>` : ''}<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>
     ${next.length ? `<div class="next"><span>${esc(T('next.h'))}</span>${next.map(t => `<button type="button" class="nx" data-next="${t}">${esc(OUT[t] && OUT[t].tool ? T('tgt.' + t) : t.toUpperCase())}</button>`).join('')}</div>` : ''}`;
   el.querySelectorAll('[data-next]').forEach(b => { b.onclick = () => continueWith(j, b.dataset.next).catch(e => toast(e.message)); });
   const sh = el.querySelector('.share'); if (sh) sh.onclick = async () => { try { await navigator.share({ files: [new File([j.out.blob], j.out.name, { type: j.out.blob.type })], title: j.out.name }); } catch (e) { if (e.name !== 'AbortError') toast(T('save.failed')); } };
   const sv = el.querySelector('.save'); if (sv) sv.onclick = async () => { if (await saveFile(j.out.name, j.out.blob, sv)) j.saved = true; };
+  const rt = el.querySelector('.retry'); if (rt) rt.onclick = () => j.retry();
+  const ul = el.querySelector('.unlock'); if (ul) ul.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); runBatch([j.src], 'unlock'); };
   const dm = el.querySelector('.dismiss'); if (dm) dm.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); };
   if (isNew) $('manifest').prepend(el);
 }
@@ -3825,5 +3836,54 @@ if (find) {
     if (e.key === 'Enter') { const first = nav.querySelector('.tool-grid li:not([hidden]) a'); if (first && find.value.trim()) { e.preventDefault(); location.href = first.href; } }
   });
   if (find.value) run(); // the browser may restore the text when going back
+}
+// "Copy link" on a tool page: the address of the tool, never any file.
+const cl = $('copyLink');
+if (cl) cl.onclick = async () => {
+  const u = location.origin + location.pathname;
+  try { await navigator.clipboard.writeText(u); toast(T('link.copied'), true); } catch (e) { toast(u); }
+};
+// "Clear everything": for shared computers. Removes what this visit left in the browser.
+if ($('clearAll')) $('clearAll').onclick = async () => {
+  const a = await askOptions(T('clear.title'), [{ id: 'saved', type: 'check', label: T('clear.saved') }], 'clear.ok', T('clear.note'));
+  if (!a) return;
+  tray = []; renderTray();
+  jobs.forEach(j => j.url && URL.revokeObjectURL(j.url)); jobs = jobs.filter(j => j.status === 'working');
+  $('manifest').querySelectorAll('.row:not(.working)').forEach(r => r.remove()); updateFoot();
+  document.querySelector('.draft-bar')?.remove();
+  try { indexedDB.deleteDatabase('lunaverta-draft'); } catch (e) {}
+  try { if ('caches' in window) caches.delete('lunaverta-share'); } catch (e) {}
+  if (a.saved) try { ['lunaverta-signatures', 'lunaverta-templates'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  toast(T('clear.done'), true);
+};
+// The search at the top of the front page: the first matches drop down under it, so a visitor
+// who knows what they want can go straight there. Enter opens the first one.
+const top = $('topFind'), hits = $('topHits');
+if (top && find) {
+  const fold = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/ß/g, 'ss').replace(/œ/g, 'oe');
+  const items = [...document.querySelectorAll('.tools .tool-grid li')].map(li => ({ a: li.querySelector('a'), words: fold(li.dataset.k || li.textContent).split(/[^a-z0-9]+/).filter(Boolean) }));
+  const show = () => {
+    const q = fold(top.value).split(/[^a-z0-9]+/).filter(Boolean);
+    const found = q.length ? items.filter(it => q.every(w => it.words.some(x => x.startsWith(w)))) : [];
+    hits.innerHTML = q.length ? (found.length ? found.slice(0, 6).map(it => `<li><a href="${it.a.getAttribute('href')}">${it.a.innerHTML}</a></li>`).join('') + (found.length > 6 ? `<li class="more"><a href="#h-tools" data-all="1">${esc(T('tools.allHits', { n: found.length }))}</a></li>` : '') : `<li class="none">${esc(T('tools.none'))}</li>`) : '';
+    hits.hidden = !q.length;
+    top.setAttribute('aria-expanded', String(!hits.hidden));
+  };
+  top.addEventListener('input', show);
+  top.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const a = hits.querySelector('a:not([data-all])'); if (a) { e.preventDefault(); location.href = a.href; } }
+    if (e.key === 'ArrowDown') { const a = hits.querySelector('a'); if (a) { e.preventDefault(); a.focus(); } }
+    if (e.key === 'Escape' && top.value) { top.value = ''; show(); e.preventDefault(); }
+  });
+  hits.addEventListener('keydown', e => {
+    const links = [...hits.querySelectorAll('a')], i = links.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown' && i < links.length - 1) { e.preventDefault(); links[i + 1].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? links[i - 1] : top).focus(); }
+    if (e.key === 'Escape') { e.preventDefault(); top.focus(); hits.hidden = true; }
+  });
+  // "All N results": the full list below, filtered by the same words
+  hits.addEventListener('click', e => { if (!e.target.closest('[data-all]')) return; find.value = top.value; find.dispatchEvent(new Event('input')); hits.hidden = true; });
+  document.addEventListener('click', e => { if (!e.target.closest('.top-find')) hits.hidden = true; });
+  top.addEventListener('focus', () => { if (top.value) show(); });
 }
 })();

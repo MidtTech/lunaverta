@@ -62,7 +62,7 @@
       </div>
       <div class="dock" id="dock">
         <div class="dock-hint">
-          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></span>
+          <span class="dock-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg></span>
           <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Choose files</button>
           <p class="dock-or"><span data-i18n="drop.or">or drag them here</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">to paste</span></p>
           {{DOCK_HINT}}
@@ -112,16 +112,16 @@
       <div class="manifest-foot">
         <button class="btn" id="saveAll" type="button" disabled data-i18n="out.saveAll">Save all as .zip</button>
         <button class="btn ghost" id="clearOut" type="button" disabled data-i18n="out.clear">Clear list</button>
+        <button class="btn ghost clear-all" id="clearAll" type="button" data-i18n="clear.btn">Clear everything</button>
       </div>
     </section>
   </main>
 
-{{POPULAR}}
+{{POPULAR}}{{RECIPES}}
 
 {{HOWTO}}
 
 {{TOOLS}}
-{{RECIPES}}
 
 {{FAQ}}
 
@@ -132,6 +132,11 @@
 
 {{ABOUT}}
 
+  <aside class="mt-box" aria-labelledby="h-mt">
+    <h2 id="h-mt" data-i18n="mt.h">Does your company have a file task that takes too long?</h2>
+    <p data-i18n="mt.p">Midt-Tech, the company behind LunaVerta, also builds tools that take care of repetitive work and save hours of manual effort.</p>
+    <a class="btn" href="https://midttech.com/" target="_blank" rel="noopener" data-i18n="mt.go">Talk to Midt-Tech</a>
+  </aside>
   <footer>
     <a class="maker" href="https://midttech.com/" target="_blank" rel="noopener"><span class="maker-by" data-i18n="maker.by">A product by</span> <b>Midt-Tech</b> <span class="maker-where" data-i18n="maker.where">Aarhus, Denmark</span> <span class="maker-go" aria-hidden="true">↗</span></a>
 {{COFFEE}}    <span class="foot-promise" data-i18n="foot.promise">No cookies · no account · no ads</span>
