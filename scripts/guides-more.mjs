@@ -99,7 +99,7 @@ export const MORE = [
       h1: 'PDF trop lourd pour être envoyé ? Passez sous la limite', lead: 'Les démarches administratives en ligne, les sites d\'emploi et les déclarations de sinistre refusent souvent les fichiers de plus de quelques mégaoctets, et le message d\'erreur aide rarement. Voici comment passer sous la limite.',
       body: [
         { h: 'Étape par étape' },
-        { ol: ['Ouvrez <a href="{tool}">Compresser PDF</a> et choisissez le PDF.', 'Chaque page est redessinée de façon plus compacte. Le texte reste consultable.', 'Vous voyez de combien il a été allégé. Cliquez sur <b>Enregistrer</b> et réessayez l\'envoi.'] },
+        { ol: ['Ouvrez <a href="{tool}">Compresser PDF</a> et choisissez le PDF.', 'Chaque page est redessinée de façon plus compacte. Le texte reste recherchable.', 'Vous voyez de combien il a été allégé. Cliquez sur <b>Enregistrer</b> et réessayez l\'envoi.'] },
         { h: 'Toujours trop lourd ? Divisez-le' },
         'Ouvrez <a href="{t:split-pdf}">Diviser PDF</a> et choisissez <b>Parties assez légères pour l\'e-mail</b>. Indiquez la limite du site en Mo, et LunaVerta crée des parties qui restent chacune en dessous. La plupart des formulaires acceptent plusieurs fichiers.',
         { h: 'Les scans et les photos sont les suspects habituels' },
@@ -203,7 +203,7 @@ export const MORE = [
     },
     fr: {
       slug: 'reunir-pages-scannees-en-un-pdf', title: 'Réunir des pages scannées en un seul PDF, dans le bon ordre · LunaVerta',
-      desc: 'Un scan par page, ou les rectos et les versos en deux fichiers ? Réunissez-les en un PDF dans le bon ordre, retirez les pages blanches et rendez le texte consultable. Gratuit et privé.',
+      desc: 'Un scan par page, ou les rectos et les versos en deux fichiers ? Réunissez-les en un PDF dans le bon ordre, retirez les pages blanches et rendez le texte recherchable. Gratuit et privé.',
       h1: 'Réunir des pages scannées en un seul PDF', lead: 'Les scanners et les applis mobiles donnent souvent un fichier par page, ou tous les rectos puis tous les versos. Voici comment obtenir un PDF propre, dans le bon ordre.',
       body: [
         { h: 'Étape par étape' },
@@ -211,7 +211,7 @@ export const MORE = [
         { h: 'Rectos et versos scannés en deux piles ?' },
         'Utilisez la <a href="{t:alternate-merge-pdf}">Fusion alternée</a> : choisissez le fichier des rectos puis celui des versos, et LunaVerta les assemble page par page, même quand les versos sont à l\'envers.',
         { h: 'Faites le ménage' },
-        { ul: ['Les scans recto verso sont pleins de versos vides. <a href="{t:remove-blank-pages}">Supprimer les pages blanches</a> les retire.', 'Rendez le texte consultable et copiable avec l\'<a href="{t:ocr}">OCR</a>.', 'Trop lourd pour l\'envoyer ? Utilisez <a href="{compress}">Compresser PDF</a>.'] },
+        { ul: ['Les scans recto verso sont pleins de versos vides. <a href="{t:remove-blank-pages}">Supprimer les pages blanches</a> les retire.', 'Rendez le texte recherchable et copiable avec l\'<a href="{t:ocr}">OCR</a>.', 'Trop lourd pour l\'envoyer ? Utilisez <a href="{compress}">Compresser PDF</a>.'] },
         { h: 'Seulement du papier ?' },
         'Prenez des photos avec votre téléphone dans <a href="{t:scan-to-pdf}">Scanner en PDF</a>. Les pages sont redressées et deviennent un PDF aussitôt.'
       ]

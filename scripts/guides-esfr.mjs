@@ -14,7 +14,7 @@ export const GUIDE_TEXT_ESFR = {
       h1: 'Quitar el DNI o el número de la Seguridad Social de un PDF', lead: 'Un DNI o un número de la Seguridad Social en un documento que compartes se puede usar mal. Así lo quitas bien, para que desaparezca de verdad del archivo y no solo quede tapado.',
       body: [
         { h: 'Paso a paso' },
-        { ol: ['Abre <a href="{tool}">Anonimizar PDF</a> y elige tu PDF.', 'LunaVerta revisa cada página y marca en amarillo los números de identificación, junto con otros datos que se suelen quitar, como IBAN, correos y teléfonos.', 'Si solo quieres quitar el número de identificación, desactiva las demás categorías. Toca una marca para conservar justo ese texto.', 'Haz clic en <b>Eliminar … y guardar nueva versión</b>. El texto marcado se borra del archivo y se guarda una copia en tu dispositivo. El original no cambia.'] },
+        { ol: ['Abre <a href="{tool}">Censurar PDF</a> y elige tu PDF.', 'LunaVerta revisa cada página y marca en amarillo los números de identificación, junto con otros datos que se suelen quitar, como IBAN, correos y teléfonos.', 'Si solo quieres quitar el número de identificación, desactiva las demás categorías. Toca una marca para conservar justo ese texto.', 'Haz clic en <b>Eliminar … y guardar nueva versión</b>. El texto marcado se borra del archivo y se guarda una copia en tu dispositivo. El original no cambia.'] },
         { h: 'Por qué no basta con un recuadro negro en Word o en el lector de PDF' },
         'Un rectángulo negro sobre un número normalmente solo lo tapa. El texto sigue debajo, y cualquiera puede copiarlo o encontrarlo con una búsqueda. LunaVerta borra los propios caracteres, así que no queda nada que copiar.',
         { h: 'Comprobar el resultado' },
@@ -29,7 +29,7 @@ export const GUIDE_TEXT_ESFR = {
       h1: 'Compartir la nómina con seguridad', lead: 'Caseros, bancos y nuevas empresas suelen pedir una nómina. Necesitan ver tus ingresos, no tu DNI ni tu cuenta bancaria. Así envías solo lo que necesitan.',
       body: [
         { h: 'Paso a paso' },
-        { ol: ['Abre <a href="{tool}">Anonimizar PDF</a> y elige la nómina.', 'El DNI, el número de la Seguridad Social, el IBAN, el correo y el teléfono se encuentran y se marcan en amarillo.', 'Conserva lo que el destinatario tiene que ver. Si están marcados los importes del sueldo, desactiva la categoría Precios para que se queden.', 'Haz clic en <b>Eliminar … y guardar nueva versión</b> y envía la copia guardada.'] },
+        { ol: ['Abre <a href="{tool}">Censurar PDF</a> y elige la nómina.', 'El DNI, el número de la Seguridad Social, el IBAN, el correo y el teléfono se encuentran y se marcan en amarillo.', 'Conserva lo que el destinatario tiene que ver. Si están marcados los importes del sueldo, desactiva la categoría Precios para que se queden.', 'Haz clic en <b>Eliminar … y guardar nueva versión</b> y envía la copia guardada.'] },
         { h: 'Qué quitar y qué dejar' },
         { ul: ['Quitar: el DNI o NIE, el número de la Seguridad Social, el IBAN, los datos de retención de IRPF que nadie te ha pedido y tu dirección, si el destinatario ya la tiene.', 'Dejar: tu nombre, la empresa, el periodo y los importes. Suele ser lo que el destinatario tiene que comprobar.'] },
         { h: '¿Varios meses?' },
@@ -129,7 +129,7 @@ export const GUIDE_TEXT_ESFR = {
       h1: 'Retirer un numéro de sécurité sociale d\'un PDF', lead: 'Un numéro de sécurité sociale ou un numéro fiscal sur un document que vous partagez peut être utilisé à mauvais escient. Voici comment le retirer correctement, pour qu\'il disparaisse vraiment du fichier au lieu d\'être seulement masqué.',
       body: [
         { h: 'Étape par étape' },
-        { ol: ['Ouvrez <a href="{tool}">Anonymiser PDF</a> et choisissez votre PDF.', 'LunaVerta parcourt chaque page et marque en jaune les numéros d\'identification, ainsi que d\'autres données qu\'on retire souvent, comme les IBAN, les adresses e-mail et les numéros de téléphone.', 'Pour ne retirer que le numéro d\'identification, désactivez les autres catégories. Touchez une marque pour garder précisément ce texte.', 'Cliquez sur <b>Supprimer … et enregistrer une nouvelle version</b>. Le texte marqué est effacé du fichier et une copie est enregistrée sur votre appareil. L\'original reste intact.'] },
+        { ol: ['Ouvrez <a href="{tool}">Caviarder un PDF</a> et choisissez votre PDF.', 'LunaVerta parcourt chaque page et marque en jaune les numéros d\'identification, ainsi que d\'autres données qu\'on retire souvent, comme les IBAN, les adresses e-mail et les numéros de téléphone.', 'Pour ne retirer que le numéro d\'identification, désactivez les autres catégories. Touchez une marque pour garder précisément ce texte.', 'Cliquez sur <b>Supprimer … et enregistrer une nouvelle version</b>. Le texte marqué est effacé du fichier et une copie est enregistrée sur votre appareil. L\'original reste intact.'] },
         { h: 'Pourquoi un cadre noir dans Word ou le lecteur PDF ne suffit pas' },
         'Un rectangle noir sur un numéro ne fait généralement que le cacher. Le texte reste dessous, et n\'importe qui peut le copier ou le retrouver avec une recherche. LunaVerta efface les caractères eux-mêmes : il ne reste rien à copier.',
         { h: 'Vérifier le résultat' },
@@ -144,7 +144,7 @@ export const GUIDE_TEXT_ESFR = {
       h1: 'Partager sa fiche de paie en sécurité', lead: 'Propriétaires, banques et nouveaux employeurs demandent souvent une fiche de paie. Ils ont besoin de vos revenus, pas de votre numéro de sécurité sociale ni de votre compte bancaire. Voici comment n\'envoyer que ce dont ils ont besoin.',
       body: [
         { h: 'Étape par étape' },
-        { ol: ['Ouvrez <a href="{tool}">Anonymiser PDF</a> et choisissez la fiche de paie.', 'Le numéro de sécurité sociale, l\'IBAN, l\'e-mail et le numéro de téléphone sont trouvés et marqués en jaune.', 'Gardez ce que le destinataire doit voir. Si les montants du salaire sont marqués, désactivez la catégorie Prix pour qu\'ils restent.', 'Cliquez sur <b>Supprimer … et enregistrer une nouvelle version</b> et envoyez la copie enregistrée.'] },
+        { ol: ['Ouvrez <a href="{tool}">Caviarder un PDF</a> et choisissez la fiche de paie.', 'Le numéro de sécurité sociale, l\'IBAN, l\'e-mail et le numéro de téléphone sont trouvés et marqués en jaune.', 'Gardez ce que le destinataire doit voir. Si les montants du salaire sont marqués, désactivez la catégorie Prix pour qu\'ils restent.', 'Cliquez sur <b>Supprimer … et enregistrer une nouvelle version</b> et envoyez la copie enregistrée.'] },
         { h: 'Ce qu\'il faut retirer et ce qu\'il faut garder' },
         { ul: ['Retirer : le numéro de sécurité sociale, l\'IBAN, les détails du prélèvement à la source que personne n\'a demandés, et votre adresse si le destinataire l\'a déjà.', 'Garder : votre nom, l\'employeur, la période et les montants. C\'est généralement ce que le destinataire doit vérifier.'] },
         { h: 'Plusieurs mois ?' },
@@ -166,11 +166,11 @@ export const GUIDE_TEXT_ESFR = {
     },
     receipts: {
       slug: 'reunir-tickets-dans-un-pdf', title: 'Réunir des tickets dans un PDF pour l\'assurance, les notes de frais ou les impôts · LunaVerta',
-      desc: 'Photographiez vos tickets et faites-en un PDF propre et consultable pour l\'assurance, la note de frais ou la déclaration d\'impôts. Gratuit et privé.',
+      desc: 'Photographiez vos tickets et faites-en un PDF propre et recherchable pour l\'assurance, la note de frais ou la déclaration d\'impôts. Gratuit et privé.',
       h1: 'Réunir des tickets dans un PDF', lead: 'Les déclarations de sinistre, les notes de frais et les impôts demandent souvent les justificatifs en un seul fichier. Voici comment passer d\'une pile de papiers à un PDF propre, avec seulement votre téléphone.',
       body: [
         { h: 'Étape par étape' },
-        { ol: ['Ouvrez <a href="{tool}">Scanner en PDF</a> sur votre téléphone et photographiez le premier ticket.', 'Les bords sont détectés et le ticket est redressé comme un vrai scan. Cliquez sur <b>Ajouter une page</b> et photographiez le suivant. Recommencez pour tous.', 'Cochez <b>Rendre le texte consultable (OCR)</b> pour pouvoir rechercher des montants plus tard.', 'Cliquez sur <b>Créer le PDF</b>, puis sur <b>Enregistrer</b>. Tous les tickets forment maintenant un seul fichier.'] },
+        { ol: ['Ouvrez <a href="{tool}">Scanner en PDF</a> sur votre téléphone et photographiez le premier ticket.', 'Les bords sont détectés et le ticket est redressé comme un vrai scan. Cliquez sur <b>Ajouter une page</b> et photographiez le suivant. Recommencez pour tous.', 'Cochez <b>Rendre le texte recherchable (OCR)</b> pour pouvoir rechercher des montants plus tard.', 'Cliquez sur <b>Créer le PDF</b>, puis sur <b>Enregistrer</b>. Tous les tickets forment maintenant un seul fichier.'] },
         { h: 'Certains justificatifs sont déjà des PDF ?' },
         'Enregistrez votre scan, puis réunissez-le avec les autres PDF dans <a href="{merge}">Fusionner PDF</a>.',
         { h: 'Trop lourd pour un e-mail ?' },
@@ -230,7 +230,7 @@ export const GUIDE_TEXT_ESFR = {
         { h: 'Juste corriger quelques mots ?' },
         'Vous n\'avez peut-être même pas besoin de Word. Avec <a href="{t:edit-pdf}">Modifier PDF</a>, vous corrigez le texte directement dans le PDF, dans sa propre police, et le reste de la page reste exactement tel quel.',
         { h: 'PDF scannés' },
-        'Un scan est une image du papier : il n\'y a pas de texte à lire. Passez-le d\'abord par <a href="{t:ocr}">OCR : rendre un PDF consultable</a>, puis convertissez le résultat en Word.',
+        'Un scan est une image du papier : il n\'y a pas de texte à lire. Passez-le d\'abord par <a href="{t:ocr}">OCR : rendre un PDF recherchable</a>, puis convertissez le résultat en Word.',
         { h: 'Ce qui ne suit pas' },
         'Les mises en page compliquées, comme du texte sur plusieurs colonnes, des tableaux dessinés avec des traits ou du texte sur des images, peuvent demander quelques retouches dans Word ensuite.'
       ]

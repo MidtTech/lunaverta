@@ -36,7 +36,7 @@ export default {
    "grey": "pasan a gris",
    "repair": "reparan",
    "meta": "actualizan con nuevos datos",
-   "images": "vacían de sus imágenes",
+   "images": "revisan, y cada imagen se guarda por separado",
    "nup": "preparan para imprimir",
    "crop": "recortan o ajustan de tamaño",
    "headfoot": "completan con encabezado y pie"
@@ -310,14 +310,14 @@ export default {
   },
   "redact-pdf": {
    "slug": "anonimizar-pdf",
-   "name": "Anonimizar PDF",
-   "title": "Anonimizar un PDF · Tapa texto de verdad, sin subirlo",
-   "desc": "Tapa nombres, números de DNI y otro texto confidencial en un PDF. El texto se elimina, no solo se cubre. Gratis y privado: tu PDF nunca se sube.",
-   "h1": "Anonimizar un PDF",
+   "name": "Censurar PDF",
+   "title": "Censurar (anonimizar) un PDF · Gratis, sin subirlo",
+   "desc": "Censura nombres, números de DNI y otro texto confidencial en un PDF. El texto se elimina, no solo se tapa. Gratis y privado: tu PDF nunca se sube.",
+   "h1": "Censurar un PDF",
    "lead": "Elimina nombres, números de identificación, precios y otros datos confidenciales antes de compartir un PDF. LunaVerta los encuentra por ti, y el texto se borra del propio archivo, así que no se puede copiar ni buscar.",
    "steps": [
     "Elige un PDF. LunaVerta busca importes, números de identificación, números de cuenta, correos, teléfonos, direcciones, fechas y números de referencia.",
-    "Haz clic en una sugerencia para marcarla entera, y haz clic en las marcas de las páginas (o de la lista) para conservar o eliminar cada una. Busca cualquier otra palabra o arrastra recuadros negros a mano.",
+    "Haz clic en una sugerencia para marcar todas las coincidencias de ese tipo, y haz clic en las marcas de las páginas (o de la lista) para conservar o eliminar cada una. Busca cualquier otra palabra o arrastra recuadros negros a mano.",
     "Pulsa Eliminar y guardar nueva versión. El texto se borra de la copia; tu original no se toca."
    ],
    "faq": [
@@ -358,7 +358,7 @@ export default {
     ],
     [
      "¿También tapa texto?",
-     "No. Para eliminar texto de las páginas, usa Anonimizar PDF."
+     "No. Para eliminar texto de las páginas, usa Censurar PDF."
     ]
    ]
   },

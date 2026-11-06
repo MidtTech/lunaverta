@@ -25,7 +25,7 @@ export default {
    "protect": "verrouillés par mot de passe",
    "unlock": "déverrouillés avec votre mot de passe",
    "split": "divisés en pages séparées",
-   "ocr": "rendus consultables",
+   "ocr": "rendus recherchables",
    "clean": "débarrassés des données cachées",
    "extract": "réduits aux pages que vous choisissez",
    "imgedit": "allégés, redimensionnés ou recadrés",
@@ -36,7 +36,7 @@ export default {
    "grey": "passés en gris",
    "repair": "réparés",
    "meta": "dotés de nouvelles informations",
-   "images": "vidés de leurs images",
+   "images": "parcourus, et chaque image est enregistrée à part",
    "nup": "préparés pour l'impression",
    "crop": "recadrés ou redimensionnés",
    "headfoot": "dotés d'un en-tête et d'un pied de page"
@@ -57,7 +57,7 @@ export default {
    ],
    [
     "Compte",
-    "Inutile"
+    "Pas nécessaire"
    ],
    [
     "Fonctionne hors ligne",
@@ -122,7 +122,7 @@ export default {
    "steps": [
     "Choisissez votre document Word (.docx) ou déposez-le sur la page.",
     "LunaVerta le met en page comme Word et crée un PDF.",
-    "Enregistrez le PDF. Le texte reste consultable."
+    "Enregistrez le PDF. Le texte reste recherchable."
    ],
    "faq": [
     [
@@ -185,9 +185,9 @@ export default {
    "slug": "compresser-pdf",
    "name": "Compresser PDF",
    "title": "Compresser un PDF · Allégez vos PDF, sans envoi",
-   "desc": "Réduisez la taille d'un PDF dans votre navigateur. Le texte reste consultable. Gratuit et privé : votre PDF n'est jamais envoyé.",
+   "desc": "Réduisez la taille d'un PDF dans votre navigateur. Le texte reste recherchable. Gratuit et privé : votre PDF n'est jamais envoyé.",
    "h1": "Compresser un PDF",
-   "lead": "Allégez les gros PDF pour qu'ils passent par e-mail. Les PDF scannés ou riches en images sont souvent réduits de 60 % ou plus, et le texte reste consultable.",
+   "lead": "Allégez les gros PDF pour qu'ils passent par e-mail. Les PDF scannés ou riches en images sont souvent réduits de 60 % ou plus, et le texte reste recherchable.",
    "steps": [
     "Choisissez un PDF ou déposez-le sur la page.",
     "LunaVerta redessine les pages de façon plus compacte.",
@@ -256,15 +256,15 @@ export default {
   },
   "ocr": {
    "slug": "ocr-pdf",
-   "name": "OCR : rendre un PDF consultable",
-   "title": "OCR · Rendre les PDF scannés consultables, sans envoi",
+   "name": "OCR : rendre un PDF recherchable",
+   "title": "OCR · Rendre les PDF scannés recherchables, sans envoi",
    "desc": "Reconnaissez le texte des PDF scannés et des photos, en français, espagnol, anglais, allemand et langues nordiques, pour le rechercher et le copier. Gratuit et privé : fonctionne sur votre appareil.",
-   "h1": "Rendre un PDF scanné consultable",
+   "h1": "Rendre un PDF scanné recherchable",
    "lead": "Un scan n'est qu'une image du texte. L'OCR lit les mots et les ajoute en texte invisible sur la page, pour que vous puissiez rechercher, sélectionner et copier. Il fonctionne sur votre propre appareil et lit le français, l'espagnol, l'anglais, l'allemand, le danois, le suédois et le norvégien.",
    "steps": [
     "Choisissez un PDF scanné ou une photo d'un document.",
     "LunaVerta lit le texte de chaque page. La première fois, les données de langue (environ 2 Mo) sont chargées.",
-    "Enregistrez le PDF consultable. Il a exactement le même aspect qu'avant."
+    "Enregistrez le PDF recherchable. Il a exactement le même aspect qu'avant."
    ],
    "faq": [
     [
@@ -281,7 +281,7 @@ export default {
     ],
     [
      "Puis-je ensuite retirer des noms ou des prix d'un scan ?",
-     "Oui. Ouvrez le PDF consultable dans l'éditeur et utilisez Supprimer les données sensibles : le texte trouvé est recouvert et la page est enregistrée comme image, il ne reste donc rien."
+     "Oui. Ouvrez le PDF recherchable dans l'éditeur et utilisez Supprimer les données sensibles : le texte trouvé est recouvert et la page est enregistrée comme image, il ne reste donc rien."
     ]
    ]
   },
@@ -310,14 +310,14 @@ export default {
   },
   "redact-pdf": {
    "slug": "anonymiser-pdf",
-   "name": "Anonymiser PDF",
-   "title": "Anonymiser un PDF · Noircir du texte pour de bon, sans envoi",
-   "desc": "Noircissez des noms, des numéros de sécurité sociale et d'autres textes confidentiels dans un PDF. Le texte est supprimé, pas seulement masqué. Gratuit et privé : votre PDF n'est jamais envoyé.",
-   "h1": "Anonymiser un PDF",
+   "name": "Caviarder un PDF",
+   "title": "Caviarder (anonymiser) un PDF · Gratuit, sans envoi",
+   "desc": "Caviardez (anonymisez) des noms, des numéros de sécurité sociale et d'autres textes confidentiels dans un PDF. Le texte est supprimé, pas seulement masqué. Gratuit et privé : votre PDF n'est jamais envoyé.",
+   "h1": "Caviarder un PDF",
    "lead": "Supprimez noms, numéros d'identification, prix et autres données confidentielles avant de partager un PDF. LunaVerta les trouve pour vous, et le texte est effacé du fichier lui-même : il ne peut être ni copié ni recherché.",
    "steps": [
     "Choisissez un PDF. LunaVerta cherche les montants, numéros d'identification, numéros de compte, e-mails, téléphones, adresses, dates et références.",
-    "Cliquez sur une suggestion pour tout marquer, et cliquez sur les marques des pages (ou de la liste) pour garder ou supprimer chacune. Recherchez un autre mot, ou tracez des cadres noirs à la main.",
+    "Cliquez sur une suggestion pour marquer toutes les occurrences de ce type, et cliquez sur les marques des pages (ou de la liste) pour garder ou supprimer chacune. Recherchez un autre mot, ou tracez des cadres noirs à la main.",
     "Appuyez sur Supprimer et enregistrer une nouvelle version. Le texte est effacé de la copie ; votre original reste intact."
    ],
    "faq": [
@@ -358,7 +358,7 @@ export default {
     ],
     [
      "Est-ce que ça noircit aussi du texte ?",
-     "Non. Pour supprimer du texte sur les pages, utilisez Anonymiser PDF."
+     "Non. Pour supprimer du texte sur les pages, utilisez Caviarder un PDF."
     ]
    ]
   },
@@ -757,7 +757,7 @@ export default {
     ],
     [
      "Est-ce que ça marche avec les scans ?",
-     "Un scan est une image sans texte. Passez d'abord par OCR : rendre un PDF consultable, puis convertissez le résultat."
+     "Un scan est une image sans texte. Passez d'abord par OCR : rendre un PDF recherchable, puis convertissez le résultat."
     ]
    ]
   },
@@ -922,7 +922,7 @@ export default {
     ],
     [
      "Est-ce que ça marche avec les PDF scannés ?",
-     "Seulement si le scan a une couche de texte. Lancez d'abord l'OCR pour rendre le scan consultable, puis convertissez-le en Word."
+     "Seulement si le scan a une couche de texte. Lancez d'abord l'OCR pour rendre le scan recherchable, puis convertissez-le en Word."
     ],
     [
      "Mon PDF est-il envoyé ?",
@@ -1065,9 +1065,9 @@ export default {
    "slug": "scanner-en-pdf",
    "name": "Scanner en PDF",
    "title": "Scanner des documents en PDF avec votre téléphone · Sans envoi",
-   "desc": "Photographiez du papier avec votre téléphone et obtenez un PDF propre et droit, avec le texte consultable si vous le souhaitez. Gratuit et privé : les photos ne quittent jamais votre appareil.",
+   "desc": "Photographiez du papier avec votre téléphone et obtenez un PDF propre et droit, avec le texte recherchable si vous le souhaitez. Gratuit et privé : les photos ne quittent jamais votre appareil.",
    "h1": "Scanner du papier en PDF avec votre téléphone",
-   "lead": "Photographiez une lettre, un ticket ou un formulaire : LunaVerta trouve la feuille, la redresse, atténue les ombres et crée un PDF. Ajoutez autant de pages que nécessaire et rendez le texte consultable avec l'OCR. Rien n'est envoyé.",
+   "lead": "Photographiez une lettre, un ticket ou un formulaire : LunaVerta trouve la feuille, la redresse, atténue les ombres et crée un PDF. Ajoutez autant de pages que nécessaire et rendez le texte recherchable avec l'OCR. Rien n'est envoyé.",
    "steps": [
     "Appuyez sur Choisir des fichiers et prenez une photo, ou choisissez des photos existantes.",
     "Vérifiez les quatre coins, choisissez couleur, gris ou noir et blanc, et ajoutez d'autres pages.",
@@ -1161,7 +1161,7 @@ export default {
    "slug": "pdf-niveaux-de-gris",
    "name": "PDF en niveaux de gris",
    "title": "Convertir un PDF en niveaux de gris (noir et blanc) · Sans envoi",
-   "desc": "Transformez un PDF couleur en niveaux de gris pour imprimer moins cher et alléger le fichier. Le texte reste consultable. Gratuit et privé, rien n'est envoyé.",
+   "desc": "Transformez un PDF couleur en niveaux de gris pour imprimer moins cher et alléger le fichier. Le texte reste recherchable. Gratuit et privé, rien n'est envoyé.",
    "h1": "Convertir un PDF en niveaux de gris",
    "lead": "Passez un PDF couleur en gris pour imprimer moins cher sur une imprimante noir et blanc, ou simplement pour un rendu plus sobre. Le texte peut toujours être recherché et copié. Rien n'est envoyé.",
    "steps": [

@@ -150,7 +150,7 @@ Remove names, ID numbers, prices and other confidential details before you share
 
 Steps:
 1. Choose a PDF. LunaVerta looks for amounts, CPR numbers, account numbers, e-mails, phone numbers, addresses, dates and reference numbers.
-2. Click a suggestion to mark all of it, and click marks on the pages (or in the list) to keep or remove each one. Search for any other word, or drag black boxes by hand.
+2. Click a suggestion to mark every match of that kind, and click marks on the pages (or in the list) to keep or remove each one. Search for any other word, or drag black boxes by hand.
 3. Press Remove and save new version. The text is deleted from the copy; your original is untouched.
 
 Questions:

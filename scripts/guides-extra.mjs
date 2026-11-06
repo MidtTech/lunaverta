@@ -73,7 +73,7 @@ export const GUIDE_TEXT = {
         { h: 'Blir kvaliteten densamma?' },
         'Bilden ser likadan ut. JPG-filer är lite större än HEIC, och det är priset för att de kan läsas överallt. Behöver de vara mindre, till exempel för ett formulär med storleksgräns, använder du <a href="{t:compress-image}">Komprimera bild</a> efteråt.',
         { h: 'Plats och andra dolda uppgifter' },
-        'Bilder från en telefon sparar oftast var de togs. Delar du dem med främlingar kör du dem också genom <a href="{t:remove-photo-location}">Ta bort plats från foton</a>.',
+        'Bilder från en telefon sparar oftast var de togs. Delar du dem med främlingar kör du dem också genom <a href="{t:remove-photo-location}">Ta bort platsinformation från foton</a>.',
         { h: 'Få iPhone att sluta göra HEIC' },
         'Gå på iPhone till Inställningar › Kamera › Format och välj <b>Mest kompatibelt</b>. Nya bilder sparas då som JPG. Bilder du redan har tagit förblir HEIC.'
       ]
@@ -99,7 +99,7 @@ export const GUIDE_TEXT = {
       h1: 'Ta bort platsen från bilder innan du delar dem', lead: 'De flesta mobilbilder sparar i tysthet var de togs. En bild på soffan du säljer kan berätta för en främling var du bor. Så tar du bort det innan du delar.',
       body: [
         { h: 'Steg för steg' },
-        { ol: ['Öppna <a href="{tool}">Ta bort plats från foton</a>.', 'Välj dina bilder eller släpp dem på sidan.', 'Plats, kamerauppgifter, datum och andra dolda uppgifter tas bort. Själva bilden rörs inte, så kvaliteten är densamma.', 'Spara de rensade bilderna och dela dem i stället för originalen.'] },
+        { ol: ['Öppna <a href="{tool}">Ta bort platsinformation från foton</a>.', 'Välj dina bilder eller släpp dem på sidan.', 'Plats, kamerauppgifter, datum och andra dolda uppgifter tas bort. Själva bilden rörs inte, så kvaliteten är densamma.', 'Spara de rensade bilderna och dela dem i stället för originalen.'] },
         { h: 'Tar inte webbplatsen bort det ändå?' },
         'Vissa stora webbplatser tar bort platsen när du laddar upp, men det syns inte alltid, och bilder som skickas med e-post, som filer i en chatt eller på ett USB-minne behåller den oftast. Rensar du dem först behöver du inte lita på någon annan.',
         { h: 'Stäng av det för framtida bilder' },
