@@ -69,11 +69,13 @@ function kindOfMime(t) { if (!t) return null; for (const [re, k] of MIME_KIND) i
 // Tools kept out of the ring for a kind, but still used by their own pages
 // (Compress PDF, Remove PDF metadata, PDF to text, Remove prices).
 const PAGE_ONLY = { pdf: ['shrink', 'clean', 'txt', 'prices', 'compare', 'extract', 'altmerge', 'blank', 'flatten', 'grey', 'repair', 'meta', 'images', 'nup', 'crop', 'headfoot'], image: ['scan'] };
+let chainTarget = ''; // set while a finished result is sent on to another tool ("Continue with this file")
 function targetsFor(file) {
   const k = kindOf(file); if (!k) return [];
   const e = SAME[ext(file.name)] || ext(file.name);
   const list = KINDS[k].targets.filter(t => t !== e);
   if (PRESET && (PAGE_ONLY[k] || []).includes(PRESET)) list.push(PRESET);
+  if (chainTarget && (PAGE_ONLY[k] || []).includes(chainTarget) && !list.includes(chainTarget)) list.push(chainTarget);
   if (k === 'image') list.push('merge'); // images can join a PDF merge
   return list;
 }
@@ -2801,6 +2803,28 @@ window.LVLoadEditor = loadEditor;
 if (['edit', 'redact', 'prices'].includes(PRESET)) {
   (window.requestIdleCallback || (f => setTimeout(f, 1200)))(() => loadEditor().catch(() => {}));
 }
+// Unsaved work from the PDF editor (kept in this browser only, see editor.js): offer to carry on.
+(async () => {
+  if (!window.indexedDB || !editorSupported || !$('dock')) return;
+  try {
+    const d = await new Promise((ok, no) => {
+      const r = indexedDB.open('lunaverta-draft', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('d');
+      r.onerror = () => no(r.error);
+      r.onsuccess = () => { const db = r.result, g = db.transaction('d').objectStore('d').get('state'); g.onsuccess = () => { db.close(); ok(g.result); }; g.onerror = () => { db.close(); no(g.error); }; };
+    });
+    if (!d || !d.names || !d.names.length) return;
+    const drop = () => { const r = indexedDB.open('lunaverta-draft', 1); r.onsuccess = () => { const db = r.result, tx = db.transaction('d', 'readwrite'); tx.objectStore('d').clear(); tx.oncomplete = () => db.close(); }; };
+    if (Date.now() - d.when > 7 * 864e5) { drop(); return; } // a week old: let it go
+    const bar = document.createElement('div');
+    bar.className = 'draft-bar'; bar.setAttribute('role', 'status');
+    const when = new Date(d.when).toLocaleString(document.documentElement.lang || undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    bar.innerHTML = `<span>${esc(T('draft.q', { name: d.names.join(', '), when }))}</span><button class="btn sm primary" type="button" data-d="go">${esc(T('draft.go'))}</button><button class="btn sm ghost" type="button" data-d="no">${esc(T('draft.no'))}</button>`;
+    bar.querySelector('[data-d="go"]').onclick = () => { bar.remove(); loadEditor().then(E => E.resume()).catch(e => toast(e.message)); };
+    bar.querySelector('[data-d="no"]').onclick = () => { bar.remove(); drop(); };
+    $('dock').prepend(bar);
+  } catch (e) { /* storage blocked: nothing to offer */ }
+})();
 // On a tool page, new files go straight to that page's format when they can;
 // otherwise the ring opens as usual.
 function afterAdd(added, x, y) {
@@ -2894,7 +2918,34 @@ async function finishJob(j, outs) {
   }
   if (/^image\//.test(j.out.blob.type)) j.url = URL.createObjectURL(j.out.blob);
   j.status = 'done'; j.progress = 1; renderJob(j); updateFoot();
+  if (isPdfOut(j)) pdfPreview(j).catch(() => {}); // locked or odd PDFs simply keep the plain icon
 }
+const isPdfOut = j => j.out && /\.pdf$/i.test(j.out.name);
+// A small picture of the first page and the page count, so you can see the result before saving it
+async function pdfPreview(j) {
+  const pdf = await pdfjsDoc(new File([j.out.blob], j.out.name, { type: 'application/pdf' }));
+  const page = await pdf.getPage(1), vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 112 / vp1.width });
+  const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp }).promise;
+  j.pages = pdf.numPages; j.preview = c.toDataURL('image/png'); pdf.destroy();
+  if (j.status === 'done') renderJob(j);
+}
+// What people usually do next with a result; the result goes straight into the next tool, without saving it first
+const NEXT = { merge: ['shrink', 'edit', 'protect'], redact: ['protect', 'shrink'], prices: ['protect', 'shrink'], shrink: ['protect', 'edit'], unlock: ['edit', 'shrink'], ocr: ['redact', 'shrink'],
+  edit: ['protect', 'shrink'], protect: [], pdf: ['shrink', 'protect', 'edit'], '*pdf': ['shrink', 'protect', 'edit'], '*image': ['pdf', 'clean', 'imgedit'] };
+function nextSteps(j) {
+  if (!j.out || /\.zip$/i.test(j.out.name)) return [];
+  const pdf = isPdfOut(j), img = /^image\//.test(j.out.blob.type);
+  if (!pdf && !img) return [];
+  return (NEXT[j.target] || NEXT[pdf ? '*pdf' : '*image']).filter(t => t !== j.target).slice(0, 3);
+}
+async function continueWith(j, target) {
+  const file = new File([j.out.blob], j.out.name, { type: j.out.blob.type });
+  chainTarget = target;
+  try { await runBatch([file], target); } finally { chainTarget = ''; }
+}
+const canShareFiles = (() => { try { return !!(navigator.canShare && matchMedia('(pointer: coarse)').matches && navigator.canShare({ files: [new File([''], 'x.pdf', { type: 'application/pdf' })] })); } catch (e) { return false; } })();
 function failJob(j, err) {
   console.error(err);
   // running out of memory shows up as cryptic browser errors; say what it means instead
@@ -3013,14 +3064,18 @@ function renderJob(j, isNew) {
   const srcExt = j.srcLabel || ext(j.srcName) || T('job.files');
   let thumb;
   if (j.status === 'working') thumb = `<svg class="ring-progress spin" viewBox="0 0 36 36" aria-hidden="true"><circle class="trk" cx="18" cy="18" r="16"/><circle class="bar" cx="18" cy="18" r="16" stroke-dasharray="100.5" stroke-dashoffset="${100.5 * (1 - Math.max(.25, j.progress))}"/></svg>`;
-  else if (j.url) thumb = `<img src="${j.url}" alt="">`;
+  else if (j.url || j.preview) thumb = `<img src="${j.url || j.preview}" alt=""${j.preview ? ' class="page"' : ''}>`;
   else thumb = esc(j.status === 'err' ? '!' : OUT[j.target].tool ? (ext(name) || 'pdf') : j.target);
   const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : T('job.converting')) : j.status === 'done' ? fmtSize(j.out.blob.size) : '';
-  const note = j.noteKey ? T(j.noteKey, j.noteVars) : '';
+  const note = [j.noteKey ? T(j.noteKey, j.noteVars) : '', j.pages ? T('job.pages', { n: j.pages }) : ''].filter(Boolean).join(' · ');
+  const next = j.status === 'done' ? nextSteps(j) : [];
   el.innerHTML = `<div class="thumb">${thumb}</div>
     <div class="info"><span class="fn" title="${esc(name)}">${esc(name)}</span>
     <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(label(j.target))}</b></span><span class="state">${esc(state)}</span>${note ? `<span>${esc(note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
-    <div>${j.status === 'done' ? `<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>`;
+    <div class="acts">${j.status === 'done' ? `${canShareFiles ? `<button class="btn sm ghost share" type="button">${esc(T('job.share'))}</button>` : ''}<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>
+    ${next.length ? `<div class="next"><span>${esc(T('next.h'))}</span>${next.map(t => `<button type="button" class="nx" data-next="${t}">${esc(OUT[t] && OUT[t].tool ? T('tgt.' + t) : t.toUpperCase())}</button>`).join('')}</div>` : ''}`;
+  el.querySelectorAll('[data-next]').forEach(b => { b.onclick = () => continueWith(j, b.dataset.next).catch(e => toast(e.message)); });
+  const sh = el.querySelector('.share'); if (sh) sh.onclick = async () => { try { await navigator.share({ files: [new File([j.out.blob], j.out.name, { type: j.out.blob.type })], title: j.out.name }); } catch (e) { if (e.name !== 'AbortError') toast(T('save.failed')); } };
   const sv = el.querySelector('.save'); if (sv) sv.onclick = async () => { if (await saveFile(j.out.name, j.out.blob, sv)) j.saved = true; };
   const dm = el.querySelector('.dismiss'); if (dm) dm.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); };
   if (isNew) $('manifest').prepend(el);

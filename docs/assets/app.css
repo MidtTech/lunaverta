@@ -519,6 +519,10 @@ html.ed-finding .ed-search { right: 424px; }
 .dock-hint .dock-or { color: var(--muted); font-size: 14.5px; }
 .dock-hint .dock-sub { font-size: 14px; max-width: 56ch; }
 .privacy-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 7px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+.privacy-pill { flex-wrap: wrap; justify-content: center; margin-bottom: 0; background: none; padding: 2px 0; gap: 4px 8px; font-size: 13.5px; max-width: 100%; }
+.privacy-pill > * { white-space: nowrap; }
+.privacy-pill i { font-style: normal; opacity: .55; }
+.privacy-pill a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .privacy-pill svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
 @media (hover: none) { .dock-or { display: none; } }
 /* once files are in, the start area steps aside for them */
@@ -1023,3 +1027,10 @@ main[tabindex="-1"]:focus { outline: none; }
 .dock-sample .linkish { color: var(--accent); font-weight: 600; }
 .promo-video { margin: 22px 0; max-width: 440px; }
 .promo-video video { width: 100%; height: auto; display: block; border-radius: 16px; background: var(--surface); box-shadow: 0 12px 32px rgba(21, 26, 45, .14); }
+.row .acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.row .next { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); padding-top: 2px; }
+.row .next .nx { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 11px; font-size: 13px; }
+.row .next .nx:hover { border-color: var(--accent); color: var(--accent); }
+.thumb img.page { object-fit: contain; background: #fff; }
+.draft-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; margin-bottom: 12px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, var(--raised)); font-size: 14px; text-align: left; }
+.draft-bar span { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }

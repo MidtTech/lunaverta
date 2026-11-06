@@ -81,6 +81,7 @@ function render() { labels(); S.view === 'page' ? buildPages(S.current) : render
 function cancel() { if (S && S.dirty) { $('#edConfirm').hidden = false; $('#edKeep').focus(); } else close(); }
 function close() {
   closeFind(true);
+  dropDraft();
   const el = $('#editor'); if (el) el.remove();
   document.documentElement.classList.remove('ed-open');
   S = null;
@@ -875,6 +876,43 @@ function wrapBlock(b, width, text) {
   return out;
 }
 
+// ---------- never lose work ----------
+// While the editor is open, the PDFs and the changes are kept in this browser's own
+// storage (IndexedDB, on this device only). If the tab is closed or the browser crashes,
+// the next visit offers to carry on. Saving or discarding removes the copy.
+const draftDb = () => new Promise((ok, no) => { const r = indexedDB.open('lunaverta-draft', 1); r.onupgradeneeded = () => r.result.createObjectStore('d'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
+async function draftDo(fn) { const db = await draftDb(); try { return await new Promise((ok, no) => { const tx = db.transaction('d', 'readwrite'), st = tx.objectStore('d'); let out; const r = fn(st); if (r) r.onsuccess = () => { out = r.result; }; tx.oncomplete = () => ok(out); tx.onerror = tx.onabort = () => no(tx.error); }); } finally { db.close(); } }
+let draftFiles = 0, draftTimer = 0;
+function keepDraft() {
+  if (!S || H.i <= 0 || !window.indexedDB) return;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(async () => {
+    if (!S) return;
+    try {
+      const docs = S.docs.length;
+      if (docs !== draftFiles) { await draftDo(st => st.put(S.docs.map(d => d.file), 'files')); draftFiles = docs; }
+      await draftDo(st => st.put({ when: Date.now(), names: S.docs.map(d => d.file.name), state: snap(), view: S.view, current: S.current }, 'state'));
+    } catch (e) { /* storage full or blocked (private mode): editing goes on without a copy */ }
+  }, 800);
+}
+function dropDraft() { clearTimeout(draftTimer); draftFiles = 0; if (window.indexedDB) draftDo(st => { st.delete('state'); st.delete('files'); }).catch(() => {}); }
+async function resume() {
+  let files, d;
+  try { files = await draftDo(st => st.get('files')); d = await draftDo(st => st.get('state')); } catch (e) { files = null; }
+  if (!files || !d) { app().toast(T('draft.gone')); dropDraft(); return; }
+  await open(files);
+  if (!S) return;
+  const o = JSON.parse(d.state);
+  H.quiet = true;
+  Object.assign(S, { pages: o.pages, texts: o.texts, blocks: o.blocks || [], edits: o.edits, boxes: o.boxes, fields: o.fields || [], images: o.images, marks: o.marks || [], values: o.values, watermark: o.wm || null, pageNums: o.nums || null });
+  uid = Math.max(uid, ...[...d.state.matchAll(/"id":(\d+)/g)].map(m => +m[1]));
+  H.quiet = false; S.dirty = true; draftFiles = files.length;
+  const cur = d.current && S.pages.find(p => p.id === d.current && !p.deleted);
+  if (d.view === 'page' && cur) { S.view = 'page'; S.current = cur.id; }
+  render();
+  app().toast(T('draft.back'), true);
+}
+
 // ---------- undo and redo ----------
 // Every change sets S.dirty; a moment later the state is noted down. Undo and
 // redo step through those notes (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y).
@@ -894,6 +932,7 @@ function noteState() {
   if (H.stack.length > 100) H.stack.shift();
   H.i = H.stack.length - 1;
   undoButtons();
+  keepDraft();
 }
 function undoButtons() {
   const u = $('#edUndo'), r = $('#edRedo');
@@ -2376,5 +2415,5 @@ document.addEventListener('keydown', e => {
   if (S.view === 'page' && (S.editing || S.adding || S.redacting || S.marking)) finishPage();
   else S.view === 'page' ? showGrid() : cancel();
 });
-window.LVEditor = { open };
+window.LVEditor = { open, resume };
 })();

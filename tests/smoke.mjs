@@ -41,6 +41,7 @@ const file = (name, buffer) => ({ name, mimeType: 'application/pdf', buffer });
 // ---------- runner ----------
 const results = [];
 async function test(name, fn) {
+  if (process.env.ONLY && !name.includes(process.env.ONLY)) return; // ONLY=preview npm test runs just the matching tests
   const t0 = Date.now();
   try { await fn(); results.push([true, name]); console.log(`  ok  ${name} (${Date.now() - t0} ms)`); }
   catch (e) { results.push([false, name]); console.log(`  FAIL ${name}\n       ${String(e && e.message || e).split('\n')[0]}`); }
@@ -526,6 +527,36 @@ await test('the tool search finds tools by other words, and "Show all" opens lon
   assert((await visible()).join('|') === 'Underskriv PDF', 'search: ' + (await visible()).join('|'));
   await p.fill('#toolFind', 'zzzz');
   assert(await p.isVisible('#toolNone'), 'no "nothing found" message');
+  await done(p);
+});
+
+await test('a finished PDF shows a page preview and can go straight on to the next tool', async () => {
+  const p = await page('/merge-pdf/');
+  await p.setInputFiles('#fileInput', [file('a.pdf', OLD), file('b.pdf', NEW)]);
+  await p.click('#targetRow .tgt.preset');
+  const row = p.locator('.row.done').first(); await row.waitFor({ timeout: 60000 });
+  await p.waitForSelector('.row.done .thumb img.page', { timeout: 20000 });
+  assert(/4/.test(await row.locator('.meta').innerText()), 'no page count: ' + await row.locator('.meta').innerText());
+  await row.locator('[data-next="shrink"]').click();
+  await p.waitForFunction(() => document.querySelectorAll('.row.done').length >= 2, null, { timeout: 60000 });
+  await done(p);
+});
+
+await test('unsaved work in the editor survives a reload and can be discarded', async () => {
+  const p = await page('/edit-pdf/');
+  await p.setInputFiles('#fileInput', file('agreement.pdf', OLD));
+  await p.waitForSelector('#edReverse', { timeout: 30000 });
+  await p.click('#edReverse');
+  await p.waitForTimeout(1600);
+  await p.reload();
+  await p.waitForSelector('.draft-bar', { timeout: 10000 });
+  assert(/agreement\.pdf/.test(await p.innerText('.draft-bar')), 'offer does not name the file');
+  await p.click('.draft-bar [data-d="go"]');
+  await p.waitForSelector('#edReverse', { timeout: 30000 });
+  await p.waitForFunction(() => !document.querySelector('#edUndo')?.disabled, null, { timeout: 5000 });
+  await p.click('#edCancel'); await p.click('#edDiscard');
+  await p.waitForTimeout(300); await p.reload(); await p.waitForTimeout(800);
+  assert(!(await p.$('.draft-bar')), 'draft still offered after discarding');
   await done(p);
 });
 

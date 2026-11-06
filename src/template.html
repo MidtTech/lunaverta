@@ -66,7 +66,7 @@
           <button class="btn primary big" id="pick" type="button" data-i18n="btn.choose">Choose files</button>
           <p class="dock-or"><span data-i18n="drop.or">or drag them here</span> · <kbd>Ctrl</kbd> + <kbd>V</kbd> <span data-i18n="drop.paste">to paste</span></p>
           {{DOCK_HINT}}
-          <span class="privacy-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="privacy.pill">Your files never leave your device</span></span>
+          <p class="privacy-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span data-i18n="trust.up">Nothing is uploaded</span><i aria-hidden="true">·</i><span data-i18n="trust.off">Works offline</span><i aria-hidden="true">·</i><a href="https://github.com/MidtTech/lunaverta" data-i18n="trust.src">Open source</a></p>
           <input type="file" id="fileInput" multiple hidden>
         </div>
         <div class="tray" id="tray" aria-live="polite"></div>
@@ -116,11 +116,12 @@
     </section>
   </main>
 
-{{POPULAR}}{{RECIPES}}
+{{POPULAR}}
 
 {{HOWTO}}
 
 {{TOOLS}}
+{{RECIPES}}
 
 {{FAQ}}
 

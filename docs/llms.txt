@@ -143,7 +143,7 @@ Key facts:
 - [PDF drehen](https://lunaverta.com/de/pdf-drehen/): PDF-Seiten im Browser richtig herum drehen. Einzelne oder alle Seiten drehen und speichern. Kostenlos und privat, ohne Upload.
 - [Seitenzahlen hinzufügen](https://lunaverta.com/de/seitenzahlen-zu-pdf-hinzufuegen/): Die Seiten eines PDFs im Browser nummerieren. Position und Stil wählen, etwa 1, 2, 3 oder Seite 1 von 10. Kostenlos und privat, ohne Upload.
 - [PDF-Wasserzeichen](https://lunaverta.com/de/pdf-wasserzeichen/): Ein Text-Wasserzeichen wie Kopie, Entwurf oder Vertraulich quer über jede Seite eines PDFs legen. Kostenlos und privat, im Browser, ohne Upload.
-- [PDF-Formular ausfüllen](https://lunaverta.com/de/pdf-formular-ausfuellen/): PDF-Formulare im Browser ausfüllen: in die Felder tippen, Kästchen ankreuzen und speichern. Das Formular bleibt ausfüllbar. Kostenlos und privat, ohne Upload.
+- [PDF-Formular ausfüllen](https://lunaverta.com/de/pdf-formular-ausfuellen/): Formular online ausfüllen, kostenlos und ohne Anmeldung: PDF-Formulare im Browser ausfüllen: in die Felder tippen, Kästchen ankreuzen und speichern. Das Formular bleibt ausfüllbar. Kostenlos und privat, ohne Upload.
 - [PDF in JPG](https://lunaverta.com/de/pdf-in-jpg/): Jede Seite eines PDFs im Browser in ein JPG-Bild umwandeln. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [PDF in PNG](https://lunaverta.com/de/pdf-in-png/): Jede Seite eines PDFs im Browser in ein PNG-Bild umwandeln. Verlustfrei und scharf. Kostenlos und privat, ohne Upload.
 - [JPG in PDF](https://lunaverta.com/de/jpg-in-pdf/): JPG-, PNG- und HEIC-Bilder im Browser in ein PDF umwandeln, eine Seite pro Bild. Kostenlos und privat: Nichts wird hochgeladen.
@@ -163,7 +163,7 @@ Key facts:
 - [PDF in Word](https://lunaverta.com/de/pdf-in-word/): Ein PDF in ein bearbeitbares Word-Dokument umwandeln, mit Schriften, Farben, Absätzen und Bildern. Kostenlos und privat: Dein PDF wird nie hochgeladen.
 - [Zwei PDFs vergleichen](https://lunaverta.com/de/pdf-vergleichen/): Zwei Versionen eines PDFs vergleichen und jede hinzugefügte, entfernte und geänderte Zeile sehen, Wort für Wort. Kostenlos und privat: Nichts wird hochgeladen.
 - [PDF-Seiten extrahieren](https://lunaverta.com/de/pdf-seiten-extrahieren/): Wähle die Seiten, die du aus einem PDF brauchst, etwa 2-5 und 9, und speichere sie als neues PDF. Kostenlos und privat: Dein PDF wird nie hochgeladen.
-- [Bild komprimieren](https://lunaverta.com/de/bild-komprimieren/): Fotos und Bilder für E-Mail und Web verkleinern. Die neue Größe siehst du vor dem Speichern. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
+- [Bild komprimieren](https://lunaverta.com/de/bild-komprimieren/): Bilder komprimieren und die Dateigröße ändern, für E-Mail, Formulare und Web. Die neue Größe siehst du vor dem Speichern. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
 - [Bildgröße ändern](https://lunaverta.com/de/bildgroesse-aendern/): Fotos und Bilder auf 75 %, 50 %, 25 % oder eine genaue Breite in Pixeln verkleinern, viele auf einmal. Kostenlos und privat: Deine Bilder werden nie hochgeladen.
 - [Bild zuschneiden](https://lunaverta.com/de/bild-zuschneiden/): Ein Foto oder Bild im Browser zuschneiden: quadratisch fürs Profilbild, 4:3, 16:9 oder in beliebiger Form. Kostenlos und privat: Dein Bild wird nie hochgeladen.
 - [Dokument scannen](https://lunaverta.com/de/dokument-scannen/): Fotografiere Papier mit dem Handy und erhalte ein sauberes, gerades PDF, auf Wunsch mit durchsuchbarem Text. Kostenlos und privat: Die Fotos verlassen nie dein Gerät.

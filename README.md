@@ -39,7 +39,7 @@ A static site with no server code: plain HTML, CSS and JavaScript, no framework 
 | Video | WebCodecs with MP4Box.js and mp4-muxer |
 | MP3 | lamejs |
 
-A service worker keeps the app and its libraries for offline use. Settings, signatures and templates are stored only in the browser's local storage.
+A service worker keeps the app and its libraries for offline use. Settings, signatures and templates are stored only in the browser's local storage, and unsaved work in the PDF editor is kept in the browser's IndexedDB until it is saved or discarded, so a closed tab doesn't lose it.
 
 ## Run it locally
 
