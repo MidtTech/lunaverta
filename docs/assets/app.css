@@ -436,7 +436,7 @@ html.ed-finding .ed-layer { cursor: crosshair; touch-action: none; }
 .sig-tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 .sig-pane { display: grid; gap: 8px; }
 .sig-pane[hidden] { display: none; }
-.sig-pad { width: 100%; height: auto; aspect-ratio: 560 / 200; background: #fff; border: 1px dashed var(--line); border-radius: 10px; touch-action: none; cursor: crosshair; }
+.sig-pad { width: 100%; height: auto; background: #fff; border: 1px dashed var(--line); border-radius: 10px; touch-action: none; cursor: crosshair; }
 .sig-preview { max-height: 120px; max-width: 100%; justify-self: start; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
 .sig-saved { display: flex; flex-wrap: wrap; gap: 8px; }
 .sig-item { position: relative; }
@@ -712,7 +712,7 @@ details.ref .kind { background: var(--raised); }
   .ed-name { grid-column: 2; grid-row: 1; text-align: center; max-width: none; }
   .ed-name strong { font-size: 15px; }
   .ed-name span { font-size: 12px; }
-  .ed-tools { grid-column: 1 / -1; grid-row: 2; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-inline: -12px; padding: 2px 12px 4px; gap: 8px; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .ed-tools { grid-column: 1 / -1; grid-row: 2; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-inline: -12px; padding: 2px 12px 4px; gap: 8px; }
   .ed-tools::-webkit-scrollbar { display: none; }
   .ed-tools > * { flex: none; }
   .ed-tools .ed-hint { display: none; }
@@ -1034,3 +1034,17 @@ main[tabindex="-1"]:focus { outline: none; }
 .thumb img.page { object-fit: contain; background: #fff; }
 .draft-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; margin-bottom: 12px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, var(--raised)); font-size: 14px; text-align: left; }
 .draft-bar span { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.chip .chip-pg { width: 26px; height: 30px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 3px; flex: none; margin: -3px 0 -3px -4px; }
+.chip .chip-up { font-size: 14px; }
+@media (pointer: coarse) { .chip button { width: 30px; height: 30px; } }
+
+.ed-more { display: none; }
+.ed-num { white-space: nowrap; }
+@media (max-width: 700px) {
+  .ed-bar { position: relative; }
+  .ed-bar.more-r .ed-tools { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 20px)); mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent calc(100% - 20px)); }
+  .ed-bar.more-l .ed-tools { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 28px); mask-image: linear-gradient(90deg, transparent 4px, #000 28px); }
+  .ed-bar.more-l.more-r .ed-tools { -webkit-mask-image: linear-gradient(90deg, transparent 4px, #000 28px, #000 calc(100% - 64px), transparent calc(100% - 20px)); mask-image: linear-gradient(90deg, transparent 4px, #000 28px, #000 calc(100% - 64px), transparent calc(100% - 20px)); }
+  .ed-bar.more-r .ed-more { display: grid; place-items: center; grid-column: 3; grid-row: 2; justify-self: end; z-index: 2; width: 36px; height: 36px; margin-right: -4px; border-radius: 50%; border: 1px solid var(--line); background: var(--raised); color: var(--ink); font-size: 22px; line-height: 1; padding: 0 0 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); }
+}
+html:has(dialog[open]) .ed-more { display: none !important; }

@@ -58,6 +58,7 @@ function build() {
     <input type="file" id="edAddInput" accept=".pdf,application/pdf" multiple hidden>`;
   document.body.appendChild(el);
   document.documentElement.classList.add('ed-open');
+  toolStrip();
   $('#edCancel').onclick = cancel;
   $('#edSave').onclick = save;
   $('#edKeep').onclick = () => { $('#edConfirm').hidden = true; };
@@ -67,6 +68,24 @@ function build() {
     for (const f of files) { try { await addDoc(f); S.dirty = true; } catch (err) { app().toast(err.message); } }
     render();
   };
+}
+// On a phone the tools are a strip you swipe sideways. A button and a fade show that more
+// tools wait to the right (or left), and the button moves the strip along.
+function toolStrip() {
+  const tools = $('#edTools'), bar = tools.parentElement;
+  const more = document.createElement('button');
+  more.type = 'button'; more.id = 'edMoreTools'; more.className = 'ed-more'; more.innerHTML = '&#8250;';
+  bar.appendChild(more);
+  const check = () => {
+    const room = tools.scrollWidth - tools.clientWidth, x = tools.scrollLeft;
+    bar.classList.toggle('more-r', room > 4 && x < room - 4);
+    bar.classList.toggle('more-l', room > 4 && x > 4);
+    more.setAttribute('aria-label', T('ed.moreTools')); more.title = T('ed.moreTools');
+  };
+  more.onclick = () => tools.scrollBy({ left: tools.clientWidth * .7, behavior: 'smooth' });
+  tools.addEventListener('scroll', check, { passive: true });
+  new MutationObserver(() => requestAnimationFrame(check)).observe(tools, { childList: true });
+  new ResizeObserver(check).observe(tools);
 }
 function labels() {
   $('#edTitle').textContent = T('ed.title');
@@ -1264,7 +1283,7 @@ function openSign() {
       <button type="button" role="tab" data-tab="upload" aria-selected="false">${esc(T('sign.upload'))}</button>
       <button type="button" role="tab" data-tab="saved" aria-selected="false">${esc(T('sign.saved'))}</button>
     </div>
-    <div class="sig-pane" data-pane="draw"><p class="pw-note">${esc(T('sign.drawHint'))}</p><canvas class="sig-pad" width="560" height="200"></canvas><button type="button" class="linkish" data-act="clear">${esc(T('sign.clear'))}</button></div>
+    <div class="sig-pane" data-pane="draw"><p class="pw-note">${esc(T('sign.drawHint'))}</p><canvas class="sig-pad" width="560" height="${innerWidth < 600 ? 300 : 200}"></canvas><button type="button" class="linkish" data-act="clear">${esc(T('sign.clear'))}</button></div>
     <div class="sig-pane" data-pane="upload" hidden><label>${esc(T('sign.pick'))}<input type="file" accept="image/*"></label><label class="pw-show"><input type="checkbox" name="white" checked> ${esc(T('sign.white'))}</label><img class="sig-preview" alt="" hidden></div>
     <div class="sig-pane" data-pane="saved" hidden><div class="sig-saved"></div></div>
     <label class="pw-show"><input type="checkbox" name="remember"> ${esc(T('sign.remember'))}</label>

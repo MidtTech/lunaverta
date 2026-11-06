@@ -2770,13 +2770,14 @@ let jobs = [];          // {id, src, target, status, progress, out:{name, blob},
 let uid = 0;
 
 function addFiles(list, opts = {}) {
-  const added = [];
+  const added = []; let skipped = 0;
   for (const file of list) {
     const kind = kindOf(file);
-    if (!kind) { toast(T('toast.unsupported', { name: file.name })); continue; }
+    if (!kind) { if (opts.quiet) skipped++; else toast(T('toast.unsupported', { name: file.name })); continue; }
     const item = { id: ++uid, file, kind };
     tray.push(item); added.push(item);
   }
+  if (skipped) toast(T('folder.skipped', { n: skipped }));
   renderTray();
   return added;
 }
@@ -2863,8 +2864,14 @@ function renderTray() {
   for (const it of tray) {
     const el = document.createElement('span');
     el.className = 'chip'; el.style.setProperty('--k', kv(KINDS[it.kind].color));
-    el.innerHTML = `<span class="dot"></span><span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${fmtSize(it.file.size)}</span><button type="button" aria-label="${esc(T('tray.remove', { name: it.file.name }))}">&times;</button>`;
-    el.querySelector('button').onclick = () => { tray = tray.filter(x => x !== it); renderTray(); };
+    // With several files the order matters (merge follows it), so each one shows its first page.
+    const many = tray.length > 1, pic = many && (it.kind === 'pdf' || it.kind === 'image');
+    if (pic && it.kind === 'image' && !it.thumb) it.thumb = URL.createObjectURL(it.file);
+    if (pic && it.kind === 'pdf' && !it.thumb && !it.thumbing) { it.thumbing = true; pdfThumb(it.file, 64).then(r => { it.thumb = r.url; it.pages = r.pages; if (tray.includes(it)) renderTray(); }).catch(() => {}); }
+    const idx = tray.indexOf(it);
+    el.innerHTML = `${pic && it.thumb ? `<img class="chip-pg" src="${it.thumb}" alt="">` : '<span class="dot"></span>'}<span class="nm" title="${esc(it.file.name)}">${esc(it.file.name)}</span><span class="sz">${it.pages ? esc(T('job.pages', { n: it.pages })) + ' · ' : ''}${fmtSize(it.file.size)}</span>${many && idx > 0 ? `<button type="button" class="chip-up" aria-label="${esc(T('tray.up', { name: it.file.name }))}" title="${esc(T('tray.up', { name: it.file.name }))}">&#8592;</button>` : ''}<button type="button" class="chip-x" aria-label="${esc(T('tray.remove', { name: it.file.name }))}">&times;</button>`;
+    el.querySelector('.chip-x').onclick = () => { tray = tray.filter(x => x !== it); if (it.thumb && it.kind === 'image') URL.revokeObjectURL(it.thumb); renderTray(); };
+    const up = el.querySelector('.chip-up'); if (up) up.onclick = () => { tray.splice(idx, 1); tray.splice(idx - 1, 0, it); renderTray(); const b = $('tray').children[idx - 1]?.querySelector('.chip-up, .chip-x'); if (b) b.focus(); };
     if (tray.length > 1) { // drag chips to set the order, which a merge follows
       el.draggable = true; el.title = T('tray.drag'); el.dataset.id = it.id;
       el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/x-lunaverta-chip', String(it.id)); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
@@ -2922,13 +2929,20 @@ async function finishJob(j, outs) {
 }
 const isPdfOut = j => j.out && /\.pdf$/i.test(j.out.name);
 // A small picture of the first page and the page count, so you can see the result before saving it
+// A small picture of page 1 and the page count, for results and for the files waiting to be merged.
+async function pdfThumb(file, w) {
+  const pdf = await pdfjsDoc(file);
+  try {
+    const page = await pdf.getPage(1), vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: w / vp1.width });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    return { pages: pdf.numPages, url: c.toDataURL('image/png') };
+  } finally { pdf.destroy(); }
+}
 async function pdfPreview(j) {
-  const pdf = await pdfjsDoc(new File([j.out.blob], j.out.name, { type: 'application/pdf' }));
-  const page = await pdf.getPage(1), vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 112 / vp1.width });
-  const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
-  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-  await page.render({ canvasContext: ctx, viewport: vp }).promise;
-  j.pages = pdf.numPages; j.preview = c.toDataURL('image/png'); pdf.destroy();
+  const r = await pdfThumb(new File([j.out.blob], j.out.name, { type: 'application/pdf' }), 112);
+  j.pages = r.pages; j.preview = r.url;
   if (j.status === 'done') renderJob(j);
 }
 // What people usually do next with a result; the result goes straight into the next tool, without saving it first
@@ -3259,11 +3273,33 @@ addEventListener('drop', e => {
   if (!hasFiles(e)) return;
   e.preventDefault(); dragDepth = 0; $('dock').classList.remove('over'); document.documentElement.classList.remove('dragging-files');
   const files = [...e.dataTransfer.files];
+  // Folders: the entries must be taken now, while the drop event lasts; reading them can wait.
+  const entries = [...(e.dataTransfer.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
   closeRing();
+  const x = e.clientX, y = e.clientY;
+  if (entries.some(en => en.isDirectory)) { filesFromFolders(entries).then(list => { const added = addFiles(list, { quiet: true }); afterAdd(added, x, y); }).catch(err => toast(err.message)); return; }
   if (!files.length) return;
   const added = addFiles(files);
-  afterAdd(added, e.clientX, e.clientY);
+  afterAdd(added, x, y);
 });
+// Everything inside the dropped folders (and their subfolders), sorted by path the way people
+// number things (scan2 before scan10), so pages scanned in order stay in order.
+const FOLDER_MAX = 500;
+async function filesFromFolders(entries) {
+  const out = [];
+  const walk = async (en, path) => {
+    if (out.length >= FOLDER_MAX) return;
+    if (en.isFile) { if (!en.name.startsWith('.')) { const f = await new Promise((ok, no) => en.file(ok, no)); out.push({ path: path + en.name, f }); } return; }
+    if (!en.isDirectory) return;
+    const r = en.createReader();
+    for (;;) { const batch = await new Promise((ok, no) => r.readEntries(ok, no)); if (!batch.length) break; for (const c of batch) await walk(c, path + en.name + '/'); }
+  };
+  for (const en of entries) await walk(en, '');
+  const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+  out.sort((a, b) => coll.compare(a.path, b.path));
+  if (out.length >= FOLDER_MAX) toast(T('folder.max', { n: FOLDER_MAX }));
+  return out.map(o => o.f);
+}
 
 // ---------- picking files ----------
 $('pick').onclick = () => $('fileInput').click();

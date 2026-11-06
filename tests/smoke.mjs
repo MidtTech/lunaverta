@@ -560,6 +560,31 @@ await test('unsaved work in the editor survives a reload and can be discarded', 
   await done(p);
 });
 
+await test('a dropped folder adds the files inside it, in number order, and skips what can\'t be used', async () => {
+  const p = await page('/');
+  await p.evaluate(() => {
+    const file = (name, type) => ({ isFile: true, isDirectory: false, name, file: ok => ok(new File(['x'], name, { type })) });
+    const dir = (name, kids) => ({ isFile: false, isDirectory: true, name, createReader: () => { let done = false; return { readEntries: ok => { ok(done ? [] : kids); done = true; } }; } });
+    const root = dir('scans', [file('scan10.jpg', 'image/jpeg'), file('scan2.jpg', 'image/jpeg'), file('notes.xyz', ''), file('.DS_Store', ''), dir('more', [file('scan1.jpg', 'image/jpeg')])]);
+    const e = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(e, 'dataTransfer', { value: { types: ['Files'], files: [], items: [{ webkitGetAsEntry: () => root }] } });
+    window.dispatchEvent(e);
+  });
+  await p.waitForFunction(() => document.querySelectorAll('#tray .chip').length === 3, null, { timeout: 5000 });
+  const names = await p.$$eval('#tray .chip .nm', els => els.map(e => e.textContent));
+  assert(names.join(',') === 'scan1.jpg,scan2.jpg,scan10.jpg', 'order: ' + names.join(','));
+  await done(p);
+});
+
+await test('files waiting to be merged show their first page and can be moved earlier without dragging', async () => {
+  const p = await page('/merge-pdf/');
+  await p.setInputFiles('#fileInput', [file('a.pdf', OLD), file('b.pdf', NEW), file('c.pdf', OLD)]);
+  await p.waitForFunction(() => document.querySelectorAll('#tray .chip-pg').length === 3, null, { timeout: 20000 });
+  await p.click('#tray .chip:nth-child(3) .chip-up');
+  assert((await p.$$eval('#tray .nm', e => e.map(x => x.textContent))).join() === 'a.pdf,c.pdf,b.pdf', 'order after moving');
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

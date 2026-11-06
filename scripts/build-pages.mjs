@@ -9,6 +9,7 @@ import { join, dirname } from 'node:path';
 import vm from 'node:vm';
 import { SITE, COMPANY, HOME, LABELS, TOOLS, KINDS, TOOL_TARGETS } from './site-content.mjs';
 import { GUIDES, GUIDE_INDEX } from './guides.mjs';
+import { LOCAL } from './guides-local.mjs';
 import { icon } from './icons.mjs';
 import { KEYWORDS } from './tool-keywords.mjs';
 import { BUSINESS } from './business.mjs';
@@ -150,7 +151,7 @@ function howtoSection(lang, tool) {
     ${key ? videoFigure(lang, key, t(lang, 'howto.caption')) : ''}
     <ol>
 ${d.steps.map(s => `      <li>${esc(s)}</li>`).join('\n')}
-    </ol>${GUIDE_INDEX[lang] && GUIDES[0][lang] ? GUIDES.filter(g => g.tool === tool.id).map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}${lang === 'fr' ? ' : ' : ': '}<a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g[lang].slug)}">${esc(g[lang].h1)}</a></p>`).join('') : ''}
+    </ol>${GUIDE_INDEX[lang] && GUIDES[0][lang] ? [...GUIDES.filter(g => g.tool === tool.id).map(g => g[lang]), ...LOCAL.filter(x => x.lang === lang && x.tool === tool.id)].map(g => `\n    <p class="howto-guide">${esc(t(lang, 'howto.guide'))}${lang === 'fr' ? ' : ' : ': '}<a href="${path(lang, GUIDE_INDEX[lang].slug + '/' + g.slug)}">${esc(g.h1)}</a></p>`).join('') : ''}
   </section>`;
 }
 
@@ -286,13 +287,16 @@ function guideHtml(lang, g, main, ld, script = '', cls = 'guide') {
   return fillTexts(html.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? vals[k] : m)), lang);
 }
 const guidePages = [];
+// every guide in one language: the shared ones, then the ones written only for that language
+const guidesIn = lang => [...GUIDES.map(g => ({ g, d: g[lang], alts: L => g[L] && gPath(L, g[L].slug) })), ...LOCAL.filter(x => x.lang === lang).map(x => ({ g: x, d: x, alts: L => L === lang && gPath(L, x.slug) }))];
 for (const lang of GLANGS) {
   const I = GUIDE_INDEX[lang], links = { merge: toolUrl(lang, 'merge-pdf'), compress: toolUrl(lang, 'compress-pdf') };
   const crumbs = extra => `    <nav class="crumbs" aria-label="Breadcrumb"><a href="${path(lang)}">${esc(LABELS[lang].home)}</a> <span aria-hidden="true">›</span> ${extra}</nav>`;
-  for (const g of GUIDES) {
-    const d = g[lang], tool = toolUrl(lang, g.tool), fill = x => x.replace(/\{t:([a-z-]+)\}/g, (m, id) => toolUrl(lang, id)).replace(/\{(tool|merge|compress)\}/g, (m, k) => (k === 'tool' ? tool : links[k]));
+  const list = guidesIn(lang);
+  for (const { g, d, alts } of list) {
+    const tool = toolUrl(lang, g.tool), fill = x => x.replace(/\{t:([a-z-]+)\}/g, (m, id) => toolUrl(lang, id)).replace(/\{(tool|merge|compress)\}/g, (m, k) => (k === 'tool' ? tool : links[k]));
     const body = d.body.map(b => typeof b === 'string' ? `    <p>${fill(b)}</p>` : b.h ? `    <h2>${esc(b.h)}</h2>` : b.ol ? `    <ol>${b.ol.map(x => `<li>${fill(x)}</li>`).join('')}</ol>` : `    <ul>${b.ul.map(x => `<li>${fill(x)}</li>`).join('')}</ul>`).join('\n');
-    const others = GUIDES.filter(o => o !== g).map(o => `<li><a href="${gPath(lang, o[lang].slug)}">${esc(o[lang].h1)}</a></li>`).join('');
+    const others = list.filter(o => o.g !== g).map(o => `<li><a href="${gPath(lang, o.d.slug)}">${esc(o.d.h1)}</a></li>`).join('');
     const main = `${crumbs(`<a href="${gPath(lang)}">${esc(I.guides)}</a> <span aria-hidden="true">›</span> <span aria-current="page">${esc(d.h1)}</span>`)}
     <h1>${esc(d.h1)}</h1>
     <p class="lead">${esc(d.lead)}</p>
@@ -301,18 +305,18 @@ ${body}
     <h2>${esc(I.all)}</h2>
     <ul class="guide-more">${others}</ul>`;
     const steps = (d.body.find(b => b.ol) || { ol: [] }).ol.map((x, i) => ({ '@type': 'HowToStep', position: i + 1, text: x.replace(/<[^>]+>/g, '') }));
-    const pg = { path: gPath(lang, d.slug), og: 'guide-' + d.slug, title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L, g[L].slug)])) };
+    const pg = { path: gPath(lang, d.slug), og: 'guide-' + d.slug, title: d.title, desc: d.desc, alts: Object.fromEntries(GLANGS.filter(alts).map(L => [L, alts(L)])) };
     const ld = [{ '@type': 'Article', headline: d.h1, description: d.desc, inLanguage: lang, dateModified: DAY, mainEntityOfPage: SITE + pg.path,
         image: ogFor(lang, pg.og), author: { '@id': SITE + '/#org' }, publisher: { '@id': SITE + '/#org' }, about: { '@type': 'WebApplication', name: 'LunaVerta · ' + TOOLS.find(x => x.id === g.tool)[lang].name, url: SITE + tool } },
       { '@type': 'HowTo', name: d.h1, description: d.desc, inLanguage: lang, step: steps },
       { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: LABELS[lang].home, item: url(lang) }, { '@type': 'ListItem', position: 2, name: I.guides, item: SITE + gPath(lang) }, { '@type': 'ListItem', position: 3, name: d.h1, item: SITE + pg.path }] }];
-    guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld), url: SITE + pg.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + pg.alts[L]])) });
+    guidePages.push({ file: `docs${pg.path}index.html`, html: guideHtml(lang, pg, main, ld), url: SITE + pg.path, alts: Object.fromEntries(Object.entries(pg.alts).map(([L, u]) => [L, SITE + u])) });
   }
   const idx = { path: gPath(lang), title: I.title, desc: I.desc, alts: Object.fromEntries(GLANGS.map(L => [L, gPath(L)])) };
   const main = `${crumbs(`<span aria-current="page">${esc(I.guides)}</span>`)}
     <h1>${esc(I.h1)}</h1>
     <p class="lead">${esc(I.lead)}</p>
-    <ul class="guide-list">${GUIDES.map(g => `<li><a href="${gPath(lang, g[lang].slug)}"><b>${esc(g[lang].h1)}</b><span>${esc(g[lang].lead)}</span></a></li>`).join('')}</ul>`;
+    <ul class="guide-list">${list.map(({ d }) => `<li><a href="${gPath(lang, d.slug)}"><b>${esc(d.h1)}</b><span>${esc(d.lead)}</span></a></li>`).join('')}</ul>`;
   guidePages.push({ file: `docs${idx.path}index.html`, html: guideHtml(lang, idx, main, [{ '@type': 'CollectionPage', name: I.h1, inLanguage: lang, url: SITE + idx.path }]), url: SITE + idx.path, alts: Object.fromEntries(GLANGS.map(L => [L, SITE + idx.alts[L]])) });
 }
 // ---------- the "For business" page in every language ----------

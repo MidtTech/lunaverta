@@ -6,6 +6,7 @@ import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { TOOLS } from './site-content.mjs';
 import { GUIDES } from './guides.mjs';
+import { LOCAL } from './guides-local.mjs';
 import { GUIDE_TEXT } from './guides-extra.mjs';
 import { BUSINESS } from './business.mjs';
 for (const [L, texts] of Object.entries(GUIDE_TEXT)) for (const g of GUIDES) g[L] = texts[g.id];
@@ -50,6 +51,7 @@ for (const L of LANGS) for (const tl of TOOLS) jobs.push({ L, file: `${ROOT}og/$
 const BZ_CHIP = { en: 'No licences · No uploads', da: '21.600 kr./år → 0 kr.', sv: 'Inga licenser · Ingen uppladdning', no: 'Ingen lisenser · Ingen opplasting', de: 'Keine Lizenzen · Kein Upload', es: 'Sin licencias · Sin subidas', fr: 'Sans licences · Sans envoi' };
 for (const L of LANGS) jobs.push({ L, file: `${ROOT}og/${L}/business.jpg`, html: page(L, BUSINESS[L].h1, firstSentence(BUSINESS[L].lead), BZ_CHIP[L]) });
 for (const L of LANGS) for (const g of GUIDES) jobs.push({ L, file: `${ROOT}og/${L}/guide-${g[L].slug}.jpg`, html: page(L, g[L].h1, firstSentence(g[L].lead), GUIDE_WORD[L]) });
+for (const g of LOCAL) jobs.push({ L: g.lang, file: `${ROOT}og/${g.lang}/guide-${g.slug}.jpg`, html: page(g.lang, g.h1, firstSentence(g.lead), GUIDE_WORD[g.lang]) });
 
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
