@@ -3799,8 +3799,15 @@ function installHint() {
   setTimeout(() => {
     if (!installEvt || tray.length || jobs.length || $('installHint') || document.documentElement.classList.contains('ed-open')) return;
     const h = document.createElement('aside'); h.id = 'installHint'; h.className = 'install-hint'; h.setAttribute('aria-labelledby', 'installHintH');
-    h.innerHTML = `<span class="ih-arrow" aria-hidden="true"><svg viewBox="0 0 24 30"><path d="M12 28V4m0 0-8 8m8-8 8 8"/></svg></span>
+    // Where the install icon sits differs: Edge has more buttons to the right of the address bar
+    // (profile, menu, Copilot) than Chrome. Measured from the right edge of the window, at 100 % zoom.
+    const edge = /Microsoft Edge/.test(brands), fromRight = edge ? 260 : 150;
+    const icon = edge
+      ? '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M17.5 3v7M14 6.5h7"/></svg>'
+      : '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M12 7v5m0 0-2.5-2.5M12 12l2.5-2.5"/></svg>';
+    h.innerHTML = `<span class="ih-arrow" aria-hidden="true" style="right:${fromRight - 20 - 12}px"><svg viewBox="0 0 24 30"><path d="M12 28V4m0 0-8 8m8-8 8 8"/></svg></span>
       <b id="installHintH">${esc(T('install.hintH'))}</b><p>${esc(T('install.hintP'))}</p>
+      <p class="ih-look">${esc(T('install.look'))} <span class="ih-ico" aria-hidden="true">${icon}</span></p>
       <div class="ih-acts"><button type="button" class="btn sm primary" data-ih="go">${esc(T('install.btn'))}</button><button type="button" class="btn sm ghost" data-ih="no">${esc(T('install.later'))}</button></div>`;
     const gone = () => { h.remove(); try { localStorage.setItem(HINT_KEY, '1'); } catch (e) {} };
     h.addEventListener('click', async e => {
