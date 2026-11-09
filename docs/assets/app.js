@@ -3757,19 +3757,24 @@ if (new URLSearchParams(location.search).has('shared') && 'caches' in window) {
 
 // ---------- installed app: open files from the OS ("Open with LunaVerta") ----------
 let launched = false;
-if ('launchQueue' in window) {
-  launchQueue.setConsumer(async params => {
-    if (!params.files || !params.files.length) return;
-    launched = true;
-    const files = await Promise.all(params.files.map(h => h.getFile()));
-    // One PDF opened from Windows/macOS ("Open with", or LunaVerta as the PDF reader): show it
-    // straight away, like a PDF reader. The handle lets the editor save back to the same file.
-    if (files.length === 1 && kindOf(files[0]) === 'pdf') {
-      try { (await loadViewer()).open(files[0], params.files[0]); return; } catch (e) { /* fall back to the tools */ }
-    }
-    const added = addFiles(files);
-    afterAdd(added, innerWidth / 2, innerHeight / 2);
-  });
+async function openLaunched(params) {
+  if (!params || !params.files || !params.files.length || launched) return;
+  launched = true;
+  const files = await Promise.all(params.files.map(h => h.getFile()));
+  // One PDF opened from Windows/macOS ("Open with", or LunaVerta as the PDF reader): show it
+  // straight away, like a PDF reader. The handle lets the editor save back to the same file.
+  if (files.length === 1 && kindOf(files[0]) === 'pdf') {
+    try { (await loadViewer()).open(files[0], params.files[0]); return; } catch (e) { /* fall back to the tools */ }
+  }
+  const added = addFiles(files);
+  afterAdd(added, innerWidth / 2, innerHeight / 2);
+}
+// i18n.js may already have taken the launch (it holds the file while deciding about the language page).
+if (window.LV_LAUNCH) {
+  if (window.LV_LAUNCH.params) openLaunched(window.LV_LAUNCH.params);
+  document.addEventListener('lv-launch', e => openLaunched(e.detail));
+} else if ('launchQueue' in window) {
+  launchQueue.setConsumer(params => openLaunched(params));
 }
 
 // "Install as an app": offered only when the browser can install it, as a small button in the footer.

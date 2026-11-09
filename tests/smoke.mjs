@@ -720,6 +720,35 @@ await test('Add % to prices understands order confirmations: discount rows, 3-de
   for (const v of ['11,867', '12.816,36', '1.080', '1.130,22', '13.946,58', '3.486,65', '17.433,23']) assert(txt.includes(v), `VAT doc: missing ${v}: ` + txt.slice(0, 300));
 });
 
+await test('"Open with LunaVerta" in a Danish browser keeps the PDF (no jump to /da/), and a plain start still goes to /da/', async () => {
+  const launch = async withFile => {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'da-DK' });
+    await ctx.addInitScript(([withFile, b64]) => {
+      try { localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-tour', '1'); } catch (e) {}
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      const mm = window.matchMedia.bind(window);
+      window.matchMedia = q => /display-mode: standalone/.test(q) ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : mm(q);
+      // what Windows hands the app: launchQueue with the file's handle
+      Object.defineProperty(window, 'launchQueue', { configurable: true, value: { setConsumer(fn) { setTimeout(() => {
+        if (!withFile || location.pathname !== '/') return fn({ files: [] });
+        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        fn({ files: [{ kind: 'file', name: 'ordre.PDF', getFile: async () => new File([bytes], 'ordre.PDF', { type: 'application/pdf' }) }] });
+      }, 50); } } });
+    }, [withFile, OLD.toString('base64')]);
+    const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(e.message));
+    await p.goto(BASE + '/');
+    return p;
+  };
+  let p = await launch(true);
+  await p.waitForSelector('#viewer .vw-page canvas', { timeout: 30000 });
+  assert(new URL(p.url()).pathname === '/', 'jumped to ' + p.url());
+  assert(/Rediger/.test(await p.innerText('#vwTools')), 'viewer not in Danish: ' + await p.innerText('#vwTools'));
+  await done(p);
+  p = await launch(false);
+  await p.waitForURL(/\/da\/$/, { timeout: 5000 });
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

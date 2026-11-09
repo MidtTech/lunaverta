@@ -26,8 +26,26 @@ let lang = pageLang || (STR[detect()] ? detect() : 'en');
 // way round: search engines read pages with English settings and must see them all.
 if (pageLang === 'en') {
   let saved = null; try { saved = localStorage.getItem(KEY); } catch (e) {}
-  const want = detect();
-  if (!saved && want !== 'en' && altUrl(want) && !navigator.webdriver) location.replace(altUrl(want));
+  const want = detect(), jump = !saved && want !== 'en' && altUrl(want) && !navigator.webdriver;
+  // The installed app opens "/" (English). If Windows handed it a file ("Open with LunaVerta"),
+  // going to /da/ would lose that file, so the app stays and shows its texts in the visitor's
+  // language in place. The file is kept for app.js in window.LV_LAUNCH. Without a file, a visitor
+  // who has not chosen a language goes on to their language's page as usual.
+  const appWindow = matchMedia('(display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui)').matches;
+  if (appWindow && 'launchQueue' in window && want !== 'en') {
+    let decided = false;
+    const go = () => { if (!decided) { decided = true; if (jump) location.replace(altUrl(want)); } };
+    window.LV_LAUNCH = { params: null };
+    launchQueue.setConsumer(p => {
+      if (p && p.files && p.files.length) {
+        decided = true;
+        window.LV_LAUNCH.params = p;
+        if (STR[want]) { lang = want; const now = () => { apply(); document.dispatchEvent(new CustomEvent('lv-lang', { detail: want })); }; document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', now) : now(); }
+        document.dispatchEvent(new CustomEvent('lv-launch', { detail: p }));
+      } else go();
+    });
+    setTimeout(go, 400); // a plain start of the app (no file)
+  } else if (jump) location.replace(altUrl(want));
 }
 
 function t(key, vars) {
