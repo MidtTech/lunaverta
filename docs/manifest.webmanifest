@@ -158,7 +158,9 @@
     }
   ],
   "launch_handler": {
-    "client_mode": "focus-existing"
+    "client_mode": [
+      "navigate-new"
+    ]
   },
   "share_target": {
     "action": "/share-target",

@@ -614,6 +614,65 @@ await test('the search at the top finds a tool, and "Clear everything" empties t
   await done(p);
 });
 
+await test('a PDF opened from Windows shows straight away, and the editor can save back over it', async () => {
+  const p = await page('/');
+  // what launchQueue hands over: the file and its handle (a stand-in that records what is written)
+  await p.evaluate(async b64 => {
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0)), file = new File([bytes], 'agreement.pdf', { type: 'application/pdf' });
+    window.__written = null;
+    const handle = { name: 'agreement.pdf', kind: 'file', requestPermission: async () => 'granted', createWritable: async () => { const parts = []; return { write: async x => parts.push(x), close: async () => { window.__written = await new Blob(parts).arrayBuffer().then(a => a.byteLength); } }; } };
+    (await window.LVLoadViewer()).open(file, handle);
+  }, OLD.toString('base64'));
+  await p.waitForSelector('#viewer .vw-page canvas', { timeout: 30000 });
+  await p.waitForSelector('#viewer .textLayer span', { timeout: 15000 });
+  assert(/Service agreement/.test(await p.innerText('#viewer .vw-page')), 'text layer has no text');
+  assert(/2/.test(await p.innerText('#vwInfo')), 'page count: ' + await p.innerText('#vwInfo'));
+  await p.click('#vwEdit');
+  await p.waitForSelector('#edSave', { timeout: 30000 });
+  await p.click('#edReverse');
+  await p.click('#edSave');
+  await p.waitForSelector('dialog[open] input[value="over"]');
+  assert(/agreement\.pdf/.test(await p.innerText('dialog[open]')), 'no file name in the save choice');
+  await p.click('dialog[open] [value="ok"]');
+  await p.waitForFunction(() => window.__written > 1000, null, { timeout: 30000 });
+  await done(p);
+});
+
+await test('Chrome and Edge get an install card that opens the install window, and it stays away once closed', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx.addInitScript(() => {
+    try { localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-tour', '1'); } catch (e) {}
+    Object.defineProperty(navigator, 'userAgentData', { get: () => ({ brands: [{ brand: 'Microsoft Edge', version: '130' }], mobile: false }) });
+    addEventListener('load', () => setTimeout(() => { const e = new Event('beforeinstallprompt'); e.prompt = () => { window.__prompted = 1; }; e.userChoice = Promise.resolve({ outcome: 'dismissed' }); dispatchEvent(e); }, 200));
+  });
+  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(e.message));
+  await p.goto(BASE + '/da/');
+  await p.waitForSelector('#installHint', { timeout: 8000 });
+  await p.click('#installHint [data-ih="go"]');
+  assert(await p.evaluate(() => window.__prompted === 1), 'install window not opened');
+  await p.reload(); await p.waitForTimeout(3500);
+  assert(!(await p.$('#installHint')), 'card came back after it was closed');
+  await done(p);
+});
+
+await test('Add % to prices: 8 % on a quote recalculates lines, subtotal, VAT and total in the saved PDF', async () => {
+  const p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 });
+  await p.click('#edMarkup');
+  await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
+  assert((await p.$$('.mk-pct input')).length === 4, 'quote lines found: ' + (await p.$$('.mk-pct input')).length);
+  await p.fill('#mkAll', '8'); await p.click('#mkAllGo');
+  assert(/10\.123,65 kr\./.test(await p.innerText('#mkSums')), 'sums: ' + await p.innerText('#mkSums'));
+  await p.click('.mk-dialog [value="ok"]');
+  await p.waitForSelector('.ed-edit', { timeout: 15000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  for (const v of ['2.046,60', '730,08', '8.098,92', '2.024,73', '10.123,65']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 300));
+  for (const v of ['7.499,00', '9.373,75']) assert(!txt.includes(v), `old amount still there: ${v}`);
+  await done(p);
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);

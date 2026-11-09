@@ -2778,6 +2778,7 @@ function addFiles(list, opts = {}) {
     tray.push(item); added.push(item);
   }
   if (skipped) toast(T('folder.skipped', { n: skipped }));
+  if (added.length) document.dispatchEvent(new Event('lv-files'));
   renderTray();
   return added;
 }
@@ -2801,6 +2802,14 @@ function loadEditor() {
   return editorLoading;
 }
 window.LVLoadEditor = loadEditor;
+// The PDF reader (viewer.js), only fetched when the installed app is asked to open a PDF.
+let viewerLoading = null;
+function loadViewer() {
+  if (window.LVViewer) return Promise.resolve(window.LVViewer);
+  if (!viewerLoading) viewerLoading = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `/assets/viewer${ASSET_MIN}.js${ASSET_V ? '?' + ASSET_V : ''}`; sc.onload = () => ok(window.LVViewer); sc.onerror = () => { viewerLoading = null; no(new Error('Could not load viewer')); }; document.head.appendChild(sc); });
+  return viewerLoading;
+}
+window.LVLoadViewer = loadViewer;
 if (['edit', 'redact', 'prices'].includes(PRESET)) {
   (window.requestIdleCallback || (f => setTimeout(f, 1200)))(() => loadEditor().catch(() => {}));
 }
@@ -3656,7 +3665,8 @@ if (PRESET === 'qr') openQR().catch(e => toast(e.message));
 
 // The PDF editor (editor.js) uses these.
 window.LVApp = {
-  T, esc, lib, VENDOR, WIN_ANSI, base, toast: (m, ok, blob) => toast(m, ok, blob), reportError, qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes,
+  T, esc, lib, VENDOR, WIN_ANSI, base, toast: (m, ok, blob) => toast(m, ok, blob), reportError, qpdf, tidyPDF, pickTarget, writeTo, download, loadPdfBytes, askOptions,
+  openTools(files) { const added = addFiles(files); afterAdd(added, innerWidth / 2, innerHeight / 2); },
   addResult(srcName, target, outs, saved) { const j = newJob(srcName, target); j.srcLabel = 'PDF'; j.saved = !!saved; finishJob(j, outs).catch(e => failJob(j, e)); }
 };
 function gifLabels() { document.querySelectorAll('#optGif option').forEach(op => { op.textContent = T('opt.gifN', { n: op.value }); }); }
@@ -3758,6 +3768,11 @@ if ('launchQueue' in window) {
     if (!params.files || !params.files.length) return;
     launched = true;
     const files = await Promise.all(params.files.map(h => h.getFile()));
+    // One PDF opened from Windows/macOS ("Open with", or LunaVerta as the PDF reader): show it
+    // straight away, like a PDF reader. The handle lets the editor save back to the same file.
+    if (files.length === 1 && kindOf(files[0]) === 'pdf') {
+      try { (await loadViewer()).open(files[0], params.files[0]); return; } catch (e) { /* fall back to the tools */ }
+    }
     const added = addFiles(files);
     afterAdd(added, innerWidth / 2, innerHeight / 2);
   });
@@ -3775,8 +3790,36 @@ addEventListener('beforeinstallprompt', e => {
   b.title = T('install.hint'); b.setAttribute('data-i18n-attr', 'title:install.hint');
   b.addEventListener('click', async () => { if (!installEvt) return; installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null); if (r && r.outcome === 'accepted') b.remove(); installEvt = null; });
   foot.insertBefore(b, foot.querySelector('.foot-promise'));
+  installHint();
 });
-addEventListener('appinstalled', () => { toast(T('toast.installed')); const b = $('installApp'); if (b) b.remove(); });
+addEventListener('appinstalled', () => { toast(T('toast.installed')); const b = $('installApp'); if (b) b.remove(); $('installHint')?.remove(); });
+// Chrome and Edge on a computer: a small card at the top right, with an arrow up towards the install
+// icon in the address bar and a button that opens the same install window. Only when the browser says
+// LunaVerta can be installed (so never when it already is), and never again once closed.
+const HINT_KEY = 'lunaverta-install-hint';
+function installHint() {
+  const brands = ((navigator.userAgentData && navigator.userAgentData.brands) || []).map(b => b.brand).join(' ');
+  if (!/Google Chrome|Microsoft Edge/.test(brands) || navigator.userAgentData.mobile || !matchMedia('(pointer: fine) and (min-width: 900px)').matches) return;
+  try { if (localStorage.getItem(HINT_KEY)) return; } catch (e) { return; }
+  if ($('installHint') || document.documentElement.classList.contains('ed-open') || document.documentElement.classList.contains('vw-open')) return;
+  setTimeout(() => {
+    if (!installEvt || tray.length || jobs.length || $('installHint') || document.documentElement.classList.contains('ed-open')) return;
+    const h = document.createElement('aside'); h.id = 'installHint'; h.className = 'install-hint'; h.setAttribute('aria-labelledby', 'installHintH');
+    h.innerHTML = `<span class="ih-arrow" aria-hidden="true"><svg viewBox="0 0 24 30"><path d="M12 28V4m0 0-8 8m8-8 8 8"/></svg></span>
+      <b id="installHintH">${esc(T('install.hintH'))}</b><p>${esc(T('install.hintP'))}</p>
+      <div class="ih-acts"><button type="button" class="btn sm primary" data-ih="go">${esc(T('install.btn'))}</button><button type="button" class="btn sm ghost" data-ih="no">${esc(T('install.later'))}</button></div>`;
+    const gone = () => { h.remove(); try { localStorage.setItem(HINT_KEY, '1'); } catch (e) {} };
+    h.addEventListener('click', async e => {
+      const b = e.target.closest('[data-ih]'); if (!b) return;
+      if (b.dataset.ih === 'no' || !installEvt) { gone(); return; }
+      installEvt.prompt(); const r = await installEvt.userChoice.catch(() => null);
+      if (r && r.outcome === 'accepted') { $('installApp')?.remove(); installEvt = null; } gone();
+    });
+    document.body.appendChild(h);
+  }, 2500);
+}
+// Files added or the editor opened: the card steps aside (it is shown again on a later visit).
+document.addEventListener('lv-files', () => $('installHint')?.remove());
 
 // ---------- offline support ----------
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

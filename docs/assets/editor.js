@@ -123,10 +123,11 @@ async function thumb(pg) {
 }
 function renderGrid() {
   S.view = 'grid';
-  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edReverse">${esc(T('ed.reverse'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
+  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edReverse">${esc(T('ed.reverse'))}</button><button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
   $('#edAdd').onclick = () => $('#edAddInput').click();
   // Reverse the order of the pages, e.g. a stack that was scanned upside down (undo brings it back)
   $('#edReverse').onclick = () => { S.pages.reverse(); S.dirty = true; renderGrid(); };
+  $('#edMarkup').onclick = () => openMarkup().catch(e => app().toast(e.message));
   $('#edFind').onclick = openFind;
   wireUndo();
   const body = $('#edBody');
@@ -236,6 +237,7 @@ function pageTools() {
       <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}" title="${esc(T('tip.edit'))}">${esc(T('ed.editText'))}</button>
       <button class="btn sm${S.paras ? ' primary' : ''}" type="button" id="edParas" aria-pressed="${!!S.paras}" title="${esc(T('tip.paras'))}">${esc(T('ed.paras'))}</button>
       <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}" title="${esc(T('tip.add'))}">${esc(T('ed.addText'))}</button>
+      <button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))}</button>
       <label class="ed-size" title="${esc(T('tip.size'))}"><span class="sr-only">${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     </span>
     <span class="ed-group" role="group" aria-label="${esc(T('grp.mark'))}" data-label="${esc(T('grp.mark'))}">
@@ -260,6 +262,7 @@ function pageTools() {
   const mode = k => () => { const on = !S[k]; endModes(); S[k] = on; renderPage(); };
   $('#edRedact').onclick = mode('redacting');
   $('#edAddText').onclick = mode('adding');
+  $('#edMarkup').onclick = () => { endModes(); openMarkup().catch(e => app().toast(e.message)); };
   $('#edEditText').onclick = mode('editing');
   $('#edParas').onclick = mode('paras');
   $('#edSize').onchange = e => { S.size = +e.target.value; };
@@ -511,14 +514,15 @@ function sampleColours(canvas, dpr, box) {
   const w = Math.min(canvas.width - x, Math.ceil(box.width * dpr) + 4), h = Math.min(canvas.height - y, Math.ceil(box.height * dpr) + 4);
   if (w < 3 || h < 3) return { ink: [0, 0, 0], bg: [255, 255, 255] };
   const d = ctx.getImageData(x, y, w, h).data, lum = i => d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11;
-  let darkest = 0, dl = 999;
-  for (let i = 0; i < d.length; i += 4) { const l = lum(i); if (l < dl) { dl = l; darkest = i; } }
   const edge = [];
   for (let i = 0; i < w; i++) edge.push((i) * 4, ((h - 1) * w + i) * 4);
   for (let j = 0; j < h; j++) edge.push((j * w) * 4, (j * w + w - 1) * 4);
   edge.sort((p, q) => lum(q) - lum(p));
-  const m = edge[Math.floor(edge.length * .3)]; // a light, typical edge pixel
-  return { ink: [d[darkest], d[darkest + 1], d[darkest + 2]], bg: [d[m], d[m + 1], d[m + 2]] };
+  const m = edge[Math.floor(edge.length * .5)], bl = lum(m); // a typical edge pixel: the background
+  // The ink is the pixel that differs most from the background: dark text on light, or light text on dark.
+  let ink = 0, far = -1;
+  for (let i = 0; i < d.length; i += 4) { const f = Math.abs(lum(i) - bl); if (f > far) { far = f; ink = i; } }
+  return { ink: [d[ink], d[ink + 1], d[ink + 2]], bg: [d[m], d[m + 1], d[m + 2]] };
 }
 const CSS_FONT = { sans: 'Helvetica, Arial, sans-serif', serif: '"Times New Roman", Times, serif', mono: '"Courier New", Courier, monospace' };
 async function textRuns(page, pg, vp, layer, canvas, dpr) {
@@ -540,7 +544,7 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
       Object.assign(el.style, {
         left: box.left + 'px', top: box.top + 'px', minWidth: box.width + 'px', height: box.height + 'px',
         fontFamily: (edit.cssName ? `"${edit.cssName}", ` : '') + CSS_FONT[edit.font.family], fontWeight: edit.font.bold ? '700' : '400', fontStyle: edit.font.italic ? 'italic' : 'normal',
-        fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`
+        fontSize: (edit.size * vp.scale) + 'px', color: `rgb(${edit.ink})`, background: `rgb(${edit.bg})`, textAlign: edit.align === 'right' ? 'right' : ''
       });
       // Size the box to its text in the font it is shown in, so all of it is visible.
       const fit = () => {
@@ -930,6 +934,167 @@ async function resume() {
   if (d.view === 'page' && cur) { S.view = 'page'; S.current = cur.id; }
   render();
   app().toast(T('draft.back'), true);
+}
+
+
+// ---------- percentage on the prices in a quote ----------
+// A salesperson's request: put 8 % on the prices of a supplier's quote (or a different % per line,
+// as in the ERP), and have subtotal, VAT and total worked out again. The amounts are found in the
+// page text, the new ones go in as ordinary text edits (the PDF's own font, right-aligned where the
+// column is), so they show on the page, can be changed by hand and undone like any other edit.
+const MK_CUR = '(?:kr\\.?|DKK|NOK|SEK|EUR|€|\\$|£|USD|GBP|CHF)';
+const MK_RE = new RegExp(`^(\\(?)(-|−)?\\s*(${MK_CUR}\\s?)?(-|−)?(\\d{1,3}(?:([.,\\s\\u00a0'’])\\d{3})*|\\d+)(?:([.,])(\\d{2})|(,-))(\\s?${MK_CUR}\\.?)?(\\)?)$`, 'i');
+function mkParse(str) {
+  const t = str.trim(), m = t.match(MK_RE);
+  if (!m) return null;
+  const [, open, neg1, pre, neg2, int, thou, dec, cents, dash, post, close] = m;
+  if (thou && dec && thou === dec) return null; // "1.234.56" is not money
+  if (!dec && !dash) return null;
+  const v = parseFloat(int.replace(/[^\d]/g, '') + '.' + (cents || '00')) * (neg1 || neg2 || (open && close) ? -1 : 1);
+  return { v, fmt: { open, neg: neg1 || neg2 || '', negBefore: !!neg1, pre: pre || '', thou: thou || '', dec: dec || '', dash: !!dash, post: post || '', close } };
+}
+function mkFormat(v, f) {
+  const neg = v < 0, a = Math.abs(v), cents = f.dash ? 0 : Math.round(a * 100) % 100, whole = f.dash ? Math.round(a) : Math.floor(Math.round(a * 100) / 100);
+  const thou = f.thou || (f.dec === ',' || f.dash ? '.' : ','), int = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, thou);
+  const num = int + (f.dash ? ',-' : (f.dec || ',') + String(cents).padStart(2, '0'));
+  const sign = neg ? (f.neg || '-') : '';
+  if (f.open && f.close && neg) return `(${f.pre}${num}${f.post})`;
+  return f.negBefore ? `${sign}${f.pre}${num}${f.post}` : `${f.pre}${sign}${num}${f.post}`;
+}
+const mkRound = (v, f) => f.dash ? Math.round(v + 1e-9) : Math.round((v + Math.sign(v) * 1e-9) * 100) / 100; // a hair added, so x.xx5 rounds up as people expect
+const MK_TOTAL = /\b(total|i alt|ialt|at betale|til betaling|samlet|gesamt|summe|att betala|å betale|totalt|importe total|montant)\b/i;
+const MK_INCL = /\b(inkl|incl|including|inklusive|ttc|iva incl)/i;
+const MK_VAT = /\b(moms|vat|mwst|ust|mva|iva|tva|tax|merverdiavgift)\b/i;
+const MK_SUB = /(subtotal|sub-total|sub total|netto|ekskl|excl|zwischensumme|delsum|summa|base imponible|sous-total|nettobeløb|beløb ekskl)/i;
+async function mkScan() {
+  const lines = [], sums = [];
+  for (const pg of S.pages.filter(p => !p.deleted)) {
+    const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
+    let tc; try { tc = await page.getTextContent(); } catch (e) { continue; }
+    const runs = lineRuns(tc.items);
+    // rows: runs on the same line
+    const rows = [];
+    for (const r of runs.slice().sort((a, b) => b.y - a.y || a.x - b.x)) {
+      let row = rows.find(w => Math.abs(w.y - r.y) < Math.max(w.size, r.size) * .45);
+      if (!row) rows.push(row = { y: r.y, size: r.size, runs: [] });
+      row.runs.push(r);
+    }
+    const all = [];
+    for (const row of rows) {
+      row.runs.sort((a, b) => a.x - b.x);
+      row.amounts = row.runs.map(r => ({ r, p: mkParse(r.str) })).filter(a => a.p);
+      row.label = row.runs.filter(r => !mkParse(r.str)).map(r => r.str).join(' ').replace(/\s+/g, ' ').trim();
+      if (row.amounts.length) all.push(row);
+    }
+    if (!all.length) continue;
+    // where the summary starts: the first row (from the top) whose words say subtotal, VAT or total
+    const kind = row => { const l = row.label; if (MK_TOTAL.test(l) && (MK_INCL.test(l) || !MK_VAT.test(l)) && !MK_SUB.test(l)) return 'total'; if (MK_VAT.test(l) && !MK_TOTAL.test(l)) return 'vat'; if (MK_SUB.test(l) || (MK_TOTAL.test(l) && /ekskl|excl|netto/i.test(l))) return 'sub'; if (MK_VAT.test(l)) return 'vat'; return ''; };
+    const firstSum = all.findIndex(row => kind(row));
+    all.forEach((row, i) => {
+      const k = kind(row);
+      if (firstSum >= 0 && i >= firstSum) { if (k) sums.push({ row, kind: k, page, pg, tc }); }
+      else if (row.label.replace(/[\d\s.,-]/g, '').length >= 2) lines.push({ row, page, pg, tc, pct: 0 });
+    });
+  }
+  // right- or left-aligned: amounts that share a right edge are a right-aligned column
+  const amts = [...lines, ...sums].flatMap(x => x.row.amounts);
+  for (const a of amts) {
+    const right = a.r.x + a.r.w;
+    const sameRight = amts.filter(b => b !== a && Math.abs(b.r.x + b.r.w - right) < 1.5).length, sameLeft = amts.filter(b => b !== a && Math.abs(b.r.x - a.r.x) < 1.5).length;
+    a.align = sameLeft > sameRight ? 'left' : 'right';
+  }
+  return { lines, sums };
+}
+function mkCompute(scan) {
+  let delta = 0, linesOld = 0;
+  const out = new Map(); // amount → new value
+  for (const ln of scan.lines) {
+    const f = 1 + (ln.pct || 0) / 100, am = ln.row.amounts;
+    for (const a of am) out.set(a, mkRound(a.p.v * f, a.p.fmt));
+    // Unit price and line amount: the amount stays the new unit price × the quantity, so the line adds up.
+    if (am.length === 2 && am[0].p.v) { const q = am[1].p.v / am[0].p.v; if (Math.abs(q - Math.round(q * 1000) / 1000) < 1e-6) out.set(am[1], mkRound(out.get(am[0]) * q, am[1].p.fmt)); }
+    const last = am.at(-1); linesOld += last.p.v; delta += out.get(last) - last.p.v;
+  }
+  const one = k => scan.sums.find(x => x.kind === k), sub = one('sub'), vat = one('vat'), tot = one('total');
+  const val = x => x.row.amounts.at(-1);
+  const base = sub ? val(sub).p.v : linesOld;
+  let vatDelta = 0;
+  if (sub) out.set(val(sub), mkRound(val(sub).p.v + delta, val(sub).p.fmt));
+  if (vat) {
+    // A clean rate (25 %) is used as it is, so the new VAT is exact; otherwise it grows with the subtotal.
+    const v = val(vat), rate = base ? Math.round(v.p.v / base * 10000) / 10000 : 0;
+    const nv = !base ? v.p.v : Math.abs(rate * base - v.p.v) < .011 ? mkRound(rate * (base + delta), v.p.fmt) : mkRound(v.p.v * (base + delta) / base, v.p.fmt);
+    out.set(v, nv); vatDelta = nv - v.p.v;
+  }
+  if (tot) out.set(val(tot), mkRound(val(tot).p.v + delta + vatDelta, val(tot).p.fmt));
+  return { out, sub, vat, tot };
+}
+async function mkApply(scan, res) {
+  const pages = new Map();
+  const canvasOf = async x => {
+    if (pages.has(x.pg.id)) return pages.get(x.pg.id);
+    const vp = x.page.getViewport({ scale: 1.5 }), c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await x.page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const v = { c, vp }; pages.set(x.pg.id, v); return v;
+  };
+  let n = 0;
+  for (const x of [...scan.lines, ...scan.sums]) {
+    for (const a of x.row.amounts) {
+      if (!res.out.has(a)) continue;
+      const nv = res.out.get(a), r = a.r, key = `${x.pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
+      const text = mkFormat(nv, a.p.fmt), old = S.edits.find(e => e.key === key);
+      if (old) { old.text = text; n++; continue; }
+      if (Math.abs(nv - a.p.v) < .005) continue;
+      const { c, vp } = await canvasOf(x);
+      const [x1, y1, x2, y2] = vp.convertToViewportRectangle([r.x - 1, r.y - r.size * .25, r.x + r.w + 1, r.y + r.size * .95]);
+      const col = sampleColours(c, 1, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
+      S.edits.push({ key, pageId: x.pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text, font: fontStyle(x.page, r.fontName, x.tc.styles), cssName: cssName(x.page, r.fontName), ink: col.ink, bg: col.bg, align: a.align });
+      n++;
+    }
+  }
+  if (n) S.dirty = true;
+  return n;
+}
+async function openMarkup() {
+  const scan = await mkScan();
+  if (!scan.lines.length) { app().toast(T('mk.none')); return; }
+  const pctOf = s => { const v = parseFloat(String(s).replace('−', '-').replace('–', '-').replace(',', '.').replace(/[^\d.-]/g, '')); return isFinite(v) ? v : 0; };
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog mk-dialog';
+  const lineRow = (ln, i) => { const a = ln.row.amounts.at(-1); return `<tr><td class="mk-desc" title="${esc(ln.row.label)}">${esc(ln.row.label)}</td><td class="mk-num">${esc(a.r.str)}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: ln.row.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`; };
+  d.innerHTML = `<form method="dialog">
+    <h2>${esc(T('mk.title'))}</h2>
+    <p class="pw-note">${esc(T('mk.intro'))}</p>
+    <div class="mk-all"><label for="mkAll">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
+    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.lines.map(lineRow).join('')}</tbody></table></div>
+    <dl class="mk-sums" id="mkSums"></dl>
+    <p class="pw-note">${esc(T('mk.check'))}</p>
+    <div class="pw-btns"><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
+  </form>`;
+  document.body.appendChild(d);
+  const update = () => {
+    d.querySelectorAll('[data-i]').forEach(inp => { scan.lines[+inp.dataset.i].pct = pctOf(inp.value); });
+    const res = mkCompute(scan);
+    scan.lines.forEach((ln, i) => { const a = ln.row.amounts.at(-1), cell = d.querySelector(`[data-new="${i}"]`); cell.textContent = ln.pct ? mkFormat(res.out.get(a), a.p.fmt) : ''; });
+    const sum = (k, x) => x ? `<dt>${esc(T('mk.' + k))}</dt><dd><s>${esc(x.row.amounts.at(-1).r.str)}</s> → <b>${esc(mkFormat(res.out.get(x.row.amounts.at(-1)), x.row.amounts.at(-1).p.fmt))}</b></dd>` : '';
+    d.querySelector('#mkSums').innerHTML = sum('sub', res.sub) + sum('vat', res.vat) + sum('total', res.tot);
+    return res;
+  };
+  d.addEventListener('input', update);
+  d.querySelector('#mkAllGo').onclick = () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); update(); };
+  d.querySelector('#mkAll').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.querySelector('#mkAllGo').click(); } });
+  update();
+  d.showModal(); d.querySelector('#mkAll').focus();
+  const ok = await new Promise(r => d.addEventListener('close', () => r(d.returnValue === 'ok'), { once: true }));
+  const res = update(); d.remove();
+  if (!ok) return;
+  const n = await mkApply(scan, res);
+  if (!n) { app().toast(T('mk.nothing')); return; }
+  S.editing = false;
+  if (S.view !== 'page') { S.view = 'page'; S.current = (scan.lines[0].pg || S.pages[0]).id; }
+  render();
+  app().toast(T('mk.done', { n }), true);
 }
 
 // ---------- undo and redo ----------
@@ -2150,7 +2315,17 @@ async function save(opt) {
   const btn = $('#edSave');
   // Ask where to save first, while the click still counts as the visitor's.
   const name = app().base(S.docs[0].file.name) + ((opt && opt.suffix) || '-edited') + '.pdf';
-  const handle = await app().pickTarget(name, 'application/pdf');
+  let handle;
+  // Opened with LunaVerta from Windows: offer to save over that file, the way a PDF reader does.
+  if (S.origHandle && S.docs.length === 1) {
+    const a = await app().askOptions(T('ed.saveWhere'), [{ id: 'where', type: 'radio', value: 'over', options: [['over', T('ed.saveOver', { name: S.origHandle.name }), T('ed.saveOverD')], ['copy', T('ed.saveCopy'), T('ed.saveCopyD')]] }], 'ed.save');
+    if (!a) return;
+    if (a.where === 'over') {
+      try { if ((await S.origHandle.requestPermission({ mode: 'readwrite' })) === 'granted') handle = S.origHandle; } catch (e) { handle = undefined; }
+      if (!handle) { app().toast(T('ed.saveOverNo')); return; }
+    }
+  }
+  if (!handle) handle = await app().pickTarget(name, 'application/pdf');
   if (handle === null) return; // cancelled: stay in the editor
   btn.disabled = true; btn.textContent = T('ed.saving');
   try {
@@ -2262,7 +2437,7 @@ async function save(opt) {
           const t2 = [...ed.text].map(ch => L.canDraw(own, ch) || !notAnsi.test(ch) ? ch : '?').join('');
           const tw = L.measure(own, fb, t2, ed.size), mid = ed.x + ed.w / 2;
           const centred = Math.abs(mid - (mb.x + mb.width / 2)) < mb.width * .03 && ed.w < mb.width * .8;
-          L.writeLine(out, page, own, fb, t2, centred ? mid - tw / 2 : ed.x, ed.y, ed.size, ed.ink.map(v => v / 255));
+          L.writeLine(out, page, own, fb, t2, ed.align === 'right' ? ed.x + ed.w - tw : centred ? mid - tw / 2 : ed.x, ed.y, ed.size, ed.ink.map(v => v / 255));
           continue;
         }
         const f = await fontFor(ed.font), text = ed.text.replace(app().WIN_ANSI, '?');
@@ -2271,7 +2446,7 @@ async function save(opt) {
         const size = natural ? ed.size * Math.min(1.1, Math.max(.75, ed.w / natural)) : ed.size;
         // Keep centred lines centred.
         const mid = ed.x + ed.w / 2, centred = Math.abs(mid - (mb.x + mb.width / 2)) < mb.width * .03 && ed.w < mb.width * .8;
-        const x = centred ? mid - f.widthOfTextAtSize(text, size) / 2 : ed.x;
+        const x = ed.align === 'right' ? ed.x + ed.w - f.widthOfTextAtSize(text, size) : centred ? mid - f.widthOfTextAtSize(text, size) / 2 : ed.x;
         page.drawText(text, { x, y: ed.y, size, font: f, color: col(ed.ink) });
       }
       // Text is drawn turned with the page, so it reads upright however the page is shown.
@@ -2375,8 +2550,8 @@ async function save(opt) {
     app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }), true, blob);
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed')); if (app().reportError) app().reportError(e, 'editor save');
-    // The Save as window has already made an empty file: take it away again.
-    if (handle && handle.remove) handle.remove().catch(() => {});
+    // The Save as window has already made an empty file: take it away again (never the file that was opened).
+    if (handle && handle.remove && handle !== S.origHandle) handle.remove().catch(() => {});
     btn.disabled = false; btn.textContent = T('ed.save');
   }
 }
@@ -2390,6 +2565,7 @@ async function open(files, opt = {}) {
   try { for (const f of files) await addDoc(f); }
   catch (e) { close(); app().toast(e.message); return; }
   trackChanges();
+  S.origHandle = (files.length === 1 && opt.handle) || null; // opened from Windows: Save can write back to the same file
   // The Redact PDF page opens the first page ready to black out.
   if (opt.redact && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; S.redacting = true; }
   if (opt.find && S.pages.length) { S.view = 'page'; S.current = S.pages[0].id; }
@@ -2399,6 +2575,7 @@ async function open(files, opt = {}) {
   render();
   if (opt.action === 'sign') openSign();
   else if (opt.action === 'nums' || opt.action === 'wm') openStamps(opt.action);
+  else if (opt.action === 'markup') openMarkup().catch(e => app().toast(e.message));
   // Opened to remove sensitive text: the suggestions panel opens, with amounts switched on.
   if (opt.find) {
     await openFind();
