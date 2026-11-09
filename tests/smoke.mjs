@@ -638,7 +638,7 @@ await test('a PDF opened from Windows shows straight away, and the editor can sa
   await done(p);
 });
 
-await test('Chrome and Edge get an install card that opens the install window, and it stays away once closed', async () => {
+await test('a computer gets a note that LunaVerta can be installed, its button opens the install window, and it stays away once closed', async () => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   await ctx.addInitScript(() => {
     try { localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-tour', '1'); } catch (e) {}

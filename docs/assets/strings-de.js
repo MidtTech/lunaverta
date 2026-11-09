@@ -373,7 +373,6 @@ window.LV_STR.de = {
   'nav.privacy': 'Datenschutz',
   'nav.licenses': 'Open-Source-Lizenzen',
   'nav.source': 'Quellcode',
-  'install.look': 'Oder klicke auf dieses Symbol in der Adressleiste:',
   'mk.btn': '% auf Preise',
   'mk.tip': 'Einen Prozentsatz auf die Preise eines Angebots legen, für alle Positionen oder einzeln',
   'mk.title': 'Prozent auf die Preise',

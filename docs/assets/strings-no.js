@@ -373,7 +373,6 @@ window.LV_STR.no = {
   'nav.privacy': 'Personvern',
   'nav.licenses': 'Lisenser for åpen kildekode',
   'nav.source': 'Kildekode',
-  'install.look': 'Eller klikk på dette ikonet i adressefeltet:',
   'mk.btn': 'Legg % på priser',
   'mk.tip': 'Legg en prosentsats på prisene i et tilbud, på alle linjer eller linje for linje',
   'mk.title': 'Legg prosent på prisene',

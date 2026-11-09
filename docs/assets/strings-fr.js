@@ -378,7 +378,6 @@ window.LV_STR.fr = {
   'nav.privacy': 'Confidentialité',
   'nav.licenses': 'Licences open source',
   'nav.source': 'Code source',
-  'install.look': 'Ou cliquez sur cette icône dans la barre d\'adresse :',
   'mk.btn': 'Ajouter % aux prix',
   'mk.tip': 'Appliquer un pourcentage aux prix d\'un devis, à toutes les lignes ou ligne par ligne',
   'mk.title': 'Ajouter un pourcentage aux prix',

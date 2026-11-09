@@ -373,7 +373,6 @@ window.LV_STR.sv = {
   'nav.privacy': 'Integritet',
   'nav.licenses': 'Licenser för öppen källkod',
   'nav.source': 'Källkod',
-  'install.look': 'Eller klicka på den här ikonen i adressfältet:',
   'mk.btn': 'Lägg % på priser',
   'mk.tip': 'Lägg en procentsats på priserna i en offert, på alla rader eller rad för rad',
   'mk.title': 'Lägg procent på priserna',

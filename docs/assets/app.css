@@ -1097,16 +1097,13 @@ html.vw-open, html.vw-open body { overflow: hidden; }
   html.vw-printing #vwPrintPages img { display: block; width: 100%; height: auto; break-after: page; }
   @page { margin: 0; }
 }
-/* "Install LunaVerta": top right, the arrow points up at the install icon in Chrome's and Edge's address bar */
-.install-hint { position: fixed; top: calc(34px + env(safe-area-inset-top, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); z-index: 50; width: 300px; display: grid; gap: 6px; padding: 14px 16px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px -16px rgba(20, 24, 40, .35); font-size: 14px; animation: ih-in .35s ease-out; }
+/* "Install LunaVerta": a small note at the bottom right */
+.install-hint { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); z-index: 50; width: 300px; display: grid; gap: 6px; padding: 14px 16px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px -16px rgba(20, 24, 40, .35); font-size: 14px; animation: ih-in .35s ease-out; }
 .install-hint b { font: 700 16px/1.25 var(--f-display); }
 .install-hint p { margin: 0; color: var(--muted); line-height: 1.45; }
 .install-hint .ih-acts { display: flex; gap: 8px; margin-top: 6px; }
-.install-hint .ih-arrow { position: absolute; top: -33px; right: 128px; /* set per browser in app.js */ width: 24px; height: 30px; color: var(--accent); animation: ih-bob 1.6s ease-in-out infinite; }
-.install-hint .ih-arrow svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-@keyframes ih-in { from { opacity: 0; transform: translateY(-8px); } }
-@keyframes ih-bob { 50% { transform: translateY(-6px); } }
-@media (prefers-reduced-motion: reduce) { .install-hint, .install-hint .ih-arrow { animation: none; } }
+@keyframes ih-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .install-hint { animation: none; } }
 /* Add % to prices */
 .mk-dialog { width: min(720px, calc(100vw - 32px)); }
 .mk-all { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; font-weight: 500; }
@@ -1125,6 +1122,3 @@ html.vw-open, html.vw-open body { overflow: hidden; }
 .mk-sums dt { color: var(--muted); }
 .mk-sums dd { margin: 0; text-align: right; }
 .mk-sums s { color: var(--muted); margin-right: 6px; }
-.install-hint .ih-look { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.install-hint .ih-ico { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--surface); }
-.install-hint .ih-ico svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

@@ -3787,27 +3787,19 @@ addEventListener('beforeinstallprompt', e => {
   installHint();
 });
 addEventListener('appinstalled', () => { toast(T('toast.installed')); const b = $('installApp'); if (b) b.remove(); $('installHint')?.remove(); });
-// Chrome and Edge on a computer: a small card at the top right, with an arrow up towards the install
-// icon in the address bar and a button that opens the same install window. Only when the browser says
-// LunaVerta can be installed (so never when it already is), and never again once closed.
+// On a computer, when the browser says LunaVerta can be installed (so never when it already is):
+// a small note at the bottom right that it can be installed, with a button that opens the browser's
+// own install window. Never again once closed. (An arrow at the browser's install icon was tried, but
+// where that icon sits depends on the browser, the window and the user's toolbar.)
 const HINT_KEY = 'lunaverta-install-hint';
 function installHint() {
-  const brands = ((navigator.userAgentData && navigator.userAgentData.brands) || []).map(b => b.brand).join(' ');
-  if (!/Google Chrome|Microsoft Edge/.test(brands) || navigator.userAgentData.mobile || !matchMedia('(pointer: fine) and (min-width: 900px)').matches) return;
+  if ((navigator.userAgentData && navigator.userAgentData.mobile) || !matchMedia('(pointer: fine) and (min-width: 900px)').matches) return;
   try { if (localStorage.getItem(HINT_KEY)) return; } catch (e) { return; }
   if ($('installHint') || document.documentElement.classList.contains('ed-open') || document.documentElement.classList.contains('vw-open')) return;
   setTimeout(() => {
-    if (!installEvt || tray.length || jobs.length || $('installHint') || document.documentElement.classList.contains('ed-open')) return;
+    if (!installEvt || tray.length || jobs.length || $('installHint') || document.querySelector('.welcome-card, .upd-note') || document.documentElement.classList.contains('ed-open')) return;
     const h = document.createElement('aside'); h.id = 'installHint'; h.className = 'install-hint'; h.setAttribute('aria-labelledby', 'installHintH');
-    // Where the install icon sits differs: Edge has more buttons to the right of the address bar
-    // (profile, menu, Copilot) than Chrome. Measured from the right edge of the window, at 100 % zoom.
-    const edge = /Microsoft Edge/.test(brands), fromRight = edge ? 260 : 150;
-    const icon = edge
-      ? '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M17.5 3v7M14 6.5h7"/></svg>'
-      : '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M12 7v5m0 0-2.5-2.5M12 12l2.5-2.5"/></svg>';
-    h.innerHTML = `<span class="ih-arrow" aria-hidden="true" style="right:${fromRight - 20 - 12}px"><svg viewBox="0 0 24 30"><path d="M12 28V4m0 0-8 8m8-8 8 8"/></svg></span>
-      <b id="installHintH">${esc(T('install.hintH'))}</b><p>${esc(T('install.hintP'))}</p>
-      <p class="ih-look">${esc(T('install.look'))} <span class="ih-ico" aria-hidden="true">${icon}</span></p>
+    h.innerHTML = `<b id="installHintH">${esc(T('install.hintH'))}</b><p>${esc(T('install.hintP'))}</p>
       <div class="ih-acts"><button type="button" class="btn sm primary" data-ih="go">${esc(T('install.btn'))}</button><button type="button" class="btn sm ghost" data-ih="no">${esc(T('install.later'))}</button></div>`;
     const gone = () => { h.remove(); try { localStorage.setItem(HINT_KEY, '1'); } catch (e) {} };
     h.addEventListener('click', async e => {
