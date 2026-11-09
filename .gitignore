@@ -4,3 +4,17 @@ node_modules/
 # Local working files, not part of the site
 Claude outputs/
 demo-redesign/
+
+# Made by scripts/build-pages.mjs (npm run pages). GitHub builds them when it publishes,
+# so they are not kept in git. Run the build to get them locally.
+docs/**/index.html
+docs/privacy.html
+docs/licenses.html
+docs/no-upload.html
+docs/404.html
+docs/sw.js
+docs/sitemap.xml
+docs/llms.txt
+docs/llms-full.txt
+docs/assets/*.min.js
+docs/assets/*.min.css

@@ -407,7 +407,7 @@ ${GUIDES.map(g => `- [${g.en.h1}](${SITE}${gPath('en', g.en.slug)})` + GLANGS.fi
 const files = [];
 (function walk(d) { for (const f of readdirSync(d)) { const p = join(d, f); statSync(p).isDirectory() ? walk(p) : files.push(p); } })('docs');
 const h = createHash('sha256');
-for (const f of files.sort()) if (!/\.html$|sw\.js$|sitemap\.xml$|\.min\.(js|css)$/.test(f)) h.update(f).update(readFileSync(f));
+for (const f of files.sort()) if (!/\.html$|sw\.js$|sitemap\.xml$|llms(-full)?\.txt$|\.min\.(js|css)$/.test(f)) h.update(f).update(readFileSync(f));
 h.update(readFileSync('src/template.html')).update(readFileSync('scripts/site-content.mjs'));
 const version = h.digest('hex').slice(0, 10);
 const pkgVersion = JSON.parse(readFileSync('package.json', 'utf8')).version;
@@ -435,8 +435,9 @@ for (const [from, to] of Object.entries(MOVED)) {
   writeFileSync(`docs/${from}/index.html`, `<!doctype html><html lang="da"><head><meta charset="utf-8"><title>LunaVerta</title><meta name="robots" content="noindex"><link rel="canonical" href="${SITE}${to}"><meta http-equiv="refresh" content="0; url=${to}"></head><body><p><a href="${to}">${SITE}${to}</a></p></body></html>\n`);
 }
 for (const p of [...pages, ...guidePages]) writeFileSync(p.file, bust(readFileSync(p.file, 'utf8').replace('{{VERSION}}', label7).replace('{{BUILD_DATE}}', today)));
-for (const f of ['docs/privacy.html', 'docs/licenses.html', 'docs/no-upload.html', 'docs/404.html']) writeFileSync(f, bust(readFileSync(f, 'utf8')));
-writeFileSync('docs/sw.js', readFileSync('docs/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`)
+// Hand-written pages and the service worker live in src/static; the copies in docs/ get the asset versions.
+for (const f of ['privacy.html', 'licenses.html', 'no-upload.html', '404.html']) writeFileSync('docs/' + f, bust(readFileSync('src/static/' + f, 'utf8')));
+writeFileSync('docs/sw.js', readFileSync('src/static/sw.js', 'utf8').replace(/const VERSION = '[^']*';/, `const VERSION = '${version}';`)
   .replace(/'assets\/([\w-]+)(?:\.min)?\.(js|css)'/g, (m, n, x) => `'assets/${minName(n + '.' + x)}'`));
 // ---------- llms-full.txt: every tool and guide in full (English), for AI assistants that want the details ----------
 const plain = x => String(x).replace(/<[^>]+>/g, '').replace(/\{(?:t:[a-z-]+|tool|merge|compress)\}/g, '').replace(/\s+/g, ' ').trim();

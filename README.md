@@ -24,7 +24,7 @@ The privacy claim is the whole point, so it should be easy to check:
 1. **Go offline.** Load the page, turn off Wi-Fi, and convert a file. It still works.
 2. **Watch the network.** Open the developer tools (F12), go to the Network tab and convert a file. You'll see LunaVerta's own files load, never your file go out.
 3. **Read the policy.** Every page ships a strict Content Security Policy (`connect-src 'self' blob: data:`): the browser itself refuses to send data to any other host.
-4. **Read the code.** It's all here. There is no backend: `docs/` is the whole website, served as static files by GitHub Pages.
+4. **Read the code.** It's all here. There is no backend: `docs/` is the whole website, served as static files by GitHub Pages. The pages themselves are made from `src/` and `scripts/` when the site is published.
 
 ## How it works
 
@@ -48,6 +48,7 @@ A service worker keeps the app and its libraries for offline use. Settings, sign
 ```
 npm install
 npm run build        # copies the libraries into docs/ and writes every page
+                     # (npm run pages writes only the pages)
 npm run serve        # http://localhost:8080
 ```
 
@@ -60,14 +61,16 @@ LunaVerta is a folder of static files. To run it on your own server or intranet,
 ### Project layout
 
 ```
-docs/                 the website, published as is (GitHub Pages)
+docs/                 the website (GitHub Pages). The pages, sitemap and .min files in it
+                      are made by the build and are not kept in git
   assets/app.js       converters and the main interface
   assets/editor.js    the PDF editor, Remove sensitive and Add % to prices
   assets/pdf-text.js  reads and rewrites the text in a PDF page's own drawing commands
   assets/viewer.js    the PDF reader the installed app opens files in
-  sw.js               the service worker (offline copy, updates)
   assets/strings*.js  interface texts, one file per language
 src/template.html     the page template
+src/static/           hand-written pages (privacy, licenses, 404) and the service worker
+.github/workflows/    builds and publishes the site on every push to main
 scripts/
   build-pages.mjs     writes the front page and one page per tool in every language,
                       the guides, sitemap.xml, llms.txt and llms-full.txt
