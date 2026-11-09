@@ -1064,8 +1064,9 @@ function mkRow(row, f, out) {
 function mkCompute(scan) {
   const out = new Map(); // token → new value
   let oldSum = 0, newSum = 0;
+  const asLine = scan.mode === 'line';
   for (const b of scan.blocks) {
-    const f = 1 + (b.pct || 0) / 100, [first, ...rest] = b.rows, G = first.money.at(-1);
+    const f = 1 + (asLine ? 0 : (b.pct || 0)) / 100, [first, ...rest] = b.rows, G = first.money.at(-1);
     mkRow(first, f, out);
     if (rest.length) {
       const G2 = out.get(G), last = b.rows.at(-1), N = last.money.at(-1);
@@ -1081,6 +1082,9 @@ function mkCompute(scan) {
     }
     oldSum += b.total.v; newSum += out.get(b.total);
   }
+  // "As its own line": the lines stay, one markup line is added and the sums include it.
+  let add = 0;
+  if (asLine && scan.linePct) { const places = scan.blocks[0].total.places; add = mkRound(oldSum * scan.linePct / 100, places); newSum = mkRound(oldSum + add, places); }
   // sums, by value
   const results = [], near = (a, b) => Math.abs(a - b) < .05;
   let vatOld = null, vatNew = null;
@@ -1097,7 +1101,7 @@ function mkCompute(scan) {
     if (nv !== null) out.set(s.tok, mkRound(nv, s.tok.places));
     results.push({ s, kind, nv });
   }
-  return { out, oldSum, newSum, results };
+  return { out, oldSum, newSum, results, add };
 }
 async function mkApply(scan, res) {
   const pages = new Map();
@@ -1128,6 +1132,37 @@ async function mkApply(scan, res) {
   if (n) S.dirty = true;
   return n;
 }
+// Where the markup line goes: in the free space just above the subtotal ("Tillæg 8 %"), or, when
+// the rows are packed tight, under the last sum ("Heraf tillæg 8 %"). The two halves (words and
+// amount) line up with the subtotal's words and amount; they are ordinary added text, so they can
+// be moved or changed by hand.
+async function mkLine(scan, res) {
+  if (!res.add) return null;
+  const pctTxt = String(scan.linePct).replace('.', scan.dec);
+  const target = (res.results.find(x => x.kind === 'sub') || res.results[0] || {}).s;
+  const lastSum = scan.sums.filter(x => !target || x.P === target.P).sort((a, b) => a.row.y - b.row.y)[0];
+  const lastRow = scan.blocks.at(-1).rows.at(-1);
+  const ref = target ? target.row : lastRow, P = target ? target.P : scan.blocks.at(-1).P;
+  const tok = target ? target.tok : lastRow.money.at(-1), size = ref.size;
+  const x0 = ref.runs[0].x, x1 = tok.run.x + tok.run.w;
+  const across = r => r.x < x1 + 2 && r.x + r.w > x0 - 2;
+  // the nearest text above and below a row, in the same columns
+  const gapAbove = row => { const up = P.runs.filter(r => r.y > row.y + row.size * .5 && across(r)).sort((a, b) => a.y - b.y)[0]; return up ? up.y - row.y : Infinity; };
+  const gapBelow = row => { const dn = P.runs.filter(r => r.y < row.y - row.size * .5 && across(r)).sort((a, b) => b.y - a.y)[0]; return dn ? row.y - dn.y : row.y - P.page.view[1]; };
+  let y, below = false;
+  if (target && gapAbove(ref) >= size * 2.4) y = ref.y + Math.min(gapAbove(ref) / 2, size * 1.6);
+  else { const low = lastSum ? lastSum.row : lastRow; below = !!target; y = low.y - Math.min(gapBelow(low) / 2, size * 1.6); }
+  // the amount in the subtotal's own number format, with the same "kr." or "DKK" after it
+  const after = tok.run.str.slice(tok.i1).match(/^\s*(kr\.?|dkk|eur|€|sek|nok)?/i)[0];
+  const amount = mkFormat(res.add, tok) + after;
+  const label = T(below ? 'mk.lineOf' : 'mk.lineLabel', { p: pctTxt });
+  await app().lib('pdflib');
+  const doc = await PDFLib.PDFDocument.create(), hv = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  const wAmt = hv.widthOfTextAtSize(amount, size);
+  const right = tok.run.align === 'left' ? tok.run.x + hv.widthOfTextAtSize(tok.run.str.slice(0, tok.i0), size) + wAmt : tok.run.x + tok.run.w;
+  const amtX = Math.max(x0 + hv.widthOfTextAtSize(label, size) + size, right - wAmt);
+  return { P, y, size, below, items: [{ x: x0, text: label }, { x: amtX, text: amount }] };
+}
 async function openMarkup() {
   const scan = await mkScan();
   if (!scan.blocks.length) { app().toast(T('mk.none')); return; }
@@ -1138,8 +1173,11 @@ async function openMarkup() {
   const lineRow = (b, i) => `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
   d.innerHTML = `<form method="dialog">
     <h2>${esc(T('mk.title'))}</h2>
-    <p class="pw-note">${esc(T('mk.intro'))}</p>
-    <div class="mk-all"><label for="mkAll">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
+    <div class="mk-mode" role="radiogroup" aria-label="${esc(T('mk.how'))}">
+      <label><input type="radio" name="mkMode" value="each" checked> <span><b>${esc(T('mk.each'))}</b>${esc(T('mk.eachD'))}</span></label>
+      <label><input type="radio" name="mkMode" value="line"> <span><b>${esc(T('mk.asLine'))}</b>${esc(T('mk.asLineD'))}</span></label></div>
+    <p class="pw-note" id="mkIntro">${esc(T('mk.intro'))}</p>
+    <div class="mk-all"><label for="mkAll" id="mkAllL">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
     <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
@@ -1148,15 +1186,22 @@ async function openMarkup() {
   </form>`;
   document.body.appendChild(d);
   const update = () => {
+    scan.mode = d.querySelector('input[name="mkMode"]:checked').value;
+    const asLine = scan.mode === 'line';
+    scan.linePct = asLine ? pctOf(d.querySelector('#mkAll').value) : 0;
+    d.querySelector('#mkAllGo').hidden = asLine; d.querySelector('.mk-wrap').hidden = asLine;
+    d.querySelector('#mkAllL').textContent = T(asLine ? 'mk.linePct' : 'mk.all');
+    d.querySelector('#mkIntro').textContent = T(asLine ? 'mk.lineIntro' : 'mk.intro');
     d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
     const res = mkCompute(scan);
-    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = b.pct ? fmt(res.out.get(b.total), b.total) : ''; });
-    d.querySelector('#mkSums').innerHTML = res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
+    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = b.pct && !asLine ? fmt(res.out.get(b.total), b.total) : ''; });
+    const tok0 = scan.blocks[0].total;
+    d.querySelector('#mkSums').innerHTML = (res.add ? `<dt>${esc(T('mk.lineLabel', { p: String(scan.linePct).replace('.', scan.dec) }))}</dt><dd><b>+ ${esc(fmt(res.add, tok0))}</b></dd>` : '') + res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
     const odd = res.results.filter(x => x.nv === null).length, w = d.querySelector('#mkWarn');
     w.hidden = !odd; if (odd) w.textContent = T('mk.odd', { n: odd });
     return res;
   };
-  d.addEventListener('input', update);
+  d.addEventListener('input', update); d.addEventListener('change', update);
   d.querySelector('#mkAllGo').onclick = () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); update(); };
   d.querySelector('#mkAll').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.querySelector('#mkAllGo').click(); } });
   update();
@@ -1164,12 +1209,17 @@ async function openMarkup() {
   const ok = await new Promise(r => d.addEventListener('close', () => r(d.returnValue === 'ok'), { once: true }));
   const res = update(); d.remove();
   if (!ok) return;
-  const n = await mkApply(scan, res);
+  let n = await mkApply(scan, res);
+  const line = await mkLine(scan, res);
+  if (line) {
+    for (const it of line.items) S.texts.push({ id: ++uid, pageId: line.P.pg.id, x: it.x, y: line.y, size: line.size, rot: 0, text: it.text });
+    S.dirty = true; n++;
+  }
   if (!n) { app().toast(T('mk.nothing')); return; }
   S.editing = false;
   if (S.view !== 'page') { S.view = 'page'; S.current = scan.blocks[0].P.pg.id; }
   render();
-  app().toast(T('mk.done', { n }), true);
+  app().toast(line ? T('mk.lineDone', { p: String(scan.linePct).replace('.', scan.dec) }) : T('mk.done', { n }), true);
 }
 
 // ---------- undo and redo ----------
@@ -2007,6 +2057,7 @@ async function openFind() {
       <div class="ed-find-drag" role="radiogroup" aria-label="${esc(T('find.dragLabel'))}"><span>${esc(T('find.dragLabel'))}</span>
         <label><input type="radio" name="edFindDrag" value="add" checked> ${esc(T('find.dragAdd'))}</label>
         <label><input type="radio" name="edFindDrag" value="off"> ${esc(T('find.dragOff'))}</label></div>
+      <button type="button" class="btn sm ed-find-review" id="edFindReview">${esc(T('find.review'))}</button>
       <div class="ed-find-sel"><button type="button" class="linkish" id="edFindAll">${esc(T('find.all'))}</button><button type="button" class="linkish" id="edFindNone">${esc(T('find.noneSel'))}</button></div>
       <fieldset class="ed-find-mode"><legend class="sr-only">${esc(T('find.how'))}</legend>
         <label><input type="radio" name="edFindMode" value="blank" checked> ${esc(T('find.modeBlank'))}</label>
@@ -2128,7 +2179,7 @@ async function openFind() {
     const blank = panel.querySelector('input[name="edFindMode"]:checked').value === 'blank';
     let n = 0;
     // found text removes only its own letters; a dragged area removes everything in it
-    for (const h of F.hits) if (h.on && !h.done) { S.boxes.push({ id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: !h.area }); n++; }
+    for (const h of F.hits) if (h.on && !h.done) { S.boxes.push({ id: ++uid, pageId: h.pg.id, x1: h.x1, y1: h.y1, x2: h.x2, y2: h.y2, blank, found: !h.area, text: h.area ? '' : h.text }); n++; }
     if (n) S.dirty = true;
     return n;
   };
@@ -2203,6 +2254,46 @@ async function openFind() {
     const id = $('#edTplSel').value; if (!id) return;
     saveTpls(loadTpls().filter(o => o.id !== id)); drawTpls('');
     status.textContent = T('tpl.deleted');
+  };
+  // One at a time: each hit is shown on its page, and the visitor says remove or keep.
+  $('#edFindReview').onclick = () => {
+    const todo = F.hits.filter(h => !h.done);
+    if (!todo.length) return;
+    let i = 0;
+    const box = document.createElement('div');
+    box.className = 'ed-review'; box.id = 'edReview'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', T('find.review'));
+    list.hidden = true; foot.hidden = true; list.after(box);
+    const end = () => { box.remove(); document.removeEventListener('keydown', keys, true); list.hidden = false; drawList(); paintHits(); };
+    const show = () => {
+      if (i >= todo.length) {
+        const on = todo.filter(h => h.on).length;
+        box.innerHTML = `<p class="ed-rv-done">${esc(T('find.reviewDone', { n: on, k: todo.length - on }))}</p><button type="button" class="btn primary" id="edRvBack">${esc(T('find.reviewBack'))}</button>`;
+        box.querySelector('#edRvBack').onclick = end; box.querySelector('#edRvBack').focus();
+        return;
+      }
+      const h = todo[i];
+      box.innerHTML = `<div class="ed-rv-top"><span>${esc(T('find.reviewPos', { i: i + 1, n: todo.length }))} · ${esc(T('ed.page', { n: h.n }))}</span><button type="button" class="ed-ico" id="edRvClose" aria-label="${esc(T('find.reviewStop'))}" title="${esc(T('find.reviewStop'))}">${ICON.x}</button></div>
+        <p class="ed-rv-ctx">${esc(h.before)}<mark>${esc(h.text)}</mark>${esc(h.after)}</p>
+        <p class="ed-rv-now">${esc(T(h.on ? 'find.reviewIsOn' : 'find.reviewIsOff'))}</p>
+        <div class="ed-rv-btns"><button type="button" class="btn primary" id="edRvYes">${esc(T('find.reviewYes'))}</button><button type="button" class="btn" id="edRvNo">${esc(T('find.reviewNo'))}</button></div>
+        <div class="ed-rv-nav"><button type="button" class="linkish" id="edRvPrev" ${i ? '' : 'disabled'}>← ${esc(T('find.reviewPrev'))}</button><button type="button" class="linkish" id="edRvNext">${esc(T('find.reviewNext'))} →</button></div>`;
+      const pick = on => { h.on = on; paintHits(); i++; show(); };
+      box.querySelector('#edRvYes').onclick = () => pick(true);
+      box.querySelector('#edRvNo').onclick = () => pick(false);
+      box.querySelector('#edRvPrev').onclick = () => { i = Math.max(0, i - 1); show(); };
+      box.querySelector('#edRvNext').onclick = () => { i++; show(); };
+      box.querySelector('#edRvClose').onclick = end;
+      box.querySelector('#edRvYes').focus();
+      peek(h);
+    };
+    const keys = e => {
+      if (!document.getElementById('edReview')) return;
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); end(); }
+      else if (e.key === 'ArrowRight' && i < todo.length) { e.preventDefault(); i++; show(); }
+      else if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); i--; show(); }
+    };
+    document.addEventListener('keydown', keys, true);
+    show();
   };
   $('#edFindAll').onclick = () => { F.hits.forEach(h => { if (!h.done) h.on = true; }); drawList(); paintHits(); };
   $('#edFindNone').onclick = () => { F.hits.forEach(h => { h.on = false; }); drawList(); paintHits(); };
@@ -2339,7 +2430,7 @@ function peek(h) {
   if (S.view !== 'page' || !S.pv) return;
   const v = S.pv.views.get(h.pg.id); if (!v) return;
   const [x1, y1, x2, y2] = v.vp.convertToViewportRectangle([h.x1, h.y1, h.x2, h.y2]);
-  const top = v.wrap.offsetTop + v.stage.offsetTop + Math.min(y1, y2), body = S.pv.body;
+  const body = S.pv.body, top = body.scrollTop + v.stage.getBoundingClientRect().top - body.getBoundingClientRect().top + Math.min(y1, y2);
   if (top < body.scrollTop + 40 || top > body.scrollTop + body.clientHeight - 80) body.scrollTo({ top: top - body.clientHeight / 3, behavior: 'smooth' });
   let f = $('#edFlash');
   if (!f) { f = document.createElement('div'); f.id = 'edFlash'; f.className = 'ed-flash'; }
@@ -2617,18 +2708,42 @@ async function save(opt) {
     // Rewrite so only what the PDF still uses is kept (removed pages, letters,
     // pictures and fields are then really gone).
     if (oldRefs.length || S.boxes.length) { try { bytes = await app().tidyPDF(bytes); } catch (e) { console.warn('Tidy-up skipped', e); } }
+    // Removed text: read the new file back and check that it really is gone, and say so.
+    const gone = S.boxes.filter(b => b.text && b.text.replace(/\s+/g, '').length >= 3);
+    let check = null;
+    if (gone.length) { try { check = await verifyGone(bytes, gone); } catch (e) { console.warn('Check skipped', e); } }
     const blob = new Blob([bytes], { type: 'application/pdf' });
     let where = handle ? handle.name : name;
     if (handle) await app().writeTo(handle, blob); else app().download(name, blob);
-    app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name: where, blob }], true);
+    const note = check ? (check.left.length ? { noteKey: 'find.verifyBadShort', noteVars: { n: check.left.length } } : { noteKey: 'find.verifyOkShort', noteVars: { n: check.n } }) : {};
+    app().addResult(S.docs.map(d => d.file.name).join(', '), 'edit', [{ name: where, blob, ...note }], true);
     S.dirty = false; close();
-    app().toast(T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where }), true, blob);
+    const said = T(covered ? 'ed.savedCovered' : 'ed.saved', { name: where });
+    if (check && check.left.length) app().toast(said + ' ' + T('find.verifyBad', { n: check.left.length, list: check.left.slice(0, 3).join(', ') }), false, blob);
+    else app().toast(said + (check ? ' ' + T('find.verifyOk', { n: check.n }) : ''), true, blob);
   } catch (e) {
     console.error(e); app().toast(e.message || T('job.failed')); if (app().reportError) app().reportError(e, 'editor save');
     // The Save as window has already made an empty file: take it away again (never the file that was opened).
     if (handle && handle.remove && handle !== S.origHandle) handle.remove().catch(() => {});
     btn.disabled = false; btn.textContent = T('ed.save');
   }
+}
+
+// After saving with removed text: is any of it still in the new file? Counted with the spaces taken
+// out (a PDF can split a word anywhere), and compared with how often it was in the pages before, so
+// the same number left on purpose somewhere else is not taken for a miss.
+async function verifyGone(bytes, gone) {
+  const flat = async (getPage, n) => { let t = ''; for (let i = 0; i < n; i++) { const tc = await (await getPage(i)).getTextContent(); t += tc.items.map(x => x.str).join('') + '\n'; } return t.replace(/\s+/g, ''); };
+  const count = (hay, needle) => { let c = 0, k = 0; while ((k = hay.indexOf(needle, k)) >= 0) { c++; k += needle.length; } return c; };
+  const doc = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+  const after = await flat(i => doc.getPage(i + 1), doc.numPages); doc.destroy();
+  const live = S.pages.filter(p => !p.deleted);
+  const before = await flat(i => S.docs[live[i].doc].js.getPage(live[i].index + 1), live.length);
+  const texts = new Map();
+  for (const b of gone) { const k = b.text.replace(/\s+/g, ''); texts.set(k, (texts.get(k) || 0) + 1); }
+  const left = [];
+  for (const [k, removed] of texts) if (count(after, k) > Math.max(0, count(before, k) - removed)) left.push(k);
+  return { n: gone.length, left };
 }
 
 // ---------- open ----------

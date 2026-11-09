@@ -2919,6 +2919,7 @@ function schedule(fn) {
   });
 }
 async function finishJob(j, outs) {
+  if (j.cancelled) return;
   if (outs.length > 1) {
     j.out = { name: `${base(j.srcName)}-${j.target}.zip`, blob: await zipOf(outs) };
     j.noteKey = 'job.zip'; j.noteVars = { n: outs.length };
@@ -2964,6 +2965,7 @@ async function continueWith(j, target) {
 }
 const canShareFiles = (() => { try { return !!(navigator.canShare && matchMedia('(pointer: coarse)').matches && navigator.canShare({ files: [new File([''], 'x.pdf', { type: 'application/pdf' })] })); } catch (e) { return false; } })();
 function failJob(j, err) {
+  if (j.cancelled || (err && err.message === STOPPED)) return;
   console.error(err);
   // running out of memory shows up as cryptic browser errors; say what it means instead
   if (err && (err.name === 'RangeError' || /allocation failed|out of memory|Array buffer|Invalid array length/i.test(err.message || ''))) err = new Error(T('err.memory'));
@@ -3071,13 +3073,27 @@ async function runBatch(files, target) {
 // settings (the other files in the batch keep their results).
 function track(j, run) {
   j.retry = () => { j.status = 'working'; j.error = ''; j.progress = 0; renderJob(j); updateFoot(); track(j, run); };
+  j.waiting = true;
   return schedule(async () => {
+    j.waiting = false;
+    if (j.cancelled) return;
+    if (j.el) renderJob(j);
     const outs = await run();
+    if (j.cancelled) return;
     if (!outs || !outs.length) throw new Error(T('job.empty'));
     await finishJob(j, outs);
   }).catch(e => failJob(j, e));
 }
-function setProgress(j, p) { j.progress = p; const bar = j.el && j.el.querySelector('.bar'); if (bar) { bar.style.strokeDashoffset = 100.5 * (1 - p); j.el.querySelector('.ring-progress').classList.remove('spin'); } const st = j.el && j.el.querySelector('.state'); if (st) st.textContent = Math.round(p * 100) + '%'; }
+// Stop: the job is marked, and the next progress report from the work throws, which ends it.
+const STOPPED = 'lv-stopped';
+const fmtLeft = ms => { const s = Math.ceil(ms / 1000); return s < 60 ? T('job.leftS', { n: Math.max(5, Math.ceil(s / 5) * 5) }) : T('job.leftM', { n: Math.round(s / 60) }); };
+function stateText(j) {
+  if (j.waiting) return T('job.waiting');
+  if (!j.progress) return T('job.converting');
+  const pct = Math.round(j.progress * 100) + '%', el = performance.now() - (j.t0 || performance.now());
+  return j.progress > .04 && j.progress < .98 && el > 3000 ? pct + ' · ' + fmtLeft(el * (1 - j.progress) / j.progress) : pct;
+}
+function setProgress(j, p) { if (j.cancelled) throw new Error(STOPPED); if (!j.t0) j.t0 = performance.now(); j.progress = p; const bar = j.el && j.el.querySelector('.bar'); if (bar) { bar.style.strokeDashoffset = 100.5 * (1 - p); j.el.querySelector('.ring-progress').classList.remove('spin'); } const st = j.el && j.el.querySelector('.state'); if (st) st.textContent = stateText(j); }
 
 const SHRINKS = new Set(['shrink', 'vshrink', 'imgedit', 'grey', 'clean', 'jpg', 'webp']);
 function renderJob(j, isNew) {
@@ -3092,18 +3108,19 @@ function renderJob(j, isNew) {
   else thumb = esc(j.status === 'err' ? '!' : OUT[j.target].tool ? (ext(name) || 'pdf') : j.target);
   // Tools that make files smaller say how much: 8.4 MB → 2.1 MB · 75 % smaller
   const pct = j.status === 'done' && j.src && SHRINKS.has(j.target) && !/\.zip$/i.test(j.out.name) ? Math.round(100 * (1 - j.out.blob.size / j.src.size)) : 0;
-  const state = j.status === 'working' ? (j.progress ? Math.round(j.progress * 100) + '%' : T('job.converting')) : j.status === 'done' ? (pct >= 1 ? T('job.smaller', { a: fmtSize(j.src.size), b: fmtSize(j.out.blob.size), p: pct }) : fmtSize(j.out.blob.size)) : '';
+  const state = j.status === 'working' ? stateText(j) : j.status === 'done' ? (pct >= 1 ? T('job.smaller', { a: fmtSize(j.src.size), b: fmtSize(j.out.blob.size), p: pct }) : fmtSize(j.out.blob.size)) : '';
   const note = [j.noteKey ? T(j.noteKey, j.noteVars) : '', j.pages ? T('job.pages', { n: j.pages }) : ''].filter(Boolean).join(' · ');
   const next = j.status === 'done' ? nextSteps(j) : [];
   el.innerHTML = `<div class="thumb">${thumb}</div>
     <div class="info"><span class="fn" title="${esc(name)}">${esc(name)}</span>
     <span class="meta"><span class="route">${esc(srcExt.toUpperCase())} &rarr; <b>${esc(label(j.target))}</b></span><span class="state">${esc(state)}</span>${note ? `<span>${esc(note)}</span>` : ''}${j.error ? `<span class="msg">${esc(j.error)}</span>` : ''}</span></div>
-    <div class="acts">${j.status === 'done' ? `${canShareFiles ? `<button class="btn sm ghost share" type="button">${esc(T('job.share'))}</button>` : ''}<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `${j.error === T('err.pdf.locked') && j.src && j.target !== 'unlock' ? `<button class="btn sm unlock" type="button">${esc(T('tgt.unlock'))}</button>` : j.retry ? `<button class="btn sm retry" type="button">${esc(T('job.retry'))}</button>` : ''}<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>
+    <div class="acts">${j.status === 'working' ? `<button class="btn sm ghost stop" type="button">${esc(T('job.stop'))}</button>` : j.status === 'done' ? `${canShareFiles ? `<button class="btn sm ghost share" type="button">${esc(T('job.share'))}</button>` : ''}<button class="btn sm save" type="button">${esc(T(j.saved ? 'job.saved' : 'job.save'))}</button>` : j.status === 'err' ? `${j.error === T('err.pdf.locked') && j.src && j.target !== 'unlock' ? `<button class="btn sm unlock" type="button">${esc(T('tgt.unlock'))}</button>` : j.retry ? `<button class="btn sm retry" type="button">${esc(T('job.retry'))}</button>` : ''}<button class="btn sm ghost dismiss" type="button">${esc(T('job.dismiss'))}</button>` : ''}</div>
     ${next.length ? `<div class="next"><span>${esc(T('next.h'))}</span>${next.map(t => `<button type="button" class="nx" data-next="${t}">${esc(OUT[t] && OUT[t].tool ? T('tgt.' + t) : t.toUpperCase())}</button>`).join('')}</div>` : ''}`;
   el.querySelectorAll('[data-next]').forEach(b => { b.onclick = () => continueWith(j, b.dataset.next).catch(e => toast(e.message)); });
   const sh = el.querySelector('.share'); if (sh) sh.onclick = async () => { try { await navigator.share({ files: [new File([j.out.blob], j.out.name, { type: j.out.blob.type })], title: j.out.name }); } catch (e) { if (e.name !== 'AbortError') toast(T('save.failed')); } };
   const sv = el.querySelector('.save'); if (sv) sv.onclick = async () => { if (await saveFile(j.out.name, j.out.blob, sv)) j.saved = true; };
   const rt = el.querySelector('.retry'); if (rt) rt.onclick = () => j.retry();
+  const sp = el.querySelector('.stop'); if (sp) sp.onclick = () => { j.cancelled = true; jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); toast(T('job.stopped')); };
   const ul = el.querySelector('.unlock'); if (ul) ul.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); runBatch([j.src], 'unlock'); };
   const dm = el.querySelector('.dismiss'); if (dm) dm.onclick = () => { jobs = jobs.filter(x => x !== j); el.remove(); updateFoot(); };
   if (isNew) $('manifest').prepend(el);

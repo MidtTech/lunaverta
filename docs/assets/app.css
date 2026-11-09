@@ -370,6 +370,17 @@ html.ed-open .cookie-note { display: none; }
 .ed-find-foot { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
 .ed-find-foot[hidden] { display: none; }
 .ed-find-sel { display: flex; gap: 14px; font-size: 13.5px; }
+.ed-find-review { justify-self: start; }
+.ed-find-list[hidden] { display: none; }
+.ed-review { border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; background: var(--surface); }
+.ed-rv-top { display: flex; align-items: center; justify-content: space-between; font-size: 13.5px; color: var(--muted); font-weight: 600; }
+.ed-rv-ctx { margin: 0; font-size: 16px; line-height: 1.5; word-break: break-word; }
+.ed-rv-ctx mark { background: #ffe58a; color: #111; border-radius: 3px; padding: 1px 3px; font-weight: 700; }
+.ed-rv-now { margin: 0; font-size: 13px; color: var(--muted); }
+.ed-rv-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ed-rv-nav { display: flex; justify-content: space-between; font-size: 13.5px; }
+.ed-rv-nav button[disabled] { opacity: .4; cursor: default; }
+.ed-rv-done { margin: 0; font-size: 15px; line-height: 1.5; }
 .ed-find-mode { border: 0; margin: 0; padding: 0; display: flex; gap: 16px; font-size: 14px; }
 .ed-find-mode label { display: flex; align-items: center; gap: 6px; }
 .linkish { font: inherit; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; }
@@ -1106,6 +1117,13 @@ html.vw-open, html.vw-open body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .install-hint { animation: none; } }
 /* Add % to prices */
 .mk-dialog { width: min(720px, calc(100vw - 32px)); }
+.mk-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+.mk-mode label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--raised); }
+.mk-mode label:has(input:checked) { border-color: var(--accent, #3d57e8); box-shadow: 0 0 0 1px var(--accent, #3d57e8) inset; }
+.mk-mode input { margin-top: 3px; }
+.mk-mode span { display: grid; gap: 2px; font-size: 13.5px; color: var(--muted, inherit); }
+.mk-mode b { color: var(--ink); font-size: 14.5px; }
+@media (max-width: 520px) { .mk-mode { grid-template-columns: 1fr; } }
 .mk-all { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; font-weight: 500; }
 .mk-all input, .mk-pct input { width: 64px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--ink); text-align: right; }
 .mk-wrap { max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }

@@ -517,6 +517,40 @@ await test('"Try it with a sample file" opens a made-up PDF in the tool', async 
   await done(p);
 });
 
+await test('Remove sensitive: go through the finds one at a time, and after saving it checks that the text is gone', async () => {
+  const p = await page('/da/anonymiser-pdf/');
+  await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'loenseddel.pdf'));
+  await p.waitForSelector('#edFindCats button[data-k="cpr"]:not([disabled])', { timeout: 20000 });
+  await p.click('#edFindCats button[data-k="cpr"]'); await p.click('#edFindCats button[data-k="accounts"]');
+  await p.waitForSelector('#edFindReview'); await p.click('#edFindReview');
+  await p.waitForSelector('#edReview mark');
+  const first = await p.innerText('#edReview mark');
+  assert(/010203-4567/.test(first) || /\d/.test(first), 'review shows: ' + first);
+  let guard = 0;
+  while (await p.$('#edRvYes') && guard++ < 20) await p.click('#edRvYes');
+  assert(/bliver fjernet/.test(await p.innerText('#edReview')), 'no summary: ' + await p.innerText('#edReview'));
+  await p.click('#edRvBack');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edFindSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  assert(!txt.includes('010203-4567'), 'CPR still in the file');
+  await p.waitForFunction(() => /Tjekket/.test(document.querySelector('#toast')?.textContent || ''), null, { timeout: 15000 });
+  assert(/tjekket/.test(await p.innerText('.row.done')), 'result row has no check note: ' + await p.innerText('.row.done'));
+  await done(p);
+});
+
+await test('a long job shows Stop, and stopping it removes it without an error', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica);
+  for (let i = 0; i < 80; i++) d.addPage([595, 842]).drawText('Page ' + (i + 1), { x: 60, y: 760, size: 40, font: f });
+  const p = await page('/pdf-to-jpg/');
+  await p.setInputFiles('#fileInput', file('long.pdf', Buffer.from(await d.save())));
+  await p.waitForSelector('.row.working .stop', { timeout: 20000 });
+  await p.click('.row.working .stop');
+  await p.waitForFunction(() => !document.querySelector('.row'), null, { timeout: 5000 });
+  await p.waitForTimeout(2500);
+  assert(!(await p.$('.row')), 'a row came back after Stop');
+  await done(p);
+});
+
 await test('the tool search finds tools by other words, and "Show all" opens long groups on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const visible = () => p.evaluate(() => [...document.querySelectorAll('.tool-grid li')].filter(li => li.offsetParent).map(li => li.textContent.trim()));
@@ -670,6 +704,27 @@ await test('Add % to prices: 8 % on a quote recalculates lines, subtotal, VAT an
   const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
   for (const v of ['2.046,60', '730,08', '8.098,92', '2.024,73', '10.123,65']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 300));
   for (const v of ['7.499,00', '9.373,75']) assert(!txt.includes(v), `old amount still there: ${v}`);
+  await done(p);
+});
+
+await test('Add % to prices as its own line: the prices stay, a "Tillæg 8 %" line is added and the sums include it', async () => {
+  const p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 });
+  await p.click('#edMarkup');
+  await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
+  await p.check('input[name="mkMode"][value="line"]');
+  assert(await p.isHidden('.mk-wrap'), 'the per-line table should hide');
+  await p.fill('#mkAll', '8');
+  const sums = await p.innerText('#mkSums');
+  assert(/Tillæg 8 %/.test(sums) && /599,92/.test(sums) && /10\.123,65/.test(sums), 'sums: ' + sums);
+  await p.click('.mk-dialog [value="ok"]');
+  await p.waitForSelector('.ed-text textarea', { timeout: 15000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  for (const v of ['Tillæg 8 %', '599,92', '8.098,92', '2.024,73', '10.123,65']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 400));
+  assert(!txt.includes('2.046,60'), 'a line price was changed');
+  assert(!txt.includes('9.373,75'), 'old total still there');
   await done(p);
 });
 
