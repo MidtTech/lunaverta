@@ -378,6 +378,8 @@ window.LV_STR.es = {
   'nav.privacy': 'Privacidad',
   'nav.licenses': 'Licencias de código abierto',
   'nav.source': 'Código fuente',
+  'mk.sum': 'Suma',
+  'mk.odd': '{n} sumas no cuadraban con las líneas y no se han cambiado. Revísalas antes de guardar.',
   'mk.btn': 'Añadir % a precios',
   'mk.tip': 'Aplica un porcentaje a los precios de un presupuesto, a todas las líneas o línea a línea',
   'mk.title': 'Añadir un porcentaje a los precios',

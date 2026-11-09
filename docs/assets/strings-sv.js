@@ -373,6 +373,8 @@ window.LV_STR.sv = {
   'nav.privacy': 'Integritet',
   'nav.licenses': 'Licenser för öppen källkod',
   'nav.source': 'Källkod',
+  'mk.sum': 'Summa',
+  'mk.odd': '{n} summor stämde inte med raderna och har inte ändrats. Kontrollera dem innan du sparar.',
   'mk.btn': 'Lägg % på priser',
   'mk.tip': 'Lägg en procentsats på priserna i en offert, på alla rader eller rad för rad',
   'mk.title': 'Lägg procent på priserna',

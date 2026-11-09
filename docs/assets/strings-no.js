@@ -373,6 +373,8 @@ window.LV_STR.no = {
   'nav.privacy': 'Personvern',
   'nav.licenses': 'Lisenser for åpen kildekode',
   'nav.source': 'Kildekode',
+  'mk.sum': 'Sum',
+  'mk.odd': '{n} summer stemte ikke med linjene og er ikke endret. Sjekk dem før du lagrer.',
   'mk.btn': 'Legg % på priser',
   'mk.tip': 'Legg en prosentsats på prisene i et tilbud, på alle linjer eller linje for linje',
   'mk.title': 'Legg prosent på prisene',

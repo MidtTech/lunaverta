@@ -938,147 +938,222 @@ async function resume() {
 
 
 // ---------- percentage on the prices in a quote ----------
-// A salesperson's request: put 8 % on the prices of a supplier's quote (or a different % per line,
-// as in the ERP), and have subtotal, VAT and total worked out again. The amounts are found in the
-// page text, the new ones go in as ordinary text edits (the PDF's own font, right-aligned where the
-// column is), so they show on the page, can be changed by hand and undone like any other edit.
-const MK_CUR = '(?:kr\\.?|DKK|NOK|SEK|EUR|€|\\$|£|USD|GBP|CHF)';
-const MK_RE = new RegExp(`^(\\(?)(-|−)?\\s*(${MK_CUR}\\s?)?(-|−)?(\\d{1,3}(?:([.,\\s\\u00a0'’])\\d{3})*|\\d+)(?:([.,])(\\d{2})|(,-))(\\s?${MK_CUR}\\.?)?(\\)?)$`, 'i');
-function mkParse(str) {
-  const t = str.trim(), m = t.match(MK_RE);
-  if (!m) return null;
-  const [, open, neg1, pre, neg2, int, thou, dec, cents, dash, post, close] = m;
-  if (thou && dec && thou === dec) return null; // "1.234.56" is not money
-  if (!dec && !dash) return null;
-  const v = parseFloat(int.replace(/[^\d]/g, '') + '.' + (cents || '00')) * (neg1 || neg2 || (open && close) ? -1 : 1);
-  return { v, fmt: { open, neg: neg1 || neg2 || '', negBefore: !!neg1, pre: pre || '', thou: thou || '', dec: dec || '', dash: !!dash, post: post || '', close } };
+// A salesperson's request: put 8 % on the prices of a supplier's quote or order confirmation (or a
+// different % per line, as in the ERP), and have the sums worked out again. Suppliers lay these out
+// in many ways, so the amounts are understood from the numbers more than from the words:
+//  - a line is a block: the row with the item and the rows under it (discounts, net price);
+//  - in a row, quantity × unit price = amount tells which number is the quantity (never changed);
+//  - percentages (discounts, "25% moms") are never changed;
+//  - a sum is recognised by its value: the lines added up (subtotal), a clean share of that (VAT),
+//    or the two together (total), whatever the supplier calls it.
+// The new amounts go in as ordinary text edits (the PDF's own font, right-aligned where the column
+// is), so they show on the page, can be changed by hand and undone like any other edit.
+const MK_SUMWORD = /(subtotal|sub-total|i ?alt|total|netto ?beløb|nettobeløb|beløb|at betale|til betaling|samlet|moms|vat|mwst|mva|iva|tva|tax|gesamt|summe|summa|delsum|zwischensumme|att betala|å betale)/i;
+const MK_SUBROW = /(rabat|netto ?pris|nettopris|net price|discount|skonto|nachlass|tillæg i %)/i;
+const MK_VAT = /\b(moms|vat|mwst|ust|mva|iva|tva|tax)\b/i;
+const MK_NET = /(netto ?pris|nettopris|net price|netto)/i;
+// Numbers in a run: the decimal mark is worked out per document (1.234,56 or 1,234.56).
+function mkTokens(str, dec) {
+  const th = dec === ',' ? '[.\\u00a0\\u202f]' : '[,\\u00a0\\u202f]', d = dec === ',' ? ',' : '\\.';
+  const re = new RegExp(`(?<![\\w.,/-])([-−])?(\\d{1,3}(?:${th}\\d{3})*)(?:${d}(\\d+|-))?(-(?=\\s|$))?(?![\\w/]|[.,]\\d)`, 'g');
+  const out = [];
+  for (const m of str.matchAll(re)) {
+    const [raw, neg, int, frac, negAfter] = m, rest = str.slice(m.index + raw.length);
+    const pct = /^\s*%/.test(rest);
+    const kind = pct ? 'pct' : frac === '-' ? 'money' : frac && frac.length === 2 ? 'money' : frac ? 'num' : 'int';
+    const v = parseFloat(int.replace(/\D/g, '') + '.' + (frac && frac !== '-' ? frac : '0')) * (neg || negAfter ? -1 : 1);
+    const sep = (int.match(/\D/) || [''])[0];
+    out.push({ i0: m.index, i1: m.index + raw.length, raw, v, kind, places: frac === '-' ? 0 : (frac || '').length, fmt: { neg: neg || negAfter || '', after: !!negAfter, sep, dash: frac === '-', dec } });
+  }
+  return out;
 }
-function mkFormat(v, f) {
-  const neg = v < 0, a = Math.abs(v), cents = f.dash ? 0 : Math.round(a * 100) % 100, whole = f.dash ? Math.round(a) : Math.floor(Math.round(a * 100) / 100);
-  const thou = f.thou || (f.dec === ',' || f.dash ? '.' : ','), int = String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, thou);
-  const num = int + (f.dash ? ',-' : (f.dec || ',') + String(cents).padStart(2, '0'));
-  const sign = neg ? (f.neg || '-') : '';
-  if (f.open && f.close && neg) return `(${f.pre}${num}${f.post})`;
-  return f.negBefore ? `${sign}${f.pre}${num}${f.post}` : `${f.pre}${sign}${num}${f.post}`;
+const mkRound = (v, places) => { const k = 10 ** places; return Math.round((v + Math.sign(v) * 1e-9) * k) / k; };
+function mkFormat(v, t) {
+  const f = t.fmt, a = Math.abs(v), places = t.places, k = 10 ** places;
+  const n = Math.round(a * k + 1e-9), whole = Math.floor(n / k), part = String(n % k).padStart(places, '0');
+  const sep = f.sep || (f.dec === ',' ? '.' : ','), int = whole >= 1000 || f.sep ? String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, sep) : String(whole);
+  const num = int + (f.dash ? f.dec + '-' : places ? f.dec + part : '');
+  if (v >= 0) return num;
+  const m = f.neg || '-';
+  return f.after ? num + m : m + num;
 }
-const mkRound = (v, f) => f.dash ? Math.round(v + 1e-9) : Math.round((v + Math.sign(v) * 1e-9) * 100) / 100; // a hair added, so x.xx5 rounds up as people expect
-const MK_TOTAL = /\b(total|i alt|ialt|at betale|til betaling|samlet|gesamt|summe|att betala|å betale|totalt|importe total|montant)\b/i;
-const MK_INCL = /\b(inkl|incl|including|inklusive|ttc|iva incl)/i;
-const MK_VAT = /\b(moms|vat|mwst|ust|mva|iva|tva|tax|merverdiavgift)\b/i;
-const MK_SUB = /(subtotal|sub-total|sub total|netto|ekskl|excl|zwischensumme|delsum|summa|base imponible|sous-total|nettobeløb|beløb ekskl)/i;
 async function mkScan() {
-  const lines = [], sums = [];
+  // 1. Every row of every page, with its number tokens.
+  const pages = [];
+  let commas = 0, dots = 0;
   for (const pg of S.pages.filter(p => !p.deleted)) {
     const page = await S.docs[pg.doc].js.getPage(pg.index + 1);
     let tc; try { tc = await page.getTextContent(); } catch (e) { continue; }
     const runs = lineRuns(tc.items);
-    // rows: runs on the same line
+    for (const r of runs) { commas += (r.str.match(/\d,\d{2}(?!\d)/g) || []).length; dots += (r.str.match(/\d\.\d{2}(?!\d)/g) || []).length; }
+    pages.push({ pg, page, tc, runs, width: page.view[2] - page.view[0], left: page.view[0] });
+  }
+  const dec = commas >= dots ? ',' : '.';
+  const blocks = [], sums = [];
+  for (const P of pages) {
     const rows = [];
-    for (const r of runs.slice().sort((a, b) => b.y - a.y || a.x - b.x)) {
+    for (const r of P.runs.slice().sort((a, b) => b.y - a.y || a.x - b.x)) {
       let row = rows.find(w => Math.abs(w.y - r.y) < Math.max(w.size, r.size) * .45);
       if (!row) rows.push(row = { y: r.y, size: r.size, runs: [] });
       row.runs.push(r);
     }
-    const all = [];
+    rows.sort((a, b) => b.y - a.y);
     for (const row of rows) {
       row.runs.sort((a, b) => a.x - b.x);
-      row.amounts = row.runs.map(r => ({ r, p: mkParse(r.str) })).filter(a => a.p);
-      row.label = row.runs.filter(r => !mkParse(r.str)).map(r => r.str).join(' ').replace(/\s+/g, ' ').trim();
-      if (row.amounts.length) all.push(row);
+      row.toks = [];
+      row.runs.forEach((r, ri) => mkTokens(r.str, dec).forEach(t => {
+        // "-32,00" followed by a separate "%" run is a percentage too
+        if (t.kind !== 'pct' && t.i1 === r.str.length && row.runs[ri + 1] && /^\s*%/.test(row.runs[ri + 1].str)) t.kind = 'pct';
+        row.toks.push({ ...t, run: r });
+      }));
+      row.money = row.toks.filter(t => t.kind === 'money');
+      row.label = row.runs.map(r => r.str).join(' ').replace(/\s+/g, ' ').trim();
+      row.words = row.runs.map(r => mkTokens(r.str, dec).reduceRight((s, t) => t.kind === 'pct' ? s : s.slice(0, t.i0) + s.slice(t.i1), r.str)).join(' ').replace(/\s+/g, ' ').trim();
+      row.x0 = row.runs[0].x - P.left;
     }
-    if (!all.length) continue;
-    // where the summary starts: the first row (from the top) whose words say subtotal, VAT or total
-    const kind = row => { const l = row.label; if (MK_TOTAL.test(l) && (MK_INCL.test(l) || !MK_VAT.test(l)) && !MK_SUB.test(l)) return 'total'; if (MK_VAT.test(l) && !MK_TOTAL.test(l)) return 'vat'; if (MK_SUB.test(l) || (MK_TOTAL.test(l) && /ekskl|excl|netto/i.test(l))) return 'sub'; if (MK_VAT.test(l)) return 'vat'; return ''; };
-    const firstSum = all.findIndex(row => kind(row));
-    all.forEach((row, i) => {
-      const k = kind(row);
-      if (firstSum >= 0 && i >= firstSum) { if (k) sums.push({ row, kind: k, page, pg, tc }); }
-      else if (row.label.replace(/[\d\s.,-]/g, '').length >= 2) lines.push({ row, page, pg, tc, pct: 0 });
-    });
+    // 2. Lines (blocks) until the sums start: a sum row has its words in the right part of the page.
+    let cur = null, inSums = false;
+    for (const row of rows) {
+      const isSum = row.money.length && MK_SUMWORD.test(row.words) && !MK_SUBROW.test(row.words) && row.x0 > P.width * .35 && (blocks.length || cur);
+      if (isSum) { inSums = true; sums.push({ P, row, tok: row.money.at(-1) }); cur = null; continue; }
+      if (inSums) continue;
+      if (row.money.length) {
+        if (cur && MK_SUBROW.test(row.words)) cur.rows.push(row);
+        else { cur = { P, rows: [row], text: [], pct: 0 }; blocks.push(cur); }
+      } else if (cur && /[a-zæøå]{3}/i.test(row.words) && cur.text.length < 1 && !/^(ean|tun\.?nr|db\.?nr)/i.test(row.words)) cur.text.push(row);
+    }
   }
+  // What a line is called: the text left of its quantity and price columns (the description).
+  const leftOf = (runs, x) => runs.filter(r => r.x + r.w <= x + .5).map(r => r.str).join(' ').replace(/\s+/g, ' ').trim();
+  for (const b of blocks) {
+    const first = b.rows[0]; first.pair = mkPair(first);
+    for (const r of b.rows.slice(1)) r.pair = mkPair(r);
+    const cols = [first.pair && first.pair.q, first.pair && first.pair.u, ...first.money].filter(Boolean);
+    b.xq = Math.min(...cols.map(t => t.run.x));
+    b.label = [leftOf(first.runs, b.xq), ...b.text.map(row => leftOf(row.runs, b.xq))].filter(Boolean).join(' · ') || first.words;
+    b.total = b.rows.at(-1).money.at(-1);
+  }
+  for (const s of sums) s.label = leftOf(s.row.runs, s.tok.run.x).replace(/[:\s]+$/, '') || s.row.words;
   // right- or left-aligned: amounts that share a right edge are a right-aligned column
-  const amts = [...lines, ...sums].flatMap(x => x.row.amounts);
-  for (const a of amts) {
-    const right = a.r.x + a.r.w;
-    const sameRight = amts.filter(b => b !== a && Math.abs(b.r.x + b.r.w - right) < 1.5).length, sameLeft = amts.filter(b => b !== a && Math.abs(b.r.x - a.r.x) < 1.5).length;
-    a.align = sameLeft > sameRight ? 'left' : 'right';
+  const runsWithMoney = [...new Set([...blocks.flatMap(b => b.rows), ...sums.map(s => s.row)].flatMap(r => r.toks.filter(t => t.kind !== 'pct').map(t => t.run)))];
+  for (const r of runsWithMoney) {
+    const right = r.x + r.w;
+    const sameRight = runsWithMoney.filter(o => o !== r && Math.abs(o.x + o.w - right) < 1.5).length, sameLeft = runsWithMoney.filter(o => o !== r && Math.abs(o.x - r.x) < 1.5).length;
+    r.align = sameLeft > sameRight ? 'left' : 'right';
   }
-  return { lines, sums };
+  return { blocks, sums, dec };
+}
+// In a row, quantity × unit price = the row's amount tells which number is the quantity.
+function mkPair(row) {
+  const total = row.money.at(-1);
+  if (!total) return null;
+  const nums = row.toks.filter(t => t.kind !== 'pct' && t !== total);
+  for (const u of nums.filter(t => t.kind === 'money' || t.kind === 'num')) for (const q of nums.filter(t => t !== u && (t.kind === 'int' || t.kind === 'num'))) {
+    if (q.v && Math.abs(u.v * q.v - total.v) <= .011 + Math.abs(total.v) * 5e-6) return { u, q };
+  }
+  return null;
+}
+// One row: the unit price takes the % and the amount becomes the new unit price × the quantity
+// (the quantity stays). Without a quantity, every amount takes the %.
+function mkRow(row, f, out) {
+  const total = row.money.at(-1), pair = row.pair;
+  for (const t of row.money) if (t !== total) out.set(t, mkRound(t.v * f, t.places));
+  if (pair) { const nu = mkRound(pair.u.v * f, pair.u.places); out.set(pair.u, nu); out.set(total, mkRound(nu * pair.q.v, total.places)); }
+  else out.set(total, mkRound(total.v * f, total.places));
 }
 function mkCompute(scan) {
-  let delta = 0, linesOld = 0;
-  const out = new Map(); // amount → new value
-  for (const ln of scan.lines) {
-    const f = 1 + (ln.pct || 0) / 100, am = ln.row.amounts;
-    for (const a of am) out.set(a, mkRound(a.p.v * f, a.p.fmt));
-    // Unit price and line amount: the amount stays the new unit price × the quantity, so the line adds up.
-    if (am.length === 2 && am[0].p.v) { const q = am[1].p.v / am[0].p.v; if (Math.abs(q - Math.round(q * 1000) / 1000) < 1e-6) out.set(am[1], mkRound(out.get(am[0]) * q, am[1].p.fmt)); }
-    const last = am.at(-1); linesOld += last.p.v; delta += out.get(last) - last.p.v;
+  const out = new Map(); // token → new value
+  let oldSum = 0, newSum = 0;
+  for (const b of scan.blocks) {
+    const f = 1 + (b.pct || 0) / 100, [first, ...rest] = b.rows, G = first.money.at(-1);
+    mkRow(first, f, out);
+    if (rest.length) {
+      const G2 = out.get(G), last = b.rows.at(-1), N = last.money.at(-1);
+      const disc = rest.filter(r => r !== last || !MK_NET.test(r.words)).map(r => r.money.at(-1));
+      // gross + discounts = net in the original: keep it so after the change
+      const holds = last !== first && MK_NET.test(last.words) && Math.abs(G.v + disc.reduce((s, t) => s + t.v, 0) - N.v) < .03;
+      for (const r of rest) for (const t of r.money) out.set(t, mkRound(t.v * f, t.places));
+      if (holds) {
+        let s = G2;
+        for (const t of disc) { const nv = G.v ? mkRound(t.v * G2 / G.v, t.places) : t.v; out.set(t, nv); s += nv; }
+        out.set(N, mkRound(s, N.places));
+      }
+    }
+    oldSum += b.total.v; newSum += out.get(b.total);
   }
-  const one = k => scan.sums.find(x => x.kind === k), sub = one('sub'), vat = one('vat'), tot = one('total');
-  const val = x => x.row.amounts.at(-1);
-  const base = sub ? val(sub).p.v : linesOld;
-  let vatDelta = 0;
-  if (sub) out.set(val(sub), mkRound(val(sub).p.v + delta, val(sub).p.fmt));
-  if (vat) {
-    // A clean rate (25 %) is used as it is, so the new VAT is exact; otherwise it grows with the subtotal.
-    const v = val(vat), rate = base ? Math.round(v.p.v / base * 10000) / 10000 : 0;
-    const nv = !base ? v.p.v : Math.abs(rate * base - v.p.v) < .011 ? mkRound(rate * (base + delta), v.p.fmt) : mkRound(v.p.v * (base + delta) / base, v.p.fmt);
-    out.set(v, nv); vatDelta = nv - v.p.v;
+  // sums, by value
+  const results = [], near = (a, b) => Math.abs(a - b) < .05;
+  let vatOld = null, vatNew = null;
+  for (const s of scan.sums) {
+    const v = s.tok.v;
+    let nv = null, kind = '';
+    if (near(v, oldSum)) { nv = newSum; kind = 'sub'; }
+    else if (MK_VAT.test(s.row.words) && oldSum) {
+      const rate = Math.round(v / oldSum * 10000) / 10000;
+      if (rate > 0 && rate < .5 && Math.abs(rate * oldSum - v) < .02) { nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
+    }
+    if (nv === null && vatOld !== null && near(v, oldSum + vatOld)) { nv = newSum + vatNew; kind = 'total'; }
+    if (nv === null && vatOld === null && near(v, oldSum)) { nv = newSum; kind = 'sub'; }
+    if (nv !== null) out.set(s.tok, mkRound(nv, s.tok.places));
+    results.push({ s, kind, nv });
   }
-  if (tot) out.set(val(tot), mkRound(val(tot).p.v + delta + vatDelta, val(tot).p.fmt));
-  return { out, sub, vat, tot };
+  return { out, oldSum, newSum, results };
 }
 async function mkApply(scan, res) {
   const pages = new Map();
-  const canvasOf = async x => {
-    if (pages.has(x.pg.id)) return pages.get(x.pg.id);
-    const vp = x.page.getViewport({ scale: 1.5 }), c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const canvasOf = async P => {
+    if (pages.has(P.pg.id)) return pages.get(P.pg.id);
+    const vp = P.page.getViewport({ scale: 1.5 }), c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
     const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
-    await x.page.render({ canvasContext: ctx, viewport: vp }).promise;
-    const v = { c, vp }; pages.set(x.pg.id, v); return v;
+    await P.page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const v = { c, vp }; pages.set(P.pg.id, v); return v;
   };
+  // the changed tokens, per run
+  const byRun = new Map();
+  const add = (P, row) => { for (const t of row.toks) if (res.out.has(t)) { const nv = res.out.get(t); if (Math.abs(nv - t.v) < 1e-9) continue; if (!byRun.has(t.run)) byRun.set(t.run, { P, toks: [] }); byRun.get(t.run).toks.push({ t, nv }); } };
+  for (const b of scan.blocks) for (const row of b.rows) add(b.P, row);
+  for (const s of scan.sums) add(s.P, s.row);
   let n = 0;
-  for (const x of [...scan.lines, ...scan.sums]) {
-    for (const a of x.row.amounts) {
-      if (!res.out.has(a)) continue;
-      const nv = res.out.get(a), r = a.r, key = `${x.pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`;
-      const text = mkFormat(nv, a.p.fmt), old = S.edits.find(e => e.key === key);
-      if (old) { old.text = text; n++; continue; }
-      if (Math.abs(nv - a.p.v) < .005) continue;
-      const { c, vp } = await canvasOf(x);
-      const [x1, y1, x2, y2] = vp.convertToViewportRectangle([r.x - 1, r.y - r.size * .25, r.x + r.w + 1, r.y + r.size * .95]);
-      const col = sampleColours(c, 1, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
-      S.edits.push({ key, pageId: x.pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text, font: fontStyle(x.page, r.fontName, x.tc.styles), cssName: cssName(x.page, r.fontName), ink: col.ink, bg: col.bg, align: a.align });
-      n++;
-    }
+  for (const [r, { P, toks }] of byRun) {
+    let text = r.str;
+    for (const { t, nv } of toks.sort((a, b) => b.t.i0 - a.t.i0)) text = text.slice(0, t.i0) + mkFormat(nv, t) + text.slice(t.i1);
+    const key = `${P.pg.id}:${Math.round(r.x)}:${Math.round(r.y)}`, old = S.edits.find(e => e.key === key);
+    if (old) { old.text = text; n++; continue; }
+    const { c, vp } = await canvasOf(P);
+    const [x1, y1, x2, y2] = vp.convertToViewportRectangle([r.x - 1, r.y - r.size * .25, r.x + r.w + 1, r.y + r.size * .95]);
+    const col = sampleColours(c, 1, { left: Math.min(x1, x2), top: Math.min(y1, y2), width: Math.abs(x2 - x1), height: Math.abs(y2 - y1) });
+    S.edits.push({ key, pageId: P.pg.id, x: r.x, y: r.y, w: r.w, size: r.size, orig: r.str, text, font: fontStyle(P.page, r.fontName, P.tc.styles), cssName: cssName(P.page, r.fontName), ink: col.ink, bg: col.bg, align: r.align });
+    n++;
   }
   if (n) S.dirty = true;
   return n;
 }
 async function openMarkup() {
   const scan = await mkScan();
-  if (!scan.lines.length) { app().toast(T('mk.none')); return; }
+  if (!scan.blocks.length) { app().toast(T('mk.none')); return; }
   const pctOf = s => { const v = parseFloat(String(s).replace('−', '-').replace('–', '-').replace(',', '.').replace(/[^\d.-]/g, '')); return isFinite(v) ? v : 0; };
+  const fmt = (v, t) => mkFormat(v, t);
   const d = document.createElement('dialog');
   d.className = 'pw-dialog mk-dialog';
-  const lineRow = (ln, i) => { const a = ln.row.amounts.at(-1); return `<tr><td class="mk-desc" title="${esc(ln.row.label)}">${esc(ln.row.label)}</td><td class="mk-num">${esc(a.r.str)}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: ln.row.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`; };
+  const lineRow = (b, i) => `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
   d.innerHTML = `<form method="dialog">
     <h2>${esc(T('mk.title'))}</h2>
     <p class="pw-note">${esc(T('mk.intro'))}</p>
     <div class="mk-all"><label for="mkAll">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
-    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.lines.map(lineRow).join('')}</tbody></table></div>
+    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
+    <p class="pw-note" id="mkWarn" hidden></p>
     <p class="pw-note">${esc(T('mk.check'))}</p>
     <div class="pw-btns"><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
   </form>`;
   document.body.appendChild(d);
   const update = () => {
-    d.querySelectorAll('[data-i]').forEach(inp => { scan.lines[+inp.dataset.i].pct = pctOf(inp.value); });
+    d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
     const res = mkCompute(scan);
-    scan.lines.forEach((ln, i) => { const a = ln.row.amounts.at(-1), cell = d.querySelector(`[data-new="${i}"]`); cell.textContent = ln.pct ? mkFormat(res.out.get(a), a.p.fmt) : ''; });
-    const sum = (k, x) => x ? `<dt>${esc(T('mk.' + k))}</dt><dd><s>${esc(x.row.amounts.at(-1).r.str)}</s> → <b>${esc(mkFormat(res.out.get(x.row.amounts.at(-1)), x.row.amounts.at(-1).p.fmt))}</b></dd>` : '';
-    d.querySelector('#mkSums').innerHTML = sum('sub', res.sub) + sum('vat', res.vat) + sum('total', res.tot);
+    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = b.pct ? fmt(res.out.get(b.total), b.total) : ''; });
+    d.querySelector('#mkSums').innerHTML = res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
+    const odd = res.results.filter(x => x.nv === null).length, w = d.querySelector('#mkWarn');
+    w.hidden = !odd; if (odd) w.textContent = T('mk.odd', { n: odd });
     return res;
   };
   d.addEventListener('input', update);
@@ -1092,7 +1167,7 @@ async function openMarkup() {
   const n = await mkApply(scan, res);
   if (!n) { app().toast(T('mk.nothing')); return; }
   S.editing = false;
-  if (S.view !== 'page') { S.view = 'page'; S.current = (scan.lines[0].pg || S.pages[0]).id; }
+  if (S.view !== 'page') { S.view = 'page'; S.current = scan.blocks[0].P.pg.id; }
   render();
   app().toast(T('mk.done', { n }), true);
 }

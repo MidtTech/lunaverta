@@ -378,6 +378,8 @@ window.LV_STR.fr = {
   'nav.privacy': 'Confidentialité',
   'nav.licenses': 'Licences open source',
   'nav.source': 'Code source',
+  'mk.sum': 'Somme',
+  'mk.odd': '{n} sommes ne correspondaient pas aux lignes et n\'ont pas été modifiées. Vérifiez-les avant d\'enregistrer.',
   'mk.btn': 'Ajouter % aux prix',
   'mk.tip': 'Appliquer un pourcentage aux prix d\'un devis, à toutes les lignes ou ligne par ligne',
   'mk.title': 'Ajouter un pourcentage aux prix',

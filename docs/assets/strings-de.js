@@ -373,6 +373,8 @@ window.LV_STR.de = {
   'nav.privacy': 'Datenschutz',
   'nav.licenses': 'Open-Source-Lizenzen',
   'nav.source': 'Quellcode',
+  'mk.sum': 'Summe',
+  'mk.odd': '{n} Summen passten nicht zu den Positionen und wurden nicht geändert. Prüfe sie vor dem Speichern.',
   'mk.btn': '% auf Preise',
   'mk.tip': 'Einen Prozentsatz auf die Preise eines Angebots legen, für alle Positionen oder einzeln',
   'mk.title': 'Prozent auf die Preise',

@@ -663,7 +663,7 @@ await test('Add % to prices: 8 % on a quote recalculates lines, subtotal, VAT an
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
   assert((await p.$$('.mk-pct input')).length === 4, 'quote lines found: ' + (await p.$$('.mk-pct input')).length);
   await p.fill('#mkAll', '8'); await p.click('#mkAllGo');
-  assert(/10\.123,65 kr\./.test(await p.innerText('#mkSums')), 'sums: ' + await p.innerText('#mkSums'));
+  assert(/10\.123,65/.test(await p.innerText('#mkSums')), 'sums: ' + await p.innerText('#mkSums'));
   await p.click('.mk-dialog [value="ok"]');
   await p.waitForSelector('.ed-edit', { timeout: 15000 });
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
@@ -684,6 +684,40 @@ await test('every language has every interface text, with the same {placeholders
     else if (holes(S[L][k]) !== holes(en[k])) problems.push(`${L}: ${k} has {${holes(S[L][k])}}, English has {${holes(en[k])}}`);
   }
   assert(!problems.length, problems.slice(0, 8).join(' | ') + (problems.length > 8 ? ` (+${problems.length - 8} more)` : ''));
+});
+
+await test('Add % to prices understands order confirmations: discount rows, 3-decimal unit prices, sums by value', async () => {
+  // Two made-up documents laid out like real supplier confirmations (none of their data).
+  const mk = async rows => { const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica), pg = d.addPage([595, 842]);
+    for (const [y, items] of rows) for (const [x, str, right] of items) pg.drawText(str, { x: right ? x - f.widthOfTextAtSize(str, 9) : x, y, size: 9, font: f });
+    return Buffer.from(await d.save()); };
+  const R = 560;
+  const blockDoc = await mk([[700, [[40, 'Pos. Artikelnummer'], [300, 'Antal'], [380, 'Pris'], [R, 'Nettobeløb', 1]]],
+    [680, [[40, '10'], [60, '3514019003'], [300, '465,216'], [340, 'M2'], [420, '176,40', 1], [R, '82.064,10', 1]]], [668, [[60, '34-Murfilt 190x267x1210']]],
+    [656, [[80, 'Produktrabat'], [470, '-32,00 %', 1], [R, '-26.260,51', 1]]], [644, [[80, 'Kvantumsrabat'], [470, '-20,75 %', 1], [R, '-11.579,24', 1]]],
+    [632, [[80, 'Projektrabat'], [470, '-12,00 %', 1], [R, '-5.306,92', 1]]], [620, [[80, 'netto pris'], [420, '83,65', 1], [R, '38.917,43', 1]]],
+    [580, [[380, 'Nettobeløb:'], [R, '38.917,43', 1]]]]);
+  const vatDoc = await mk([[700, [[40, 'Beskrivelse'], [300, 'Antal'], [420, 'Salgspris'], [R, 'Beløb', 1]]],
+    [680, [[40, 'Lecablok 49x19x10 cm - 6 lag'], [250, '2562420'], [330, '1.080', 1], [340, 'stk'], [420, '10,988', 1], [R, '11.867,04', 1]]],
+    [665, [[40, 'Olie- og energitillæg 6% - Blokke'], [250, '2617520'], [330, '1', 1], [340, 'Ialt'], [420, '1.130,22', 1], [R, '1.130,22', 1]]],
+    [620, [[380, 'I alt DKK'], [R, '12.997,26', 1]]], [606, [[380, '25% moms'], [R, '3.249,32', 1]]], [592, [[380, 'I alt DKK inkl. moms'], [R, '16.246,58', 1]]]]);
+  const run = async (buf, pcts) => {
+    const p = await page('/da/rediger-pdf/');
+    await p.setInputFiles('#fileInput', file('doc.pdf', buf));
+    await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+    await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
+    const ins = await p.$$('.mk-pct input'); assert(ins.length === pcts.length, `lines found: ${ins.length}, expected ${pcts.length}`);
+    for (let i = 0; i < pcts.length; i++) await ins[i].fill(String(pcts[i]));
+    await p.click('.mk-dialog [value="ok"]'); await p.waitForSelector('.ed-edit', { timeout: 15000 });
+    const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+    const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+    await done(p); return txt;
+  };
+  let txt = await run(blockDoc, [8]);
+  for (const v of ['190,51', '88.628,30', '-28.361,05', '-12.505,45', '-5.731,41', '90,34', '42.030,39', '465,216', '-32,00']) assert(txt.includes(v), `block: missing ${v}`);
+  assert(!txt.includes('38.917,43'), 'block: old net still there');
+  txt = await run(vatDoc, [8, 0]);
+  for (const v of ['11,867', '12.816,36', '1.080', '1.130,22', '13.946,58', '3.486,65', '17.433,23']) assert(txt.includes(v), `VAT doc: missing ${v}: ` + txt.slice(0, 300));
 });
 
 await test('the home page works on a phone', async () => {
