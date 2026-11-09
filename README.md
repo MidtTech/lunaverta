@@ -13,6 +13,8 @@ Available in English, Danish, Swedish, Norwegian, German, Spanish and French.
 - **Edit PDFs:** correct or delete existing text in the PDF's own font, move paragraphs (even to another page), add text, fill in and create forms, sign, stamp, annotate, reorder, rotate and delete pages.
 - **Remove sensitive information for real:** suggestions for prices, ID numbers (CPR, personnummer, Steuer-ID, DNI, NIR and more), account and card numbers, e-mails, phone numbers, addresses and dates. Marked text is deleted from the file, not covered by a black box.
 - **Convert:** HEIC, JPG, PNG, WebP, AVIF and other images; PDF to Word, Excel, JPG, PNG and text; Word, PowerPoint and Excel to PDF; CSV/JSON to Excel; video to GIF or MP3; compress phone videos.
+- **Install it as an app** (Chrome, Edge): it opens PDFs straight from Windows in a reader with text you can select and search, and saves edits back to the same file.
+- **Quotes:** put a percentage on the prices of a quote, for all lines or line by line, with subtotal, VAT and total worked out again.
 - **52 tools in all,** including merge, split, compress, protect (AES-256), unlock, OCR in seven languages, compare two PDFs, scan paper with your phone, booklet printing, header and footer, metadata, QR codes, and removing GPS location from photos without re-encoding.
 
 ## Don't take our word for it
@@ -60,7 +62,10 @@ LunaVerta is a folder of static files. To run it on your own server or intranet,
 ```
 docs/                 the website, published as is (GitHub Pages)
   assets/app.js       converters and the main interface
-  assets/editor.js    the PDF editor and Remove sensitive
+  assets/editor.js    the PDF editor, Remove sensitive and Add % to prices
+  assets/pdf-text.js  reads and rewrites the text in a PDF page's own drawing commands
+  assets/viewer.js    the PDF reader the installed app opens files in
+  sw.js               the service worker (offline copy, updates)
   assets/strings*.js  interface texts, one file per language
 src/template.html     the page template
 scripts/
@@ -68,7 +73,11 @@ scripts/
                       the guides, sitemap.xml, llms.txt and llms-full.txt
   site-content.mjs    tool list and English/Danish page texts
   lang/*.mjs          page texts for each extra language (sv, no, de, es, fr)
-  guides*.mjs         the guides, adapted to each country
+  guides*.mjs         the guides, adapted to each country (guides-local.mjs: guides in one language only)
+  business.mjs        the "For business" page in every language
+  icons.mjs           the tool icons
+  tool-keywords.mjs   other words people search tools by (for the tool search)
+  make-share-images.mjs  the share images in docs/og (run after renaming a tool or guide)
   vendor.mjs          copies the libraries from node_modules into docs/vendor
 tests/smoke.mjs       end-to-end tests in a real browser
 ```
@@ -80,7 +89,7 @@ npx playwright install chromium   # once
 npm test
 ```
 
-`tests/smoke.mjs` serves `docs/` and drives a real browser through the important paths: every page loads, conversions produce valid files, redaction really deletes text, OCR reads each language, signatures land on every page, every language has its texts, and the site fits a phone.
+`tests/smoke.mjs` serves `docs/` and drives a real browser through the important paths: every page loads, conversions produce valid files, redaction really deletes text, OCR reads each language, signatures land on every page, price markup adds up, every language has every text, and the site fits a phone. Run only some of them with `ONLY=<words from a test name> npm test`.
 
 ## Contributing
 

@@ -81,11 +81,6 @@ function targetsFor(file) {
 }
 // Merging needs at least one PDF and at least two PDFs or images in total.
 const canMerge = kinds => kinds.includes('pdf') && kinds.filter(k => k === 'pdf' || k === 'image').length > 1;
-function unionTargets(kinds) {
-  const s = new Set(); kinds.forEach(k => k && KINDS[k].targets.forEach(t => s.add(t)));
-  if (!canMerge(kinds)) s.delete('merge');
-  return ORDER.filter(t => s.has(t));
-}
 function fileTargets(files) {
   const s = new Set(); files.forEach(f => targetsFor(f).forEach(t => s.add(t)));
   if (!canMerge(files.map(kindOf))) s.delete('merge');
@@ -2916,7 +2911,6 @@ function newJob(srcName, target, kindColor) {
   jobs.unshift(j); renderJob(j, true); updateFoot();
   return j;
 }
-let queue = Promise.resolve();
 const POOL = 2; let running = 0; const waiting = [];
 function schedule(fn) {
   return new Promise((res, rej) => {

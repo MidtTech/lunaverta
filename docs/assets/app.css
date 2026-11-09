@@ -354,7 +354,6 @@ html.ed-open .cookie-note { display: none; }
 .ed-find-head h2 { margin: 0; font-size: 18px; }
 .ed-find-form { display: flex; gap: 8px; }
 .ed-find-form input { flex: 1; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
-.ed-find-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
 .ed-chip { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
 .ed-chip.on, .ed-chip:hover { border-color: var(--accent); color: var(--accent); }
 .ed-find-status { font-size: 14px; font-weight: 500; min-height: 1.4em; }
@@ -608,7 +607,6 @@ html.ed-finding .ed-search { right: 424px; }
 @media (max-width: 860px) { .about { grid-template-columns: minmax(0, 1fr); padding: 20px; } }
 .about-text { display: grid; gap: 12px; justify-items: start; }
 .about-text p { margin: 0; line-height: 1.6; }
-.about-code svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .about .facts { display: block; }
 .about .facts div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; background: none; border: 0; border-radius: 0; border-top: 1px solid var(--line); }
 .about .facts div:first-child { border-top: 0; padding-top: 2px; }
@@ -621,7 +619,6 @@ html.ed-finding .ed-search { right: 424px; }
 .wrap > footer > span:not(.foot-promise) { grid-column: 1 / -1; font-size: 12.5px; }
 @media (max-width: 600px) { .wrap > footer { grid-template-columns: minmax(0, 1fr); } .wrap > footer nav { grid-column: 1; grid-row: auto; } }
 button.toast-open { background: none; border: 0; font: inherit; font-weight: 600; cursor: pointer; }
-.about-code { text-decoration: none; color: var(--accent); }
 /* formats folded away behind one bar; the text stays on the page for search engines */
 details.ref { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 0; }
 details.ref > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; padding: 18px 22px; }

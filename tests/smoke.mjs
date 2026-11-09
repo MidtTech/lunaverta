@@ -673,6 +673,19 @@ await test('Add % to prices: 8 % on a quote recalculates lines, subtotal, VAT an
   await done(p);
 });
 
+await test('every language has every interface text, with the same {placeholders} as English', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const ctx = { window: {} };
+  for (const f of ['strings', 'strings-sv', 'strings-no', 'strings-de', 'strings-es', 'strings-fr']) runInNewContext(await readFile(join(ROOT, 'assets', f + '.js'), 'utf8'), ctx);
+  const S = ctx.window.LV_STR, en = S.en, holes = s => [...String(s).matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort().join();
+  const problems = [];
+  for (const L of ['da', 'sv', 'no', 'de', 'es', 'fr']) for (const k of Object.keys(en)) {
+    if (!(k in S[L])) problems.push(`${L}: missing ${k}`);
+    else if (holes(S[L][k]) !== holes(en[k])) problems.push(`${L}: ${k} has {${holes(S[L][k])}}, English has {${holes(en[k])}}`);
+  }
+  assert(!problems.length, problems.slice(0, 8).join(' | ') + (problems.length > 8 ? ` (+${problems.length - 8} more)` : ''));
+});
+
 await test('the home page works on a phone', async () => {
   const p = await page('/da/', { viewport: { width: 390, height: 844 } });
   const wide = await p.evaluate(() => document.documentElement.scrollWidth);
