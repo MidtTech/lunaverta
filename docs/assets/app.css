@@ -1117,6 +1117,12 @@ html.vw-open, html.vw-open body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .install-hint { animation: none; } }
 /* Add % to prices */
 .mk-dialog { width: min(720px, calc(100vw - 32px)); }
+.beta { display: inline-block; vertical-align: 1px; margin-left: 4px; padding: 1px 6px; border-radius: 999px; font: 700 10.5px/1.5 var(--font-ui, inherit); letter-spacing: .04em; text-transform: uppercase; background: #ffe58a; color: #5c4300; }
+h2 .beta { font-size: 12px; vertical-align: 3px; }
+.mk-beware { margin: 4px 0 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #e6b800; background: #fff7d6; color: #4d3b00; font-size: 14px; line-height: 1.5; }
+.mk-beware strong { display: block; margin-bottom: 2px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mk-beware { background: #3a3110; border-color: #8a7020; color: #f5e3a3; } }
+:root[data-theme="dark"] .mk-beware { background: #3a3110; border-color: #8a7020; color: #f5e3a3; }
 .mk-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
 .mk-mode label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--raised); }
 .mk-mode label:has(input:checked) { border-color: var(--accent, #3d57e8); box-shadow: 0 0 0 1px var(--accent, #3d57e8) inset; }

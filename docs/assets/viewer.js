@@ -45,11 +45,11 @@ async function open(file, handle) {
 
 // The toolbar. A locked PDF only gets "All tools" (where Unlock is) and Close.
 function tools(locked) {
-  const b = (id, key, cls = '') => `<button type="button" class="btn sm ${cls}" id="${id}">${esc(T(key))}</button>`;
+  const b = (id, key, cls = '', tag = '') => `<button type="button" class="btn sm ${cls}" id="${id}">${esc(T(key))}${tag}</button>`;
   $('#vwTools').innerHTML = locked
     ? `${b('vwMore', 'vw.more')}${b('vwClose', 'vw.close', 'ghost')}`
     : `<span class="vw-zoom"><button type="button" class="ed-ico" id="vwOut" aria-label="${esc(T('vw.zoomOut'))}" title="${esc(T('vw.zoomOut'))}">−</button><button type="button" class="vw-zoomv" id="vwFit" title="${esc(T('vw.fit'))}">100 %</button><button type="button" class="ed-ico" id="vwIn" aria-label="${esc(T('vw.zoomIn'))}" title="${esc(T('vw.zoomIn'))}">+</button></span>
-      ${b('vwEdit', 'vw.edit', 'primary')}${b('vwSign', 'vw.sign')}${V.forms ? b('vwFill', 'vw.fill') : ''}${b('vwRedact', 'vw.redact')}${b('vwMarkup', 'mk.btn')}${b('vwPrint', 'vw.print')}${b('vwMore', 'vw.more')}${b('vwClose', 'vw.close', 'ghost')}`;
+      ${b('vwEdit', 'vw.edit', 'primary')}${b('vwSign', 'vw.sign')}${V.forms ? b('vwFill', 'vw.fill') : ''}${b('vwRedact', 'vw.redact')}${b('vwMarkup', 'mk.btn', '', ` <span class="beta">${esc(T('beta'))}</span>`)}${b('vwPrint', 'vw.print')}${b('vwMore', 'vw.more')}${b('vwClose', 'vw.close', 'ghost')}`;
   const on = (id, fn) => { const x = document.getElementById(id); if (x) x.onclick = fn; };
   on('vwClose', close);
   on('vwMore', () => { const f = V.file; close(); app().openTools([f]); });

@@ -123,7 +123,7 @@ async function thumb(pg) {
 }
 function renderGrid() {
   S.view = 'grid';
-  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edReverse">${esc(T('ed.reverse'))}</button><button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))}</button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
+  $('#edTools').innerHTML = `${undoHTML()}<button class="btn sm" type="button" id="edAdd">${esc(T('ed.addPages'))}</button><button class="btn sm" type="button" id="edReverse">${esc(T('ed.reverse'))}</button><button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))} <span class="beta">${esc(T('beta'))}</span></button><button class="btn sm" type="button" id="edFind">${ICON.search}<span>${esc(T('ed.find'))}</span></button><span class="ed-hint">${esc(T('ed.gridHint'))}</span>`;
   $('#edAdd').onclick = () => $('#edAddInput').click();
   // Reverse the order of the pages, e.g. a stack that was scanned upside down (undo brings it back)
   $('#edReverse').onclick = () => { S.pages.reverse(); S.dirty = true; renderGrid(); };
@@ -237,7 +237,7 @@ function pageTools() {
       <button class="btn sm${S.editing ? ' primary' : ''}" type="button" id="edEditText" aria-pressed="${!!S.editing}" title="${esc(T('tip.edit'))}">${esc(T('ed.editText'))}</button>
       <button class="btn sm${S.paras ? ' primary' : ''}" type="button" id="edParas" aria-pressed="${!!S.paras}" title="${esc(T('tip.paras'))}">${esc(T('ed.paras'))}</button>
       <button class="btn sm${S.adding ? ' primary' : ''}" type="button" id="edAddText" aria-pressed="${!!S.adding}" title="${esc(T('tip.add'))}">${esc(T('ed.addText'))}</button>
-      <button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))}</button>
+      <button class="btn sm" type="button" id="edMarkup" title="${esc(T('mk.tip'))}">${esc(T('mk.btn'))} <span class="beta">${esc(T('beta'))}</span></button>
       <label class="ed-size" title="${esc(T('tip.size'))}"><span class="sr-only">${esc(T('ed.size'))}</span><select id="edSize">${[9, 10, 11, 12, 14, 16, 20, 24, 32].map(v => `<option value="${v}"${v === (S.size || 12) ? ' selected' : ''}>${v} pt</option>`).join('')}</select></label>
     </span>
     <span class="ed-group" role="group" aria-label="${esc(T('grp.mark'))}" data-label="${esc(T('grp.mark'))}">
@@ -1179,7 +1179,8 @@ async function openMarkup() {
   d.className = 'pw-dialog mk-dialog';
   const lineRow = (b, i) => `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
   d.innerHTML = `<form method="dialog">
-    <h2>${esc(T('mk.title'))}</h2>
+    <h2>${esc(T('mk.title'))} <span class="beta">${esc(T('beta'))}</span></h2>
+    <div class="mk-beware" role="note"><strong>${esc(T('mk.bewareH'))}</strong> ${esc(T('mk.beware'))}</div>
     <div class="mk-mode" role="radiogroup" aria-label="${esc(T('mk.how'))}">
       <label><input type="radio" name="mkMode" value="each" checked> <span><b>${esc(T('mk.each'))}</b>${esc(T('mk.eachD'))}</span></label>
       <label><input type="radio" name="mkMode" value="line"> <span><b>${esc(T('mk.asLine'))}</b>${esc(T('mk.asLineD'))}</span></label></div>
@@ -1188,7 +1189,6 @@ async function openMarkup() {
     <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
-    <p class="pw-note">${esc(T('mk.check'))}</p>
     <div class="pw-btns"><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
   </form>`;
   document.body.appendChild(d);
