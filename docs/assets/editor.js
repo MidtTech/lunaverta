@@ -1084,7 +1084,14 @@ function mkCompute(scan) {
   }
   // "As its own line": the lines stay, one markup line is added and the sums include it.
   let add = 0;
-  if (asLine && scan.linePct) { const places = scan.blocks[0].total.places; add = mkRound(oldSum * scan.linePct / 100, places); newSum = mkRound(oldSum + add, places); }
+  // each line's markup (its own %), added together into the one line
+  let linePct = null;
+  if (asLine) {
+    const places = scan.blocks[0].total.places, pcts = new Set(scan.blocks.map(b => b.pct || 0));
+    for (const b of scan.blocks) add += mkRound(b.total.v * (b.pct || 0) / 100, places);
+    add = mkRound(add, places); newSum = mkRound(oldSum + add, places);
+    if (pcts.size === 1 && !pcts.has(0)) linePct = [...pcts][0]; // the same % everywhere: the line can say which
+  }
   // sums, by value
   const results = [], near = (a, b) => Math.abs(a - b) < .05;
   let vatOld = null, vatNew = null;
@@ -1101,7 +1108,7 @@ function mkCompute(scan) {
     if (nv !== null) out.set(s.tok, mkRound(nv, s.tok.places));
     results.push({ s, kind, nv });
   }
-  return { out, oldSum, newSum, results, add };
+  return { out, oldSum, newSum, results, add, linePct };
 }
 async function mkApply(scan, res) {
   const pages = new Map();
@@ -1138,7 +1145,7 @@ async function mkApply(scan, res) {
 // be moved or changed by hand.
 async function mkLine(scan, res) {
   if (!res.add) return null;
-  const pctTxt = String(scan.linePct).replace('.', scan.dec);
+  const pctTxt = res.linePct === null ? '' : String(res.linePct).replace('.', scan.dec);
   const target = (res.results.find(x => x.kind === 'sub') || res.results[0] || {}).s;
   const lastSum = scan.sums.filter(x => !target || x.P === target.P).sort((a, b) => a.row.y - b.row.y)[0];
   const lastRow = scan.blocks.at(-1).rows.at(-1);
@@ -1155,7 +1162,7 @@ async function mkLine(scan, res) {
   // the amount in the subtotal's own number format, with the same "kr." or "DKK" after it
   const after = tok.run.str.slice(tok.i1).match(/^\s*(kr\.?|dkk|eur|€|sek|nok)?/i)[0];
   const amount = mkFormat(res.add, tok) + after;
-  const label = T(below ? 'mk.lineOf' : 'mk.lineLabel', { p: pctTxt });
+  const label = T((below ? 'mk.lineOf' : 'mk.lineLabel') + (pctTxt ? '' : 'Mix'), { p: pctTxt });
   await app().lib('pdflib');
   const doc = await PDFLib.PDFDocument.create(), hv = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   const wAmt = hv.widthOfTextAtSize(amount, size);
@@ -1178,7 +1185,7 @@ async function openMarkup() {
       <label><input type="radio" name="mkMode" value="line"> <span><b>${esc(T('mk.asLine'))}</b>${esc(T('mk.asLineD'))}</span></label></div>
     <p class="pw-note" id="mkIntro">${esc(T('mk.intro'))}</p>
     <div class="mk-all"><label for="mkAll" id="mkAllL">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
-    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
+    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
     <p class="pw-note">${esc(T('mk.check'))}</p>
@@ -1188,21 +1195,22 @@ async function openMarkup() {
   const update = () => {
     scan.mode = d.querySelector('input[name="mkMode"]:checked').value;
     const asLine = scan.mode === 'line';
-    scan.linePct = asLine ? pctOf(d.querySelector('#mkAll').value) : 0;
-    d.querySelector('#mkAllGo').hidden = asLine; d.querySelector('.mk-wrap').hidden = asLine;
-    d.querySelector('#mkAllL').textContent = T(asLine ? 'mk.linePct' : 'mk.all');
     d.querySelector('#mkIntro').textContent = T(asLine ? 'mk.lineIntro' : 'mk.intro');
     d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
     const res = mkCompute(scan);
-    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = b.pct && !asLine ? fmt(res.out.get(b.total), b.total) : ''; });
+    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * b.pct / 100, b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
+    d.querySelector('.mk-new-h').textContent = T(asLine ? 'mk.lineAdd' : 'mk.new');
+    const lineName = res.linePct === null ? T('mk.lineLabelMix') : T('mk.lineLabel', { p: String(res.linePct).replace('.', scan.dec) });
     const tok0 = scan.blocks[0].total;
-    d.querySelector('#mkSums').innerHTML = (res.add ? `<dt>${esc(T('mk.lineLabel', { p: String(scan.linePct).replace('.', scan.dec) }))}</dt><dd><b>+ ${esc(fmt(res.add, tok0))}</b></dd>` : '') + res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
+    d.querySelector('#mkSums').innerHTML = (res.add ? `<dt>${esc(lineName)}</dt><dd><b>+ ${esc(fmt(res.add, tok0))}</b></dd>` : '') + res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
     const odd = res.results.filter(x => x.nv === null).length, w = d.querySelector('#mkWarn');
     w.hidden = !odd; if (odd) w.textContent = T('mk.odd', { n: odd });
     return res;
   };
   d.addEventListener('input', update); d.addEventListener('change', update);
   d.querySelector('#mkAllGo').onclick = () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); update(); };
+  // the field at the top fills every line as you type; a line can then be given its own %
+  d.querySelector('#mkAll').addEventListener('input', () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); });
   d.querySelector('#mkAll').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.querySelector('#mkAllGo').click(); } });
   update();
   d.showModal(); d.querySelector('#mkAll').focus();
@@ -1219,7 +1227,7 @@ async function openMarkup() {
   S.editing = false;
   if (S.view !== 'page') { S.view = 'page'; S.current = scan.blocks[0].P.pg.id; }
   render();
-  app().toast(line ? T('mk.lineDone', { p: String(scan.linePct).replace('.', scan.dec) }) : T('mk.done', { n }), true);
+  app().toast(line ? (res.linePct === null ? T('mk.lineDoneMix') : T('mk.lineDone', { p: String(res.linePct).replace('.', scan.dec) })) : T('mk.done', { n }), true);
 }
 
 // ---------- undo and redo ----------

@@ -714,7 +714,6 @@ await test('Add % to prices as its own line: the prices stay, a "Tillæg 8 %" li
   await p.click('#edMarkup');
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
   await p.check('input[name="mkMode"][value="line"]');
-  assert(await p.isHidden('.mk-wrap'), 'the per-line table should hide');
   await p.fill('#mkAll', '8');
   const sums = await p.innerText('#mkSums');
   assert(/Tillæg 8 %/.test(sums) && /599,92/.test(sums) && /10\.123,65/.test(sums), 'sums: ' + sums);
@@ -725,6 +724,25 @@ await test('Add % to prices as its own line: the prices stay, a "Tillæg 8 %" li
   for (const v of ['Tillæg 8 %', '599,92', '8.098,92', '2.024,73', '10.123,65']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 400));
   assert(!txt.includes('2.046,60'), 'a line price was changed');
   assert(!txt.includes('9.373,75'), 'old total still there');
+  await done(p);
+});
+
+await test('Add % to prices as its own line with a different % per line: the markups are added together', async () => {
+  const p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+  await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
+  await p.check('input[name="mkMode"][value="line"]');
+  const ins = await p.$$('.mk-pct input'); const pct = ['5', '10', '0', '8'];
+  for (let i = 0; i < ins.length; i++) await ins[i].fill(pct[i]);
+  // 2.136,00 × 5 % + 1.895,00 × 10 % + 2.792,00 × 8 % = 106,80 + 189,50 + 223,36 = 519,66
+  const sums = await p.innerText('#mkSums');
+  assert(/Tillæg\s/.test(sums) && /519,66/.test(sums) && /8\.018,66/.test(sums), 'sums: ' + sums);
+  await p.click('.mk-dialog [value="ok"]');
+  await p.waitForSelector('.ed-text textarea', { timeout: 15000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  for (const v of ['519,66', '8.018,66', '2.004,67', '10.023,33', '2.136,00']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 400));
   await done(p);
 });
 
