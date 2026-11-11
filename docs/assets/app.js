@@ -3911,7 +3911,7 @@ if ($('clearAll')) $('clearAll').onclick = async () => {
   document.querySelector('.draft-bar')?.remove();
   try { indexedDB.deleteDatabase('lunaverta-draft'); } catch (e) {}
   try { if ('caches' in window) caches.delete('lunaverta-share'); } catch (e) {}
-  if (a.saved) try { ['lunaverta-signatures', 'lunaverta-templates'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  if (a.saved) try { ['lunaverta-signatures', 'lunaverta-templates', 'lunaverta-mk-rules'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
   toast(T('clear.done'), true);
 };
 // The search at the top of the front page: the first matches drop down under it, so a visitor

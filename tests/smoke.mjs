@@ -693,7 +693,7 @@ await test('Add % to prices: 8 % on a quote recalculates lines, subtotal, VAT an
   const p = await page('/da/rediger-pdf/');
   await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
   await p.waitForSelector('#edMarkup', { timeout: 30000 });
-  await p.click('#edMarkup');
+  await p.click('#edMarkup'); await p.click('#mkRvYes');
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 }); await p.check('input[name="mkBasis"][value="markup"]');
   assert((await p.$$('.mk-pct input')).length === 4, 'quote lines found: ' + (await p.$$('.mk-pct input')).length);
   await p.fill('#mkAll', '8'); await p.click('#mkAllGo');
@@ -711,7 +711,7 @@ await test('Add % to prices as its own line: the prices stay, a "Tillæg 8 %" li
   const p = await page('/da/rediger-pdf/');
   await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
   await p.waitForSelector('#edMarkup', { timeout: 30000 });
-  await p.click('#edMarkup');
+  await p.click('#edMarkup'); await p.click('#mkRvYes');
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 }); await p.check('input[name="mkBasis"][value="markup"]');
   await p.check('input[name="mkMode"][value="line"]');
   await p.fill('#mkAll', '8');
@@ -730,7 +730,7 @@ await test('Add % to prices as its own line: the prices stay, a "Tillæg 8 %" li
 await test('Add % to prices as its own line with a different % per line: the markups are added together', async () => {
   const p = await page('/da/rediger-pdf/');
   await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
-  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup'); await p.click('#mkRvYes');
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 }); await p.check('input[name="mkBasis"][value="markup"]');
   await p.check('input[name="mkMode"][value="line"]');
   const ins = await p.$$('.mk-pct input'); const pct = ['5', '10', '0', '8'];
@@ -749,7 +749,7 @@ await test('Add % to prices as its own line with a different % per line: the mar
 await test('Add % to prices as dækningsgrad: 8 % DG divides each price by 0.92, and DG is the default', async () => {
   const p = await page('/da/rediger-pdf/');
   await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
-  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup'); await p.click('#mkRvYes');
   await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 });
   assert(await p.isChecked('input[name="mkBasis"][value="dg"]'), 'DG is not the default');
   await p.fill('#mkAll', '8');
@@ -761,6 +761,48 @@ await test('Add % to prices as dækningsgrad: 8 % DG divides each price by 0.92,
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
   const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
   for (const v of ['96,74', '2.321,76', '8.151,16', '10.188,95']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 400));
+  await done(p);
+});
+
+await test('Add % to prices: you can correct what was read (a fee, an unnamed VAT), and it is remembered for the supplier', async () => {
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica), pg = d.addPage([595, 842]);
+  const put = (x, y, str, right) => pg.drawText(str, { x: right ? x - f.widthOfTextAtSize(str, 10) : x, y, size: 10, font: f });
+  put(40, 800, 'Leverandor Eksempel ApS  CVR 11223344'); put(40, 786, 'ordre@leverandor-eksempel.invalid');
+  [[700, 'Lægte 45x95', '10', '50,00', '500,00'], [680, 'Skruer', '2', '100,00', '200,00']].forEach(([y, n, q, u, t]) => { put(40, y, n); put(300, y, q, 1); put(420, y, u, 1); put(540, y, t, 1); });
+  put(40, 660, 'Fragt'); put(540, 660, '100,00', 1);
+  put(380, 620, 'Subtotal'); put(540, 620, '800,00', 1);
+  put(380, 605, 'Merværdiafgift'); put(540, 605, '200,00', 1);
+  put(380, 590, 'At betale'); put(540, 590, '1.000,00', 1);
+  const buf = Buffer.from(await d.save());
+  const p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', file('ordre.pdf', buf));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+  await p.waitForSelector('.mk-review[open] .mk-tok', { timeout: 30000 });
+  assert(/passede ikke/.test(await p.innerText('.mk-rv-side')), 'the unnamed VAT should not fit yet: ' + await p.innerText('.mk-rv-side'));
+  await p.click('#mkRvNo');
+  await p.click('.mk-tok[title^="100,00: Linjebeløb"]'); await p.click('.mk-rv-menu [data-r="fee"]');
+  await p.click('.mk-tok[title^="200,00: Ikke brugt"]'); await p.click('.mk-rv-menu [data-r="vat"]');
+  assert(/Gebyr, ingen procent/.test(await p.innerText('.mk-rv-mine')), 'corrections: ' + await p.innerText('.mk-rv-mine'));
+  await p.click('#mkRvDone');
+  await p.waitForSelector('.mk-dialog[open]'); await p.check('input[name="mkBasis"][value="markup"]');
+  assert(/2 rettet af dig/.test(await p.innerText('.mk-dialog h2')), 'badge');
+  await p.fill('#mkAll', '10');
+  // lines 700 + 10 % = 770, fee 100 stays: subtotal 870, VAT (25 %) 217,50, total 1.087,50
+  const sums = await p.innerText('#mkSums');
+  assert(/870,00/.test(sums) && /217,50/.test(sums) && /1\.087,50/.test(sums), 'sums: ' + sums);
+  assert(await p.isChecked('#mkKeep'), 'remember is not ticked');
+  await p.click('.mk-dialog [value="ok"]');
+  await p.waitForSelector('.ed-edit', { timeout: 15000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  for (const v of ['550,00', '220,00', '100,00', '870,00', '217,50', '1.087,50']) assert(txt.includes(v), `missing ${v}: ` + txt.slice(0, 400));
+  // the next document from the same supplier is read with the corrections
+  await p.goto(BASE + '/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', file('ordre2.pdf', buf));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+  await p.waitForSelector('.mk-review[open] .mk-rv-note', { timeout: 30000 });
+  assert(/2 rettelser fra sidst/.test(await p.innerText('.mk-rv-note')), 'note: ' + await p.innerText('.mk-rv-note'));
+  assert(await p.$('.mk-tok.r-fee') && await p.$('.mk-tok.r-vat'), 'remembered roles not used');
   await done(p);
 });
 
@@ -795,7 +837,7 @@ await test('Add % to prices understands order confirmations: discount rows, 3-de
   const run = async (buf, pcts) => {
     const p = await page('/da/rediger-pdf/');
     await p.setInputFiles('#fileInput', file('doc.pdf', buf));
-    await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup');
+    await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup'); await p.click('#mkRvYes');
     await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 }); await p.check('input[name="mkBasis"][value="markup"]');
     const ins = await p.$$('.mk-pct input'); assert(ins.length === pcts.length, `lines found: ${ins.length}, expected ${pcts.length}`);
     for (let i = 0; i < pcts.length; i++) await ins[i].fill(String(pcts[i]));

@@ -977,7 +977,14 @@ function mkFormat(v, t) {
   const m = f.neg || '-';
   return f.after ? num + m : m + num;
 }
-async function mkScan() {
+// The amount a row adds up to (the person may have pointed at another one).
+const mkTotal = row => row.forceTotal || row.money.at(-1);
+// A number's own place on the page, so a correction can be kept: page, run and position in the run.
+const mkKey = (P, t) => `${P.pg.id}|${Math.round(t.run.x)}|${Math.round(t.run.y)}|${t.i0}`;
+// A row's words without numbers, for remembering a correction on the next document from the same supplier.
+const mkLabelKey = row => row.words.toLowerCase().replace(/[^a-zæøåäöüéèß]+/g, ' ').trim();
+const mkRight = t => t.run.x + t.run.w * t.i1 / Math.max(1, t.run.str.length);
+async function mkScan(ov = new Map(), rules = []) {
   // 1. Every row of every page, with its number tokens.
   const pages = [];
   let commas = 0, dots = 0;
@@ -998,6 +1005,7 @@ async function mkScan() {
       row.runs.push(r);
     }
     rows.sort((a, b) => b.y - a.y);
+    P.rows = rows;
     for (const row of rows) {
       row.runs.sort((a, b) => a.x - b.x);
       row.toks = [];
@@ -1023,15 +1031,25 @@ async function mkScan() {
       } else if (cur && /[a-zæøå]{3}/i.test(row.words) && cur.text.length < 1 && !/^(ean|tun\.?nr|db\.?nr)/i.test(row.words)) cur.text.push(row);
     }
   }
+  // Remembered corrections for this supplier, matched by a row's words and the number's column.
+  let applied = 0;
+  if (rules.length) for (const P of pages) for (const row of P.rows) for (const t of row.toks) {
+    if (t.kind !== 'money' && t.kind !== 'num') continue;
+    const k = mkKey(P, t), lk = mkLabelKey(row);
+    if (ov.has(k)) continue;
+    const r = rules.find(r => r.label === lk && Math.abs(r.col - mkRight(t)) < 8);
+    if (r) { ov.set(k, r.role); applied++; }
+  }
+  mkOverride(pages, blocks, sums, ov);
   // What a line is called: the text left of its quantity and price columns (the description).
   const leftOf = (runs, x) => runs.filter(r => r.x + r.w <= x + .5).map(r => r.str).join(' ').replace(/\s+/g, ' ').trim();
   for (const b of blocks) {
     const first = b.rows[0]; first.pair = mkPair(first);
     for (const r of b.rows.slice(1)) r.pair = mkPair(r);
-    const cols = [first.pair && first.pair.q, first.pair && first.pair.u, ...first.money].filter(Boolean);
+    const cols = [first.pair && first.pair.q, first.pair && first.pair.u, first.forceUnit, mkTotal(first), ...first.money].filter(Boolean);
     b.xq = Math.min(...cols.map(t => t.run.x));
     b.label = [leftOf(first.runs, b.xq), ...b.text.map(row => leftOf(row.runs, b.xq))].filter(Boolean).join(' · ') || first.words;
-    b.total = b.rows.at(-1).money.at(-1);
+    b.total = mkTotal(b.rows.at(-1));
   }
   for (const s of sums) s.label = leftOf(s.row.runs, s.tok.run.x).replace(/[:\s]+$/, '') || s.row.words;
   // right- or left-aligned: amounts that share a right edge are a right-aligned column
@@ -1041,23 +1059,45 @@ async function mkScan() {
     const sameRight = runsWithMoney.filter(o => o !== r && Math.abs(o.x + o.w - right) < 1.5).length, sameLeft = runsWithMoney.filter(o => o !== r && Math.abs(o.x - r.x) < 1.5).length;
     r.align = sameLeft > sameRight ? 'left' : 'right';
   }
-  return { blocks, sums, dec };
+  return { blocks, sums, dec, pages, applied };
 }
 // In a row, quantity × unit price = the row's amount tells which number is the quantity.
 function mkPair(row) {
-  const total = row.money.at(-1);
+  const total = mkTotal(row);
   if (!total) return null;
   const nums = row.toks.filter(t => t.kind !== 'pct' && t !== total);
-  for (const u of nums.filter(t => t.kind === 'money' || t.kind === 'num')) for (const q of nums.filter(t => t !== u && (t.kind === 'int' || t.kind === 'num'))) {
+  const units = row.forceUnit ? [row.forceUnit] : nums.filter(t => t.kind === 'money' || t.kind === 'num');
+  for (const u of units) for (const q of nums.filter(t => t !== u && (t.kind === 'int' || t.kind === 'num'))) {
     if (q.v && Math.abs(u.v * q.v - total.v) <= .011 + Math.abs(total.v) * 5e-6) return { u, q };
   }
   return null;
 }
+// The person's corrections (number → what it is), applied to what the scan found:
+// a line's amount, a fee (counted in the sums, no %), a unit price, a sum of a given kind, or nothing.
+function mkOverride(pages, blocks, sums, ov) {
+  if (!ov.size) return;
+  for (const P of pages) for (const row of P.rows) for (const t of row.toks) {
+    const role = ov.get(mkKey(P, t)); if (!role) continue;
+    const b = blocks.find(x => x.rows.includes(row)), si = sums.findIndex(x => x.row === row);
+    const dropSum = () => { if (si >= 0) sums.splice(si, 1); };
+    const dropRow = () => { if (!b) return; if (b.rows[0] === row) blocks.splice(blocks.indexOf(b), 1); else b.rows.splice(b.rows.indexOf(row), 1); };
+    const asBlock = () => { if (b) return b; const nb = { P, rows: [row], text: [], pct: 0 }; blocks.push(nb); return nb; };
+    if (role === 'none') { dropSum(); if (b && mkTotal(row) === t) dropRow(); else if (row.forceUnit === t) row.forceUnit = null; }
+    else if (role === 'fee') { dropSum(); asBlock().fee = true; row.forceTotal = t; }
+    else if (role === 'line') { dropSum(); const nb = asBlock(); nb.fee = false; row.forceTotal = t; }
+    else if (role === 'unit') { dropSum(); asBlock(); row.forceUnit = t; }
+    else { dropRow(); if (si >= 0) Object.assign(sums[si], { tok: t, force: role }); else sums.push({ P, row, tok: t, force: role }); }
+  }
+  const order = (P, row) => pages.indexOf(P) * 1e6 - row.y;
+  blocks.sort((a, b) => order(a.P, a.rows[0]) - order(b.P, b.rows[0]));
+  sums.sort((a, b) => order(a.P, a.row) - order(b.P, b.row));
+}
 // One row: the unit price takes the % and the amount becomes the new unit price × the quantity
 // (the quantity stays). Without a quantity, every amount takes the %.
 function mkRow(row, f, out) {
-  const total = row.money.at(-1), pair = row.pair;
+  const total = mkTotal(row), pair = row.pair;
   for (const t of row.money) if (t !== total) out.set(t, mkRound(t.v * f, t.places));
+  if (row.forceUnit && row.forceUnit !== total) out.set(row.forceUnit, mkRound(row.forceUnit.v * f, row.forceUnit.places));
   if (pair) { const nu = mkRound(pair.u.v * f, pair.u.places); out.set(pair.u, nu); out.set(total, mkRound(nu * pair.q.v, total.places)); }
   else out.set(total, mkRound(total.v * f, total.places));
 }
@@ -1074,11 +1114,11 @@ function mkCompute(scan) {
   let oldSum = 0, newSum = 0;
   const asLine = scan.mode === 'line';
   for (const b of scan.blocks) {
-    const f = asLine ? 1 : mkFactor(scan, b.pct), [first, ...rest] = b.rows, G = first.money.at(-1);
+    const f = asLine || b.fee ? 1 : mkFactor(scan, b.pct), [first, ...rest] = b.rows, G = mkTotal(first);
     mkRow(first, f, out);
     if (rest.length) {
-      const G2 = out.get(G), last = b.rows.at(-1), N = last.money.at(-1);
-      const disc = rest.filter(r => r !== last || !MK_NET.test(r.words)).map(r => r.money.at(-1));
+      const G2 = out.get(G), last = b.rows.at(-1), N = mkTotal(last);
+      const disc = rest.filter(r => r !== last || !MK_NET.test(r.words)).map(r => mkTotal(r));
       // gross + discounts = net in the original: keep it so after the change
       const holds = last !== first && MK_NET.test(last.words) && Math.abs(G.v + disc.reduce((s, t) => s + t.v, 0) - N.v) < .03;
       for (const r of rest) for (const t of r.money) out.set(t, mkRound(t.v * f, t.places));
@@ -1095,8 +1135,8 @@ function mkCompute(scan) {
   // each line's markup (its own %), added together into the one line
   let linePct = null;
   if (asLine) {
-    const places = scan.blocks[0].total.places, pcts = new Set(scan.blocks.map(b => b.pct || 0));
-    for (const b of scan.blocks) add += mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), places);
+    const places = scan.blocks[0].total.places, pcts = new Set(scan.blocks.filter(b => !b.fee).map(b => b.pct || 0));
+    for (const b of scan.blocks) if (!b.fee) add += mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), places);
     add = mkRound(add, places); newSum = mkRound(oldSum + add, places);
     // the same % everywhere: the line can say which (not for DG, where the amount is not that % of the subtotal)
     if (pcts.size === 1 && !pcts.has(0) && scan.basis !== 'dg') linePct = [...pcts][0];
@@ -1107,16 +1147,21 @@ function mkCompute(scan) {
   for (const s of scan.sums) {
     const v = s.tok.v;
     let nv = null, kind = '';
-    if (near(v, oldSum)) { nv = newSum; kind = 'sub'; }
+    // a kind the person picked: subtotal, VAT (its own rate of the subtotal) or total (worked out below)
+    if (s.force === 'sub') { nv = newSum; kind = 'sub'; }
+    else if (s.force === 'vat') { const rate = oldSum ? Math.round(v / oldSum * 10000) / 10000 : 0; nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
+    else if (s.force === 'total') kind = 'total';
+    else if (near(v, oldSum)) { nv = newSum; kind = 'sub'; }
     else if (MK_VAT.test(s.row.words) && oldSum) {
       const rate = Math.round(v / oldSum * 10000) / 10000;
       if (rate > 0 && rate < .5 && Math.abs(rate * oldSum - v) < .02) { nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
     }
-    if (nv === null && vatOld !== null && near(v, oldSum + vatOld)) { nv = newSum + vatNew; kind = 'total'; }
-    if (nv === null && vatOld === null && near(v, oldSum)) { nv = newSum; kind = 'sub'; }
+    if (!s.force && nv === null && vatOld !== null && near(v, oldSum + vatOld)) { nv = newSum + vatNew; kind = 'total'; }
+    if (!s.force && nv === null && vatOld === null && near(v, oldSum)) { nv = newSum; kind = 'sub'; }
     if (nv !== null) out.set(s.tok, mkRound(nv, s.tok.places));
     results.push({ s, kind, nv });
   }
+  for (const x of results) if (x.s.force === 'total') { x.nv = mkRound(newSum + (vatNew || 0), x.s.tok.places); out.set(x.s.tok, x.nv); }
   return { out, oldSum, newSum, results, add, linePct };
 }
 async function mkApply(scan, res) {
@@ -1179,17 +1224,150 @@ async function mkLine(scan, res) {
   const amtX = Math.max(x0 + hv.widthOfTextAtSize(label, size) + size, right - wAmt);
   return { P, y, size, below, items: [{ x: x0, text: label }, { x: amtX, text: amount }] };
 }
+// ---- "Have I read it right?" ----
+// Supplier documents differ, so before any % goes on, the page is shown with a coloured frame round
+// every number LunaVerta will use, and the person can say what a number really is. Corrections can be
+// kept for the supplier (in this browser only) and are used on their next document.
+const MK_RULES = 'lunaverta-mk-rules';
+const mkRulesLoad = () => { try { const v = JSON.parse(localStorage.getItem(MK_RULES) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+const mkRulesSave = list => { try { localStorage.setItem(MK_RULES, JSON.stringify(list.slice(0, 30))); } catch (e) {} };
+// The supplier's saved corrections. A key that turns up in several suppliers' sets is the person's
+// own (their CVR or e-mail is on every confirmation), so it never picks a set.
+async function mkRulesFind() {
+  const keys = await docKeys(), all = mkRulesLoad(), freq = new Map();
+  for (const set of all) for (const k of set.keys || []) freq.set(k, (freq.get(k) || 0) + 1);
+  const set = all.find(x => (x.keys || []).some(k => keys.includes(k) && freq.get(k) === 1)) || null;
+  return { keys, set };
+}
+const MK_ROLES = ['line', 'fee', 'unit', 'sub', 'vat', 'total', 'none'];
+// what each number on the pages is now: for the frames and the summary
+function mkRoles(scan, res) {
+  const roles = new Map();
+  for (const b of scan.blocks) for (const row of b.rows) {
+    if (row.pair) { roles.set(row.pair.u, 'unit'); if (row.pair.q) roles.set(row.pair.q, 'qty'); }
+    if (row.forceUnit) roles.set(row.forceUnit, 'unit');
+    roles.set(mkTotal(row), b.fee ? 'fee' : 'line');
+  }
+  for (const x of res.results) roles.set(x.s.tok, x.kind || 'odd');
+  return roles;
+}
+async function mkReview(st) {
+  const d = document.createElement('dialog');
+  d.className = 'pw-dialog mk-review';
+  d.innerHTML = `<div class="mk-rv-top"><h2>${esc(T('mk.rvTitle'))} <span class="beta">${esc(T('beta'))}</span></h2><span class="mk-rv-hint" id="mkRvHint"></span></div>
+    <div class="mk-rv-body"><div class="mk-rv-pages" id="mkRvPages"></div><div class="mk-rv-side" id="mkRvSide"></div></div>`;
+  document.body.appendChild(d);
+  let fixing = st.mine.length > 0;
+  // the pages that have numbers, drawn once; the frames are redrawn after each correction
+  const pagesEl = d.querySelector('#mkRvPages'), views = [];
+  for (const P of st.scan.pages) {
+    if (!P.rows.some(r => r.toks.some(t => t.kind === 'money' || t.kind === 'num'))) continue;
+    const vp1 = P.page.getViewport({ scale: 1 }), sc = Math.min(2, (window.devicePixelRatio || 1) * 820 / vp1.width), vp = P.page.getViewport({ scale: sc });
+    const wrap = document.createElement('div'); wrap.className = 'mk-rv-page';
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    wrap.appendChild(c); const layer = document.createElement('div'); layer.className = 'mk-rv-layer'; wrap.appendChild(layer);
+    pagesEl.appendChild(wrap);
+    await P.page.render({ canvasContext: ctx, viewport: vp }).promise;
+    views.push({ id: P.pg.id, vp1, layer });
+  }
+  const side = d.querySelector('#mkRvSide');
+  const roleName = r => T('mk.role.' + r);
+  const close = v => { d.close(v); };
+  const draw = () => {
+    const scan = st.scan, res = mkCompute(scan), roles = mkRoles(scan, res);
+    d.querySelector('#mkRvHint').textContent = T(fixing ? 'mk.rvFixHint' : 'mk.rvHint');
+    for (const v of views) {
+      const P = scan.pages.find(x => x.pg.id === v.id); v.layer.replaceChildren();
+      for (const row of P.rows) for (const t of row.toks) {
+        const role = roles.get(t) || (t.kind === 'money' || t.kind === 'num' ? 'unused' : null);
+        if (!role) continue;
+        const len = Math.max(1, t.run.str.length), x0 = t.run.x + t.run.w * t.i0 / len, x1 = t.run.x + t.run.w * t.i1 / len;
+        const [a, b, c2, e] = v.vp1.convertToViewportRectangle([x0, t.run.y - t.run.size * .25, x1, t.run.y + t.run.size * .95]);
+        const W = v.vp1.width, H = v.vp1.height;
+        const el = document.createElement(role === 'qty' ? 'span' : 'button');
+        el.className = 'mk-tok r-' + role + (st.mine.some(m => m.key === mkKey(P, t)) ? ' mine' : '');
+        Object.assign(el.style, { left: (Math.min(a, c2) - 2) / W * 100 + '%', top: (Math.min(b, e) - 2) / H * 100 + '%', width: (Math.abs(c2 - a) + 4) / W * 100 + '%', height: (Math.abs(e - b) + 4) / H * 100 + '%' });
+        if (role !== 'qty') {
+          el.type = 'button'; el.title = t.raw + ': ' + roleName(role);
+          el.setAttribute('aria-label', T('mk.rvTok', { n: t.raw, role: roleName(role) }));
+          el.onclick = () => menu(P, row, t, role, el);
+        }
+        v.layer.appendChild(el);
+      }
+    }
+    const lines = scan.blocks.filter(b => !b.fee).length, fees = scan.blocks.filter(b => b.fee).length;
+    const sumTxt = res.results.map(x => `<li>${esc(x.s.label || T('mk.sum'))}${x.kind && (x.s.label || '').toLowerCase() === roleName(x.kind).toLowerCase() ? '' : ':'} ${x.kind ? ((x.s.label || '').toLowerCase() === roleName(x.kind).toLowerCase() ? '' : esc(roleName(x.kind))) + ' ✓' : `<span class="mk-rv-bad">${esc(T('mk.rvOdd'))}</span>`}</li>`).join('');
+    side.innerHTML = `<div class="mk-rv-card"><h3>${esc(T('mk.rvRead'))}</h3>
+        <div class="mk-rv-legend">${['unit', 'line', 'qty', 'sub', 'fee', 'unused'].map(r => `<span><i class="mk-sw r-${r}"></i>${esc(T('mk.lg.' + r))}</span>`).join('')}</div>
+        <ul class="mk-rv-sum"><li>${esc(T('mk.rvLines', { n: lines }))}${fees ? ' · ' + esc(T('mk.rvFees', { n: fees })) : ''}</li>${sumTxt || `<li>${esc(T('mk.rvNoSums'))}</li>`}</ul>
+        ${st.scan.applied && !st.forgot ? `<p class="mk-rv-note">${esc(T('mk.rvApplied', { n: st.scan.applied }))} <button type="button" class="linkish" id="mkRvForget">${esc(T('mk.rvForget'))}</button></p>` : ''}</div>
+      ${fixing ? `<div class="mk-rv-card"><h3>${esc(T('mk.rvMine'))}</h3>
+        ${st.mine.length ? `<ol class="mk-rv-mine">${st.mine.map(m => `<li><b>${esc(m.label ? m.label + ' ' : '')}${esc(m.text)}</b><br>${esc(roleName(m.from))} → ${esc(roleName(m.to))}</li>`).join('')}</ol><button type="button" class="linkish" id="mkRvUndo">${esc(T('mk.rvUndo'))}</button>` : `<p>${esc(T('mk.rvNone'))}</p>`}
+        <p class="mk-rv-tip">${esc(T('mk.rvMissing'))}</p></div>
+        <div class="mk-rv-btns"><button type="button" class="btn" id="mkRvCancel">${esc(T('pw.cancel'))}</button><button type="button" class="btn primary" id="mkRvDone"${scan.blocks.some(b => !b.fee) ? '' : ' disabled'}>${esc(T('mk.rvDone'))}</button></div>`
+      : `<div class="mk-rv-ask"><h3>${esc(T('mk.rvAsk'))}</h3><p>${esc(T('mk.rvAskP'))}</p>
+        <div class="mk-rv-btns"><button type="button" class="btn primary" id="mkRvYes"${scan.blocks.some(b => !b.fee) ? '' : ' disabled'}>${esc(T('mk.rvYes'))}</button><button type="button" class="btn" id="mkRvNo">${esc(T('mk.rvNo'))}</button></div>
+        <button type="button" class="linkish" id="mkRvCancel">${esc(T('pw.cancel'))}</button></div>`}`;
+    const on = (id, fn) => { const b = side.querySelector('#' + id); if (b) b.onclick = fn; };
+    on('mkRvYes', () => close('ok')); on('mkRvDone', () => close('ok')); on('mkRvCancel', () => close('cancel'));
+    on('mkRvNo', () => { fixing = true; draw(); });
+    on('mkRvUndo', async () => { const m = st.mine.pop(); if (m) { if (m.prev) st.ov.set(m.key, m.prev); else st.ov.delete(m.key); } await st.rescan(); draw(); });
+    on('mkRvForget', async () => { if (st.found.set) mkRulesSave(mkRulesLoad().filter(x => x.id !== st.found.set.id)); st.forgot = true; st.rules = []; st.ov.clear(); st.mine.length = 0; await st.rescan(); draw(); });
+  };
+  // the little menu by a number: what is it?
+  const menu = (P, row, t, role, el) => {
+    fixing = true;
+    d.querySelectorAll('.mk-rv-menu').forEach(m => m.remove());
+    const m = document.createElement('div'); m.className = 'mk-rv-menu'; m.setAttribute('role', 'group'); m.setAttribute('aria-label', T('mk.rvWhat', { n: t.raw }));
+    m.innerHTML = `<p>${esc(T('mk.rvWhat', { n: t.raw }))}</p>` + MK_ROLES.map(r => `<button type="button" data-r="${r}"${r === role ? ' aria-pressed="true" class="on"' : ''}>${esc(roleName(r))}</button>`).join('');
+    el.parentNode.appendChild(m);
+    // open towards the middle of the page, so the menu is never cut off at the edge
+    const L = parseFloat(el.style.left), Wd = parseFloat(el.style.width);
+    Object.assign(m.style, L > 50 ? { right: (100 - L - Wd) + '%' } : { left: el.style.left }, { top: `calc(${el.style.top} + ${el.style.height})` });
+    m.querySelectorAll('[data-r]').forEach(b => b.onclick = async () => {
+      const to = b.dataset.r; m.remove();
+      if (to === role) { draw(); return; }
+      const key = mkKey(P, t);
+      st.mine.push({ key, text: t.raw, label: mkLabelKey(row) ? (row.words.split(/\s+/).slice(0, 4).join(' ')) : '', from: role, to, prev: st.ov.get(key), lk: mkLabelKey(row), col: mkRight(t) });
+      st.ov.set(key, to);
+      await st.rescan(); draw();
+    });
+    const first = m.querySelector('button'); if (first) first.focus();
+  };
+  draw();
+  d.addEventListener('keydown', e => { if (e.key === 'Escape' && d.querySelector('.mk-rv-menu')) { e.preventDefault(); d.querySelectorAll('.mk-rv-menu').forEach(m => m.remove()); } });
+  d.showModal();
+  const v = await new Promise(r => d.addEventListener('close', () => r(d.returnValue), { once: true }));
+  d.remove();
+  return v === 'ok';
+}
 async function openMarkup() {
-  const scan = await mkScan();
-  if (!scan.blocks.length) { app().toast(T('mk.none')); return; }
+  const found = await mkRulesFind();
+  const st = { ov: new Map(), mine: [], found, rules: found.set ? found.set.rules : [], forgot: false };
+  st.rescan = async () => { st.scan = await mkScan(st.ov, st.rules); return st.scan; };
+  await st.rescan();
+  if (!st.scan.pages.some(P => P.rows.some(r => r.money.length))) { app().toast(T('mk.none')); return; }
+  for (;;) {
+    if (!(await mkReview(st))) return;
+    const r = await mkDialog(st);
+    if (r === 'fix') { continue; }
+    return;
+  }
+}
+async function mkDialog(st) {
+  const scan = st.scan;
   let basis = 'dg'; try { basis = localStorage.getItem('lunaverta-mk-basis') === 'markup' ? 'markup' : 'dg'; } catch (e) {}
   const pctOf = s => { const v = parseFloat(String(s).replace('−', '-').replace('–', '-').replace(',', '.').replace(/[^\d.-]/g, '')); return isFinite(v) ? v : 0; };
   const fmt = (v, t) => mkFormat(v, t);
   const d = document.createElement('dialog');
   d.className = 'pw-dialog mk-dialog';
-  const lineRow = (b, i) => `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
+  const lineRow = (b, i) => b.fee
+    ? `<tr class="mk-fee"><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)} <span class="mk-tag">${esc(T('mk.role.fee'))}</span></td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct">${esc(T('mk.noPct'))}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td></tr>`
+    : `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
+  const canKeep = st.mine.length && st.found.keys.length;
   d.innerHTML = `<form method="dialog">
-    <h2>${esc(T('mk.title'))} <span class="beta">${esc(T('beta'))}</span></h2>
+    <h2>${esc(T('mk.title'))} <span class="beta">${esc(T('beta'))}</span>${st.mine.length ? ` <span class="mk-mine">${esc(T('mk.mineN', { n: st.mine.length }))}</span>` : ''}</h2>
     <div class="mk-beware" role="note"><strong>${esc(T('mk.bewareH'))}</strong> ${esc(T('mk.beware'))}</div>
     <div class="mk-mode" role="radiogroup" aria-label="${esc(T('mk.how'))}">
       <label><input type="radio" name="mkMode" value="each" checked> <span><b>${esc(T('mk.each'))}</b>${esc(T('mk.eachD'))}</span></label>
@@ -1202,7 +1380,8 @@ async function openMarkup() {
     <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th class="mk-pct-h">${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
-    <div class="pw-btns"><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
+    ${canKeep ? `<label class="mk-keep"><input type="checkbox" id="mkKeep" checked> <span><b>${esc(T('mk.keep'))}</b>${esc(T('mk.keepD'))}</span></label>` : ''}
+    <div class="pw-btns"><button class="btn mk-fixlink" value="fix" formnovalidate>${esc(T('mk.fixAgain'))}</button><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
   </form>`;
   document.body.appendChild(d);
   const update = () => {
@@ -1213,8 +1392,9 @@ async function openMarkup() {
     const asLine = scan.mode === 'line';
     d.querySelector('#mkIntro').textContent = T(asLine ? 'mk.lineIntro' : 'mk.intro');
     d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
+    scan.blocks.forEach(b => { if (b.fee) b.pct = 0; });
     const res = mkCompute(scan);
-    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
+    scan.blocks.forEach((b, i) => { if (b.fee) return; d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
     d.querySelector('.mk-new-h').textContent = T(asLine ? 'mk.lineAdd' : 'mk.new');
     const lineName = res.linePct === null ? T('mk.lineLabelMix') : T('mk.lineLabel', { p: String(res.linePct).replace('.', scan.dec) });
     const tok0 = scan.blocks[0].total;
@@ -1231,9 +1411,18 @@ async function openMarkup() {
   d.querySelector('#mkAll').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.querySelector('#mkAllGo').click(); } });
   update();
   d.showModal(); d.querySelector('#mkAll').focus();
-  const ok = await new Promise(r => d.addEventListener('close', () => r(d.returnValue === 'ok'), { once: true }));
+  const how = await new Promise(r => d.addEventListener('close', () => r(d.returnValue), { once: true }));
+  const keep = !!(d.querySelector('#mkKeep') && d.querySelector('#mkKeep').checked);
   const res = update(); d.remove();
-  if (!ok) return;
+  if (how === 'fix') return 'fix';
+  if (how !== 'ok') return null;
+  // keep the corrections for this supplier: the row's words and the number's column, not the amount
+  if (keep) {
+    const all = mkRulesLoad(), set = (st.found.set && all.find(x => x.id === st.found.set.id)) || { id: 'm' + Date.now().toString(36), keys: st.found.keys, rules: [] };
+    for (const m of st.mine) if (m.lk) { set.rules = set.rules.filter(r => !(r.label === m.lk && Math.abs(r.col - m.col) < 8)); set.rules.push({ label: m.lk, col: Math.round(m.col * 10) / 10, role: m.to }); }
+    set.rules = set.rules.slice(-200); set.at = Date.now();
+    mkRulesSave([set, ...all.filter(x => x.id !== set.id)]);
+  }
   let n = await mkApply(scan, res);
   const line = await mkLine(scan, res);
   if (line) {
