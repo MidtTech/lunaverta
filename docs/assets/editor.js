@@ -1061,12 +1061,20 @@ function mkRow(row, f, out) {
   if (pair) { const nu = mkRound(pair.u.v * f, pair.u.places); out.set(pair.u, nu); out.set(total, mkRound(nu * pair.q.v, total.places)); }
   else out.set(total, mkRound(total.v * f, total.places));
 }
+// A percentage as a price factor. Tradespeople usually think in contribution margin (dækningsgrad):
+// 8 % DG means 8 % of the selling price is the margin, so the price is cost ÷ 0.92 (+8.7 %).
+// As a plain markup, 8 % is cost × 1.08. A minus is always a plain discount.
+function mkFactor(scan, pct) {
+  const p = pct || 0;
+  if (scan.basis === 'dg' && p > 0) return p < 100 ? 1 / (1 - p / 100) : 1;
+  return 1 + p / 100;
+}
 function mkCompute(scan) {
   const out = new Map(); // token → new value
   let oldSum = 0, newSum = 0;
   const asLine = scan.mode === 'line';
   for (const b of scan.blocks) {
-    const f = 1 + (asLine ? 0 : (b.pct || 0)) / 100, [first, ...rest] = b.rows, G = first.money.at(-1);
+    const f = asLine ? 1 : mkFactor(scan, b.pct), [first, ...rest] = b.rows, G = first.money.at(-1);
     mkRow(first, f, out);
     if (rest.length) {
       const G2 = out.get(G), last = b.rows.at(-1), N = last.money.at(-1);
@@ -1088,9 +1096,10 @@ function mkCompute(scan) {
   let linePct = null;
   if (asLine) {
     const places = scan.blocks[0].total.places, pcts = new Set(scan.blocks.map(b => b.pct || 0));
-    for (const b of scan.blocks) add += mkRound(b.total.v * (b.pct || 0) / 100, places);
+    for (const b of scan.blocks) add += mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), places);
     add = mkRound(add, places); newSum = mkRound(oldSum + add, places);
-    if (pcts.size === 1 && !pcts.has(0)) linePct = [...pcts][0]; // the same % everywhere: the line can say which
+    // the same % everywhere: the line can say which (not for DG, where the amount is not that % of the subtotal)
+    if (pcts.size === 1 && !pcts.has(0) && scan.basis !== 'dg') linePct = [...pcts][0];
   }
   // sums, by value
   const results = [], near = (a, b) => Math.abs(a - b) < .05;
@@ -1173,6 +1182,7 @@ async function mkLine(scan, res) {
 async function openMarkup() {
   const scan = await mkScan();
   if (!scan.blocks.length) { app().toast(T('mk.none')); return; }
+  let basis = 'dg'; try { basis = localStorage.getItem('lunaverta-mk-basis') === 'markup' ? 'markup' : 'dg'; } catch (e) {}
   const pctOf = s => { const v = parseFloat(String(s).replace('−', '-').replace('–', '-').replace(',', '.').replace(/[^\d.-]/g, '')); return isFinite(v) ? v : 0; };
   const fmt = (v, t) => mkFormat(v, t);
   const d = document.createElement('dialog');
@@ -1184,9 +1194,12 @@ async function openMarkup() {
     <div class="mk-mode" role="radiogroup" aria-label="${esc(T('mk.how'))}">
       <label><input type="radio" name="mkMode" value="each" checked> <span><b>${esc(T('mk.each'))}</b>${esc(T('mk.eachD'))}</span></label>
       <label><input type="radio" name="mkMode" value="line"> <span><b>${esc(T('mk.asLine'))}</b>${esc(T('mk.asLineD'))}</span></label></div>
+    <div class="mk-mode mk-basis" role="radiogroup" aria-label="${esc(T('mk.basis'))}">
+      <label><input type="radio" name="mkBasis" value="dg"${basis === 'dg' ? ' checked' : ''}> <span><b>${esc(T('mk.dg'))}</b>${esc(T('mk.dgD'))}</span></label>
+      <label><input type="radio" name="mkBasis" value="markup"${basis === 'markup' ? ' checked' : ''}> <span><b>${esc(T('mk.markup'))}</b>${esc(T('mk.markupD'))}</span></label></div>
     <p class="pw-note" id="mkIntro">${esc(T('mk.intro'))}</p>
     <div class="mk-all"><label for="mkAll" id="mkAllL">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
-    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th>${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
+    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th class="mk-pct-h">${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
     <div class="pw-btns"><button class="btn" value="cancel" formnovalidate>${esc(T('pw.cancel'))}</button><button class="btn primary" value="ok">${esc(T('mk.ok'))}</button></div>
@@ -1194,17 +1207,21 @@ async function openMarkup() {
   document.body.appendChild(d);
   const update = () => {
     scan.mode = d.querySelector('input[name="mkMode"]:checked').value;
+    scan.basis = d.querySelector('input[name="mkBasis"]:checked').value;
+    try { localStorage.setItem('lunaverta-mk-basis', scan.basis); } catch (e) {}
+    d.querySelector('.mk-pct-h').textContent = T(scan.basis === 'dg' ? 'mk.pctDg' : 'mk.pct');
     const asLine = scan.mode === 'line';
     d.querySelector('#mkIntro').textContent = T(asLine ? 'mk.lineIntro' : 'mk.intro');
     d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
     const res = mkCompute(scan);
-    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * b.pct / 100, b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
+    scan.blocks.forEach((b, i) => { d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
     d.querySelector('.mk-new-h').textContent = T(asLine ? 'mk.lineAdd' : 'mk.new');
     const lineName = res.linePct === null ? T('mk.lineLabelMix') : T('mk.lineLabel', { p: String(res.linePct).replace('.', scan.dec) });
     const tok0 = scan.blocks[0].total;
     d.querySelector('#mkSums').innerHTML = (res.add ? `<dt>${esc(lineName)}</dt><dd><b>+ ${esc(fmt(res.add, tok0))}</b></dd>` : '') + res.results.map(x => `<dt>${esc(x.s.label || T('mk.sum'))}</dt><dd><s>${esc(fmt(x.s.tok.v, x.s.tok))}</s> → <b>${esc(x.nv === null ? fmt(x.s.tok.v, x.s.tok) : fmt(x.nv, x.s.tok))}</b></dd>`).join('');
     const odd = res.results.filter(x => x.nv === null).length, w = d.querySelector('#mkWarn');
-    w.hidden = !odd; if (odd) w.textContent = T('mk.odd', { n: odd });
+    const over = scan.basis === 'dg' && scan.blocks.some(b => b.pct >= 100);
+    w.hidden = !odd && !over; w.textContent = [over ? T('mk.dg100') : '', odd ? T('mk.odd', { n: odd }) : ''].filter(Boolean).join(' ');
     return res;
   };
   d.addEventListener('input', update); d.addEventListener('change', update);
