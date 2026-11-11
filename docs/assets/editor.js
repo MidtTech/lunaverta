@@ -1239,6 +1239,17 @@ async function mkRulesFind() {
   const set = all.find(x => (x.keys || []).some(k => keys.includes(k) && freq.get(k) === 1)) || null;
   return { keys, set };
 }
+// Where a number sits inside its run of text: measured with real letter widths (a space or a "1" is
+// much narrower than a "0"), not by counting characters.
+let mkMeasureCtx = null;
+function mkSpan(t, P) {
+  const str = t.run.str, fam = (P && P.tc.styles[t.run.fontName] || {}).fontFamily || 'sans-serif';
+  if (!mkMeasureCtx) mkMeasureCtx = document.createElement('canvas').getContext('2d');
+  // the PDF's own kind of font (monospace, serif or sans) gives the right proportions
+  mkMeasureCtx.font = '100px ' + (/mono/i.test(fam) ? 'Courier New, monospace' : /serif/i.test(fam) && !/sans/i.test(fam) ? 'Times New Roman, serif' : 'Helvetica, Arial, sans-serif');
+  const w = s => mkMeasureCtx.measureText(s).width, all = w(str) || 1;
+  return [t.run.x + t.run.w * w(str.slice(0, t.i0)) / all, t.run.x + t.run.w * w(str.slice(0, t.i1)) / all];
+}
 const MK_ROLES = ['line', 'fee', 'unit', 'sub', 'vat', 'total', 'none'];
 // what each number on the pages is now: for the frames and the summary
 function mkRoles(scan, res) {
@@ -1284,12 +1295,12 @@ async function mkReview(st) {
       for (const row of P.rows) for (const t of row.toks) {
         const role = roles.get(t) || (t.kind === 'money' || t.kind === 'num' ? 'unused' : null);
         if (!role) continue;
-        const len = Math.max(1, t.run.str.length), x0 = t.run.x + t.run.w * t.i0 / len, x1 = t.run.x + t.run.w * t.i1 / len;
-        const [a, b, c2, e] = v.vp1.convertToViewportRectangle([x0, t.run.y - t.run.size * .25, x1, t.run.y + t.run.size * .95]);
+        const [x0, x1] = mkSpan(t, P);
+        const [a, b, c2, e] = v.vp1.convertToViewportRectangle([x0, t.run.y - t.run.size * .2, x1, t.run.y + t.run.size * .82]);
         const W = v.vp1.width, H = v.vp1.height;
         const el = document.createElement(role === 'qty' ? 'span' : 'button');
         el.className = 'mk-tok r-' + role + (st.mine.some(m => m.key === mkKey(P, t)) ? ' mine' : '');
-        Object.assign(el.style, { left: (Math.min(a, c2) - 2) / W * 100 + '%', top: (Math.min(b, e) - 2) / H * 100 + '%', width: (Math.abs(c2 - a) + 4) / W * 100 + '%', height: (Math.abs(e - b) + 4) / H * 100 + '%' });
+        Object.assign(el.style, { left: (Math.min(a, c2) - 1.5) / W * 100 + '%', top: (Math.min(b, e) - 1) / H * 100 + '%', width: (Math.abs(c2 - a) + 3) / W * 100 + '%', height: (Math.abs(e - b) + 2) / H * 100 + '%' });
         if (role !== 'qty') {
           el.type = 'button'; el.title = t.raw + ': ' + roleName(role);
           el.setAttribute('aria-label', T('mk.rvTok', { n: t.raw, role: roleName(role) }));

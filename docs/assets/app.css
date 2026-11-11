@@ -1144,7 +1144,7 @@ h2 .beta { font-size: 12px; vertical-align: 3px; }
 .mk-tok.r-odd { border: 3px dashed #d0261b; background: rgba(220,40,30,.18); }
 .mk-tok.mine { box-shadow: 0 0 0 3px #ffd84d; }
 .mk-sw { display: inline-block; width: 22px; height: 14px; box-sizing: border-box; border: 3px solid; border-radius: 4px; flex: none; }
-.mk-rv-side { overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; border-left: 1px solid var(--line); }
+.mk-rv-side { overflow-x: hidden; overflow-y: auto; min-width: 0; padding: 18px; display: flex; flex-direction: column; gap: 14px; border-left: 1px solid var(--line); }
 .mk-rv-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
 .mk-rv-card h3, .mk-rv-ask h3 { margin: 0; font-size: 15px; }
 .mk-rv-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; font-size: 13px; }
@@ -1158,7 +1158,8 @@ h2 .beta { font-size: 12px; vertical-align: 3px; }
 .mk-rv-ask h3 { font-size: 19px; }
 .mk-rv-ask p { margin: 0; font-size: 14px; line-height: 1.5; }
 .mk-rv-ask .linkish { justify-self: start; color: #3b2d00; }
-.mk-rv-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mk-rv-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.mk-rv-btns .btn { white-space: normal; height: auto; min-height: 44px; line-height: 1.25; padding-block: 8px; }
 .mk-rv-ask .btn:not(.primary) { background: #fff; color: #3b2d00; }
 .mk-rv-menu { position: absolute; z-index: 5; min-width: 230px; margin-top: 6px; background: var(--raised); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(20,24,40,.25); padding: 8px; display: grid; gap: 2px; }
 .mk-rv-menu p { margin: 2px 6px 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
