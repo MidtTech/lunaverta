@@ -1246,6 +1246,8 @@ function mkRoles(scan, res) {
   for (const b of scan.blocks) for (const row of b.rows) {
     if (row.pair) { roles.set(row.pair.u, 'unit'); if (row.pair.q) roles.set(row.pair.q, 'qty'); }
     if (row.forceUnit) roles.set(row.forceUnit, 'unit');
+    // every other amount in a line's rows takes the % too (a net price under a discount, say)
+    for (const t of row.money) if (!roles.has(t) && t !== mkTotal(row)) roles.set(t, b.fee ? 'fee' : 'unit');
     roles.set(mkTotal(row), b.fee ? 'fee' : 'line');
   }
   for (const x of res.results) roles.set(x.s.tok, x.kind || 'odd');
