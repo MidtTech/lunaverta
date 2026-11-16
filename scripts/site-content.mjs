@@ -341,6 +341,16 @@ export const TOOLS = [
       steps: ['Vælg en MP4- eller MOV-video, eller slip den på siden.', 'Vælg Mindst, Balanceret eller Bedst kvalitet.', 'Gem den mindre MP4.'],
       faq: [['Hvor meget mindre bliver den?', 'Mobilvideoer bliver som regel en fjerdedel eller mindre med Mindst eller Balanceret, alt efter videoen.'], ['Hvilke browsere kan det?', 'Nyere Chrome, Edge og Safari. Den bruger browserens indbyggede videokoder, så en nyere enhed er hurtigere.']] } },
 
+  { id: 'publisher-to-pdf', preset: 'pdf', slug: { en: 'publisher-to-pdf', da: 'publisher-til-pdf' },
+    en: { name: 'Publisher to PDF', title: 'Publisher to PDF · Open .pub files without Publisher, no upload', desc: 'Microsoft Publisher has been retired. Turn your .pub files (flyers, newsletters, invitations) into PDF in your browser. Free and private: nothing is uploaded.',
+      h1: 'Convert Publisher to PDF', lead: 'Microsoft stopped Publisher in October 2026, so .pub files no longer open in Office. Turn them into PDFs you can open, print and send, with text you can search and copy. Nothing is uploaded.',
+      steps: ['Choose one or more .pub files, or drop them on the page.', 'LunaVerta reads each page of the publication and draws it into a PDF.', 'Save the PDFs one by one, or all at once as a .zip.'],
+      faq: [['Does it look exactly like in Publisher?', 'Text boxes, pictures, shapes, colours and tables come out close, laid out with the fonts on your computer. Old clip art in WMF or EMF format is shown as a grey box for now, and very old files from Publisher 98 or 2000 may come out simpler.'], ['Can I edit the file afterwards?', 'Not as a .pub: no free program can save Publisher files. The PDF can be opened, printed and sent anywhere, and the text in it can be searched and copied.']] },
+    da: { name: 'Publisher til PDF', title: 'Publisher til PDF · Åbn .pub-filer uden Publisher, uden upload', desc: 'Microsoft Publisher er stoppet. Lav dine .pub-filer (foldere, nyhedsbreve, invitationer) om til PDF i din browser. Gratis og privat: intet bliver uploadet.',
+      h1: 'Konvertér Publisher til PDF', lead: 'Microsoft stoppede Publisher i oktober 2026, så .pub-filer kan ikke længere åbnes i Office. Lav dem om til PDF\'er, du kan åbne, printe og sende, med tekst du kan søge i og kopiere. Intet bliver uploadet.',
+      steps: ['Vælg en eller flere .pub-filer, eller slip dem på siden.', 'LunaVerta læser hver side i publikationen og tegner den ind i en PDF.', 'Gem PDF\'erne én ad gangen, eller alle på én gang som .zip.'],
+      faq: [['Ser det præcis ud som i Publisher?', 'Tekstbokse, billeder, figurer, farver og tabeller kommer tæt på og bliver sat op med skrifttyperne på din computer. Gammel clipart i WMF- eller EMF-format vises indtil videre som et gråt felt, og meget gamle filer fra Publisher 98 eller 2000 kan blive enklere.'], ['Kan jeg redigere filen bagefter?', 'Ikke som .pub: intet gratis program kan gemme Publisher-filer. PDF\'en kan åbnes, printes og sendes overalt, og teksten i den kan søges i og kopieres.']] } },
+
   { id: 'powerpoint-to-pdf', preset: 'pdf', slug: { en: 'powerpoint-to-pdf', da: 'powerpoint-til-pdf' },
     en: { name: 'PowerPoint to PDF', title: 'PowerPoint to PDF converter · PPTX to PDF, no upload', desc: 'Turn PowerPoint slides (.pptx) into a PDF in your browser, one slide per page. Free and private: nothing is uploaded.',
       h1: 'Convert PowerPoint to PDF', lead: 'Turn a .pptx presentation into a PDF you can send to anyone, one slide per page, with real text you can search and copy. It all happens on your device. Nothing is uploaded.',
@@ -473,6 +483,7 @@ export const KINDS = {
   doc: { color: '--c-doc', exts: ['docx', 'md', 'txt', 'html'], targets: ['pdf', 'html', 'md', 'txt'] },
   data: { color: '--c-data', exts: ['xlsx', 'xls', 'ods', 'csv', 'tsv', 'json'], targets: ['xlsx', 'csv', 'json', 'pdf', 'html', 'md'] },
   slides: { color: '--c-doc', exts: ['pptx'], targets: ['pdf'] },
+  publisher: { color: '--c-doc', exts: ['pub'], targets: ['pdf'] },
   audio: { color: '--c-audio', exts: ['mp3', 'wav', 'ogg', 'oga', 'opus', 'flac', 'm4a', 'aac', 'weba'], targets: ['mp3', 'wav'] },
   video: { color: '--c-video', exts: ['mp4', 'webm', 'mov', 'm4v', 'mkv'], targets: ['vshrink', 'gif', 'mp3', 'wav', 'png', 'jpg'] }
 };

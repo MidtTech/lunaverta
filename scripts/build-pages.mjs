@@ -84,7 +84,7 @@ ${items.map((it, i) => `      <details${toolFaq && i === 0 ? ' open' : ''}><summ
 const TOOL_GROUPS = [
   ['pdf', '--c-doc', { en: 'PDF', da: 'PDF' }, ['edit-pdf', 'merge-pdf', 'compress-pdf', 'sign-pdf', 'split-pdf', 'redact-pdf', 'pdf-to-word', 'protect-pdf', 'fill-pdf-form', 'flatten-pdf', 'make-fillable-pdf', 'remove-prices', 'alternate-merge-pdf', 'extract-pages', 'delete-pages', 'remove-blank-pages', 'rotate-pdf', 'crop-pdf', 'greyscale-pdf', 'page-numbers', 'pdf-booklet', 'watermark-pdf', 'pdf-header-footer', 'unlock-pdf', 'repair-pdf', 'ocr', 'clean-pdf', 'edit-pdf-metadata', 'compare-pdf', 'pdf-to-excel', 'pdf-to-jpg', 'pdf-to-png', 'extract-images-from-pdf', 'pdf-to-text']],
   ['image', '--c-image', { en: 'Images', da: 'Billeder' }, ['heic-to-jpg', 'compress-image', 'resize-image', 'crop-image', 'images-to-pdf', 'scan-to-pdf', 'png-to-jpg', 'webp-to-jpg', 'remove-photo-location', 'qr-code-generator']],
-  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'powerpoint-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
+  ['data', '--c-data', { en: 'Documents and data', da: 'Dokumenter og data' }, ['word-to-pdf', 'powerpoint-to-pdf', 'publisher-to-pdf', 'excel-to-pdf', 'excel-to-csv', 'csv-to-excel']],
   ['media', '--c-video', { en: 'Video and audio', da: 'Video og lyd' }, ['compress-video', 'video-to-gif', 'video-to-mp3']]
 ];
 function toolsSection(lang, currentId) {

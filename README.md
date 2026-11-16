@@ -12,10 +12,10 @@ Available in English, Danish, Swedish, Norwegian, German, Spanish and French.
 
 - **Edit PDFs:** correct or delete existing text in the PDF's own font, move paragraphs (even to another page), add text, fill in and create forms, sign, stamp, annotate, reorder, rotate and delete pages.
 - **Remove sensitive information for real:** suggestions for prices, ID numbers (CPR, personnummer, Steuer-ID, DNI, NIR and more), account and card numbers, e-mails, phone numbers, addresses and dates. Marked text is deleted from the file, not covered by a black box.
-- **Convert:** HEIC, JPG, PNG, WebP, AVIF and other images; PDF to Word, Excel, JPG, PNG and text; Word, PowerPoint and Excel to PDF; CSV/JSON to Excel; video to GIF or MP3; compress phone videos.
+- **Convert:** HEIC, JPG, PNG, WebP, AVIF and other images; PDF to Word, Excel, JPG, PNG and text; Word, PowerPoint, Excel and Publisher (.pub) to PDF; CSV/JSON to Excel; video to GIF or MP3; compress phone videos.
 - **Install it as an app** (Chrome, Edge): it opens PDFs straight from Windows in a reader with text you can select and search, and saves edits back to the same file.
 - **Quotes:** put a percentage on the prices of a quote, for all lines or line by line, with subtotal, VAT and total worked out again.
-- **52 tools in all,** including merge, split, compress, protect (AES-256), unlock, OCR in seven languages, compare two PDFs, scan paper with your phone, booklet printing, header and footer, metadata, QR codes, and removing GPS location from photos without re-encoding.
+- **53 tools in all,** including merge, split, compress, protect (AES-256), unlock, OCR in seven languages, compare two PDFs, scan paper with your phone, booklet printing, header and footer, metadata, QR codes, and removing GPS location from photos without re-encoding.
 
 ## Don't take our word for it
 

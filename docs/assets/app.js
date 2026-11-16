@@ -42,6 +42,7 @@ const KINDS = {
   doc:   { color: '--c-doc', exts: ['docx','md','markdown','txt','html','htm'], targets: ['pdf','html','md','txt'] },
   data:  { color: '--c-data', exts: ['xlsx','xls','ods','csv','tsv','json'], targets: ['xlsx','csv','json','pdf','html','md'] },
   slides: { color: '--c-doc', exts: ['pptx'], targets: ['pdf'] },
+  publisher: { color: '--c-doc', exts: ['pub'], targets: ['pdf'] },
   audio: { color: '--c-audio', exts: ['mp3','wav','ogg','oga','opus','flac','m4a','aac','weba'], targets: ['mp3','wav'] },
   video: { color: '--c-video', exts: ['mp4','webm','mov','m4v','mkv'], targets: ['vshrink','gif','mp3','wav','png','jpg'] }
 };
@@ -58,7 +59,7 @@ const OUT = {
 const label = t => (OUT[t] && OUT[t].tool ? T('tgt.' + t).toUpperCase() : t.toUpperCase());
 const ORDER = ['vshrink','edit','redact','ocr','merge','altmerge','split','extract','shrink','protect','unlock','blank','flatten','grey','repair','meta','images','nup','crop','headfoot','png','jpg','webp','gif','pdf','docx','html','md','txt','xlsx','csv','json','mp3','wav','ico','bmp','imgedit','scan','clean'];
 const MIME_KIND = [[/^image\//, 'image'], [/^application\/pdf/, 'pdf'], [/^audio\//, 'audio'], [/^video\//, 'video'],
-  [/presentationml/, 'slides'], [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
+  [/presentationml/, 'slides'], [/mspublisher/, 'publisher'], [/(spreadsheet|excel|csv|json|tab-separated)/, 'data'], [/(wordprocessingml|markdown|^text\/plain|^text\/html)/, 'doc']];
 const SAME = { jpeg: 'jpg', htm: 'html', markdown: 'md' };
 
 const ext = name => { const m = /\.([a-z0-9]+)$/i.exec(name || ''); return m ? m[1].toLowerCase() : ''; };
@@ -2747,7 +2748,7 @@ async function convertVideo(file, target, o, progress) {
     return [{ name: b + '.gif', blob: gif }];
   } finally { URL.revokeObjectURL(v.src); }
 }
-const CONVERT = { image: (f, t, o, p) => convertImage(f, t, o, p), pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t, o, p) => convertDoc(f, t, o, p), data: (f, t) => convertData(f, t), slides: (f, t, o, p) => slidesToPDF(f, p) };
+const CONVERT = { image: (f, t, o, p) => convertImage(f, t, o, p), pdf: convertPDF, audio: convertAudio, video: convertVideo, doc: (f, t, o, p) => convertDoc(f, t, o, p), data: (f, t) => convertData(f, t), slides: (f, t, o, p) => slidesToPDF(f, p), publisher: (f, t, o, p) => publisherToPDF(f, p) };
 
 async function zipOf(files, onProgress) {
   await lib('jszip');
@@ -2805,6 +2806,18 @@ function loadViewer() {
   return viewerLoading;
 }
 window.LVLoadViewer = loadViewer;
+// Publisher (.pub): pub.js and its reader (libmspub as WebAssembly), only fetched when a .pub is converted.
+let pubLoading = null;
+function loadPub() {
+  if (window.LVPub) return Promise.resolve(window.LVPub);
+  if (!pubLoading) pubLoading = new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = `/assets/pub${ASSET_MIN}.js${ASSET_V ? '?' + ASSET_V : ''}`; sc.onload = () => ok(window.LVPub); sc.onerror = () => { pubLoading = null; no(new Error(T('err.pub.read'))); }; document.head.appendChild(sc); });
+  return pubLoading;
+}
+async function publisherToPDF(file, progress) {
+  await lib('pdflib');
+  const r = await (await loadPub()).toPDF(file, progress);
+  return [{ name: base(file.name) + '.pdf', blob: r.blob, ...(r.missing ? { noteKey: 'pub.missing', noteVars: { n: r.missing } } : {}) }];
+}
 if (['edit', 'redact', 'prices'].includes(PRESET)) {
   (window.requestIdleCallback || (f => setTimeout(f, 1200)))(() => loadEditor().catch(() => {}));
 }

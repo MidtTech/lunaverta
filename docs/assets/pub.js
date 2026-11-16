@@ -12,7 +12,7 @@ function engine() {
     const s = document.createElement('script');
     s.src = VENDOR + 'libmspub/lv-pub.js';
     s.onload = () => window.LVPubModule({ locateFile: f => VENDOR + 'libmspub/' + f }).then(ok, bad);
-    s.onerror = () => bad(new Error('Could not load the Publisher reader'));
+    s.onerror = () => { modP = null; bad(new Error('Could not load the Publisher reader')); };
     document.head.appendChild(s);
   });
   return modP;
@@ -24,7 +24,8 @@ async function read(file) {
   let r;
   try { r = M._pub2json(p, bytes.length); } finally { M._free(p); }
   if (r === 0) return null;
-  if (r === 1) throw new Error('This Publisher file could not be read');
+  const T = (k, f) => (window.LVApp && window.LVApp.T ? window.LVApp.T(k) : f);
+  if (r === 1) throw new Error(T('err.pub.read', 'This Publisher file could not be read'));
   const s = M.UTF8ToString(r); M._free(r);
   return JSON.parse(s);
 }
@@ -306,9 +307,10 @@ function drawTable(ctx, t, k, words) {
 // found and copied.
 async function toPDF(file, progress = () => {}, dpi = 200) {
   const ops = await read(file);
-  if (!ops) throw new Error('This is not a Publisher file');
+  const T = (k, f) => (window.LVApp && window.LVApp.T ? window.LVApp.T(k) : f);
+  if (!ops) throw new Error(T('err.pub.not', 'This is not a Publisher file'));
   const list = pages(ops);
-  if (!list.length) throw new Error('The Publisher file has no pages');
+  if (!list.length) throw new Error(T('err.pub.read', 'The Publisher file has no pages'));
   if (!window.PDFLib && window.LVApp) await window.LVApp.lib('pdflib');
   const { PDFDocument, StandardFonts } = PDFLib;
   const doc = await PDFDocument.create(), helv = await doc.embedFont(StandardFonts.Helvetica);

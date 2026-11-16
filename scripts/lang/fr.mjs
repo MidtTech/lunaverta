@@ -784,6 +784,29 @@ export default {
     ]
    ]
   },
+  "publisher-to-pdf": {
+  "slug": "publisher-en-pdf",
+  "name": "Publisher en PDF",
+  "title": "Convertir Publisher en PDF · Ouvrir des fichiers .pub sans Publisher, sans envoi",
+  "desc": "Microsoft Publisher a été arrêté. Convertissez vos fichiers .pub (dépliants, lettres d'information, invitations) en PDF dans votre navigateur. Gratuit et privé : rien n'est envoyé.",
+  "h1": "Convertir Publisher en PDF",
+  "lead": "Microsoft a arrêté Publisher en octobre 2026 : les fichiers .pub ne s'ouvrent plus dans Office. Transformez-les en PDF que vous pouvez ouvrir, imprimer et envoyer, avec un texte qu'on peut rechercher et copier. Rien n'est envoyé.",
+  "steps": [
+   "Choisissez un ou plusieurs fichiers .pub, ou déposez-les sur la page.",
+   "LunaVerta lit chaque page de la publication et la dessine dans un PDF.",
+   "Enregistrez les PDF un par un, ou tous ensemble dans un .zip."
+  ],
+  "faq": [
+   [
+    "Le rendu est-il identique à Publisher ?",
+    "Les zones de texte, images, formes, couleurs et tableaux sont très proches et mis en page avec les polices de votre ordinateur. Les anciens cliparts au format WMF ou EMF apparaissent pour l'instant comme un cadre gris, et les fichiers très anciens de Publisher 98 ou 2000 peuvent être plus simples."
+   ],
+   [
+    "Puis-je modifier le fichier ensuite ?",
+    "Pas en .pub : aucun programme gratuit ne peut enregistrer des fichiers Publisher. Le PDF s'ouvre, s'imprime et s'envoie partout, et son texte peut être recherché et copié."
+   ]
+  ]
+ },
   "powerpoint-to-pdf": {
    "slug": "powerpoint-en-pdf",
    "name": "PowerPoint en PDF",

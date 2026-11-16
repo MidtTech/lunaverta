@@ -556,7 +556,7 @@ await test('the tool search finds tools by other words, and "Show all" opens lon
   const visible = () => p.evaluate(() => [...document.querySelectorAll('.tool-grid li')].filter(li => li.offsetParent).map(li => li.textContent.trim()));
   assert((await visible()).length < 40, 'long groups are not folded');
   for (const b of await p.$$('.tg-more')) await b.click();
-  assert((await visible()).length === 52, 'Show all did not open the group');
+  assert((await visible()).length === 53, 'Show all did not open the group');
   await p.fill('#toolFind', 'signature');
   assert((await visible()).join('|') === 'Underskriv PDF', 'search: ' + (await visible()).join('|'));
   await p.fill('#toolFind', 'zzzz');
@@ -806,15 +806,14 @@ await test('Add % to prices: you can correct what was read (a fee, an unnamed VA
   await done(p);
 });
 
-await test('Publisher to PDF (test page): a .pub file becomes a PDF with its pages and searchable text', async () => {
+await test('Publisher to PDF: a .pub file becomes a PDF with its pages and searchable text', async () => {
   // tests/fixtures/sample.pub is Apache POI's test file Sample.pub (Apache License 2.0)
-  const p = await page('/labs/pub-to-pdf.html');
-  await p.setInputFiles('#f', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'sample.pub'));
-  await p.waitForSelector('.file a.btn[download]', { timeout: 60000 });
-  assert(/2 sider/.test(await p.innerText('.file h2')), 'pages: ' + await p.innerText('.file h2'));
-  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('.file a.btn[download]')]);
-  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
-  assert(/This is some text on the first page/.test(txt) && /second page/.test(txt), 'text: ' + txt.slice(0, 200));
+  const p = await page('/publisher-to-pdf/');
+  await p.setInputFiles('#fileInput', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'sample.pub'));
+  const out = await saveFirst(p); assert(out.name === 'sample.pdf', 'name ' + out.name);
+  assert((await PDFDocument.load(out.buf)).getPageCount() === 2, 'pages');
+  const text = (await pdfText(out.buf)).replace(/\s+/g, ' ');
+  assert(/This is some text on the first page/.test(text) && /second page/.test(text), 'text: ' + text.slice(0, 200));
   await done(p);
 });
 

@@ -46,6 +46,7 @@ export const KEYWORDS = {
   'remove-photo-location': 'gps exif location metadata privacy placering lokation plats posisjon standort ubicación localisation',
   'qr-code-generator': 'qr code wifi link barcode stregkode qr-kode streckkod strekkode qr-code código qr code qr',
   'word-to-pdf': 'docx document dokument documento document',
+  'publisher-to-pdf': 'pub mspublisher microsoft publisher brochure folder flyer newsletter nyhedsbrev invitation invitasjon inbjudan einladung boletín folleto dépliant lettre d\'information',
   'powerpoint-to-pdf': 'pptx slides presentation præsentation presentation presentasjon präsentation presentación présentation diapositives',
   'excel-to-pdf': 'xlsx spreadsheet regneark kalkylblad tabelle hoja de cálculo tableur',
   'excel-to-csv': 'xlsx spreadsheet csv regneark kalkylblad tabelle hoja de cálculo tableur',

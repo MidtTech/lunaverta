@@ -31,6 +31,7 @@ const P = {
   compare: '<rect x="3" y="4" width="7.5" height="16" rx="1"/><rect x="13.5" y="4" width="7.5" height="16" rx="1"/><path d="M5.5 8h2.5M5.5 11h2.5M16 8h2.5M16 11h2.5M16 14h2.5"/>',
   word: '<path d="M6 3h8l4 4v14H6z"/><path d="m8.5 11 1.3 6 2.2-4.5 2.2 4.5 1.3-6"/>',
   sheet: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16"/>',
+  publisher: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><rect x="7" y="6" width="5" height="5" rx=".5"/><path d="M14 7h3M14 10h3M7 14h10M7 17h7"/>',
   slides: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/><path d="m10 8 4 2-4 2z"/>',
   image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="m21 16-5.5-5.5L5 20"/>',
   images: '<rect x="6" y="3" width="15" height="13" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="m21 13-4-4-7 7"/>',
@@ -53,7 +54,7 @@ export const TOOL_ICON = {
   'pdf-to-png': 'image', 'extract-images-from-pdf': 'images', 'pdf-to-text': 'text',
   'heic-to-jpg': 'image', 'compress-image': 'compress', 'resize-image': 'resize', 'crop-image': 'crop', 'images-to-pdf': 'topdf', 'scan-to-pdf': 'scan',
   'png-to-jpg': 'image', 'webp-to-jpg': 'image', 'remove-photo-location': 'pin', 'qr-code-generator': 'qr',
-  'word-to-pdf': 'word', 'powerpoint-to-pdf': 'slides', 'excel-to-pdf': 'sheet', 'excel-to-csv': 'sheet', 'csv-to-excel': 'sheet',
+  'word-to-pdf': 'word', 'powerpoint-to-pdf': 'slides', 'publisher-to-pdf': 'publisher', 'excel-to-pdf': 'sheet', 'excel-to-csv': 'sheet', 'csv-to-excel': 'sheet',
   'compress-video': 'video', 'video-to-gif': 'gif', 'video-to-mp3': 'audio'
 };
 export const icon = (id, cls = 'ti') => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${P[TOOL_ICON[id]] || P.doc}</svg>`;
