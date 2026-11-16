@@ -806,6 +806,18 @@ await test('Add % to prices: you can correct what was read (a fee, an unnamed VA
   await done(p);
 });
 
+await test('Publisher to PDF (test page): a .pub file becomes a PDF with its pages and searchable text', async () => {
+  // tests/fixtures/sample.pub is Apache POI's test file Sample.pub (Apache License 2.0)
+  const p = await page('/labs/pub-to-pdf.html');
+  await p.setInputFiles('#f', join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'sample.pub'));
+  await p.waitForSelector('.file a.btn[download]', { timeout: 60000 });
+  assert(/2 sider/.test(await p.innerText('.file h2')), 'pages: ' + await p.innerText('.file h2'));
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('.file a.btn[download]')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  assert(/This is some text on the first page/.test(txt) && /second page/.test(txt), 'text: ' + txt.slice(0, 200));
+  await done(p);
+});
+
 await test('every language has every interface text, with the same {placeholders} as English', async () => {
   const { runInNewContext } = await import('node:vm');
   const ctx = { window: {} };

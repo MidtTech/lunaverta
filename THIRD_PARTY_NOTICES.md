@@ -2932,3 +2932,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
+
+## libmspub 0.1.5, librevenge 0.0.6 and zlib 1.3.1 (compiled to WebAssembly)
+
+`docs/vendor/libmspub/lv-pub.wasm` and `lv-pub.js` are libmspub and parts of librevenge, with zlib,
+compiled with Emscripten by `scripts/pub-wasm/build.sh` from the unmodified release sources. LunaVerta adds
+`scripts/pub-wasm/pub2json.cpp` (the drawing steps out as JSON) and a small stand-in for the few ICU functions
+libmspub calls (`scripts/pub-wasm/icu_shim.cpp`). Boost headers are used at build time.
+
+- libmspub: Mozilla Public License 2.0. Source: https://dev-www.libreoffice.org/src/libmspub/ (https://www.mozilla.org/MPL/2.0/)
+- librevenge: Mozilla Public License 2.0, or LGPL 2.1 or later. Source: https://sourceforge.net/projects/libwpd/files/librevenge/
+- zlib: zlib License, Copyright (C) 1995-2024 Jean-loup Gailly and Mark Adler.
+- Boost: Boost Software License 1.0.

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Test: Publisher til PDF · LunaVerta</title>
+<style>
+:root { color-scheme: light dark; --bg: #f3f4f7; --card: #fff; --ink: #1a1d2b; --muted: #5d6474; --line: #d5dae6; --accent: #2f45c9; }
+@media (prefers-color-scheme: dark) { :root { --bg: #12141b; --card: #1a1d27; --ink: #e8eaf1; --muted: #9aa1b2; --line: #2f3443; --accent: #8796ff; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+h1 { margin: 0 0 4px; font-size: 26px; }
+.tag { display: inline-block; vertical-align: 3px; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: #ffe58a; color: #5c4300; font-size: 12px; font-weight: 700; }
+p.lead { margin: 0 0 18px; color: var(--muted); }
+.drop { border: 2px dashed var(--line); border-radius: 14px; padding: 28px; text-align: center; background: var(--card); }
+.drop.over { border-color: var(--accent); }
+.drop label { display: inline-block; padding: 10px 18px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
+.drop input { position: absolute; left: -9999px; }
+.file { margin-top: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.file h2 { margin: 0 0 6px; font-size: 16px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.file .info { color: var(--muted); font-size: 14px; }
+.file .warn { color: #b45309; font-size: 14px; }
+.file .err { color: #c0392b; }
+.pages { display: flex; gap: 12px; overflow-x: auto; padding: 10px 0 4px; }
+.pages canvas { height: 300px; width: auto; box-shadow: 0 1px 6px rgba(0,0,0,.25); background: #fff; flex: none; }
+.btn { display: inline-block; padding: 8px 14px; border-radius: 9px; background: var(--accent); color: #fff; font-weight: 600; text-decoration: none; border: 0; font: inherit; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+details { margin-top: 8px; font-size: 13px; color: var(--muted); }
+pre { max-height: 260px; overflow: auto; background: var(--bg); padding: 8px; border-radius: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Publisher til PDF <span class="tag">TEST</span></h1>
+  <p class="lead">Testside, ikke rullet ud. Vælg en eller flere .pub-filer. De læses og laves om til PDF her på computeren; intet bliver uploadet.</p>
+  <div class="drop" id="drop">
+    <label for="f">Vælg .pub-filer</label><input type="file" id="f" accept=".pub,application/x-mspublisher" multiple>
+    <p class="info">eller træk dem herind</p>
+  </div>
+  <div id="out"></div>
+</main>
+<script src="../vendor/pdf-lib.min.js"></script>
+<script src="../assets/pub.js"></script>
+<script>
+(() => {
+  const out = document.getElementById('out'), esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  async function one(file) {
+    const box = document.createElement('section'); box.className = 'file';
+    box.innerHTML = `<h2>${esc(file.name)} <span class="info">Læser…</span></h2><div class="pages"></div>`;
+    out.prepend(box);
+    const info = box.querySelector('.info'), strip = box.querySelector('.pages'), t0 = performance.now();
+    try {
+      const ops = await LVPub.read(file);
+      if (!ops) { info.className = 'err'; info.textContent = 'Det er ikke en Publisher-fil.'; return; }
+      const list = LVPub.pages(ops);
+      let missing = 0;
+      for (const pg of list) { const r = await LVPub.drawPage(pg, 60); missing += r.missing; strip.appendChild(r.canvas); }
+      info.textContent = `${list.length} side${list.length === 1 ? '' : 'r'} · laver PDF…`;
+      const res = await LVPub.toPDF(file, p => { info.textContent = `${list.length} side${list.length === 1 ? '' : 'r'} · PDF ${Math.round(p * 100)} %`; });
+      const url = URL.createObjectURL(res.blob), name = file.name.replace(/\.pub$/i, '') + '.pdf';
+      info.innerHTML = `${list.length} side${list.length === 1 ? '' : 'r'} · ${(res.blob.size / 1024).toFixed(0)} KB · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+      const bar = document.createElement('p');
+      bar.innerHTML = `<a class="btn" href="${url}" download="${esc(name)}">Hent PDF</a> <a class="btn ghost" href="${url}" target="_blank" rel="noopener">Åbn</a>` +
+        (missing ? ` <span class="warn">${missing} billede${missing === 1 ? '' : 'r'} i et format, testen ikke kan vise endnu (WMF/EMF/TIFF), står som grå felter.</span>` : '');
+      box.appendChild(bar);
+      const det = document.createElement('details');
+      det.innerHTML = `<summary>Det tekniske (til fejlfinding)</summary><pre>${esc(JSON.stringify(ops.slice(0, 400).map(o => o.op === 'image' ? { op: o.op, p: { ...o.p, 'office:binary-data': '…' } } : o.op === 'setStyle' && o.p['draw:fill-image'] ? { op: o.op, p: { ...o.p, 'draw:fill-image': '…' } } : o), null, 1))}</pre>`;
+      box.appendChild(det);
+    } catch (e) { console.error(e); info.className = 'err'; info.textContent = 'Fejl: ' + e.message; }
+  }
+  const go = files => { for (const f of files) one(f); };
+  document.getElementById('f').onchange = e => go([...e.target.files]);
+  const d = document.getElementById('drop');
+  addEventListener('dragover', e => { e.preventDefault(); d.classList.add('over'); });
+  addEventListener('dragleave', () => d.classList.remove('over'));
+  addEventListener('drop', e => { e.preventDefault(); d.classList.remove('over'); go([...e.dataTransfer.files]); });
+})();
+</script>
+</body>
+</html>
