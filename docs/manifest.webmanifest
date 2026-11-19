@@ -81,7 +81,7 @@
       "sizes": "720x1280",
       "type": "image/webp",
       "form_factor": "narrow",
-      "label": "52 tools, with search"
+      "label": "53 tools, with search"
     }
   ],
   "file_handlers": [
@@ -159,7 +159,8 @@
   ],
   "launch_handler": {
     "client_mode": [
-      "navigate-new"
+      "focus-existing",
+      "auto"
     ]
   },
   "share_target": {

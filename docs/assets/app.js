@@ -3786,15 +3786,17 @@ if (new URLSearchParams(location.search).has('shared') && 'caches' in window) {
 }
 
 // ---------- installed app: open files from the OS ("Open with LunaVerta") ----------
-let launched = false;
+// With the app already open, Windows hands it each new file too (launch_handler: focus-existing),
+// so this runs once per launch. The same launch can arrive twice (via i18n.js), hence the set.
+const launches = new WeakSet();
 async function openLaunched(params) {
-  if (!params || !params.files || !params.files.length || launched) return;
-  launched = true;
+  if (!params || !params.files || !params.files.length || launches.has(params)) return;
+  launches.add(params);
   const files = await Promise.all(params.files.map(h => h.getFile()));
-  // One PDF opened from Windows/macOS ("Open with", or LunaVerta as the PDF reader): show it
-  // straight away, like a PDF reader. The handle lets the editor save back to the same file.
-  if (files.length === 1 && kindOf(files[0]) === 'pdf') {
-    try { (await loadViewer()).open(files[0], params.files[0]); return; } catch (e) { /* fall back to the tools */ }
+  // PDFs opened from Windows/macOS ("Open with", or LunaVerta as the PDF reader) show straight away,
+  // like a PDF reader, each in its own tab. The handle lets the editor save back to the same file.
+  if (files.every(f => kindOf(f) === 'pdf')) {
+    try { const V = await loadViewer(); for (let i = 0; i < files.length; i++) await V.open(files[i], params.files[i]); return; } catch (e) { /* fall back to the tools */ }
   }
   const added = addFiles(files);
   afterAdd(added, innerWidth / 2, innerHeight / 2);

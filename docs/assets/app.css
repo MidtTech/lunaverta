@@ -1200,3 +1200,19 @@ h2 .beta { font-size: 12px; vertical-align: 3px; }
 .mk-sums dt { color: var(--muted); }
 .mk-sums dd { margin: 0; text-align: right; }
 .mk-sums s { color: var(--muted); margin-right: 6px; }
+/* PDF reader tabs: several PDFs open at once */
+.vw-tabs { display: flex; align-items: flex-end; gap: 2px; padding: 6px max(10px, env(safe-area-inset-right, 0px)) 0 max(10px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--bg) 55%, var(--line)); overflow-x: auto; scrollbar-width: thin; flex: none; }
+.vw-tabs[hidden] { display: none; }
+.vw-tab { display: flex; align-items: center; min-width: 0; max-width: 240px; flex: 0 1 auto; border-radius: 8px 8px 0 0; background: color-mix(in srgb, var(--surface) 45%, transparent); border: 1px solid transparent; border-bottom: 0; }
+.vw-tab:hover { background: color-mix(in srgb, var(--surface) 75%, transparent); }
+.vw-tab.on { background: var(--surface); border-color: var(--line); }
+.vw-tab [role="tab"] { min-width: 0; flex: 1; border: 0; background: none; font: 500 13px var(--f-body, inherit); color: var(--muted); padding: 8px 4px 8px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; text-align: left; }
+.vw-tab.on [role="tab"] { color: var(--ink); font-weight: 600; }
+.vw-tab-x { flex: none; width: 26px; height: 26px; margin-right: 4px; border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; }
+.vw-tab-x:hover { background: var(--line); color: var(--ink); }
+.vw-add { flex: none; width: 32px; height: 32px; margin: 0 0 3px 4px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 20px; line-height: 1; cursor: pointer; }
+.vw-add:hover { background: var(--line); color: var(--ink); }
+.vw-bodies { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.vw-bodies > .vw-body[hidden] { display: none; }
+#viewer[hidden] { display: none; }
+.vw-back { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); z-index: 60; box-shadow: 0 8px 24px -8px rgba(0, 0, 0, .35); }

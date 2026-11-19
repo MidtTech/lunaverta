@@ -672,6 +672,43 @@ await test('a PDF opened from Windows shows straight away, and the editor can sa
   await done(p);
 });
 
+await test('several PDFs open as tabs: one launch with two, a later launch adds one, the same file only once, tabs switch and close', async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'en-US' });
+  await ctx.addInitScript(() => {
+    try { localStorage.setItem('lunaverta-welcome', '1'); localStorage.setItem('lunaverta-tour', '1'); } catch (e) {}
+    Object.defineProperty(window, 'launchQueue', { configurable: true, value: { setConsumer(fn) { window.__launch = fn; } } });
+  });
+  const p = await ctx.newPage(); p.errors = []; p.on('pageerror', e => p.errors.push(e.message));
+  await p.goto(BASE + '/');
+  await p.waitForFunction(() => typeof window.__launch === 'function');
+  const pdfs = { old: OLD.toString('base64'), quote: (await readFile(join(ROOT, 'samples', 'tilbud.pdf'))).toString('base64') };
+  const launch = names => p.evaluate(([names, pdfs]) => {
+    const mk = n => { const bytes = Uint8Array.from(atob(pdfs[n.split(':')[1]]), c => c.charCodeAt(0)), name = n.split(':')[0];
+      return { kind: 'file', name, getFile: async () => new File([bytes], name, { type: 'application/pdf', lastModified: 1700000000000 }) }; };
+    window.__launch({ files: names.map(mk) });
+  }, [names, pdfs]);
+  await launch(['agreement.pdf:old', 'tilbud.pdf:quote']);
+  await p.waitForFunction(() => document.querySelectorAll('#vwTabs [role="tab"]').length === 2, null, { timeout: 30000 });
+  assert(await p.isVisible('#vwTabs'), 'tab strip hidden');
+  assert(/tilbud\.pdf/.test(await p.innerText('#vwName')), 'last opened not in front: ' + await p.innerText('#vwName'));
+  await launch(['ordre.pdf:old']);
+  await p.waitForFunction(() => document.querySelectorAll('#vwTabs [role="tab"]').length === 3, null, { timeout: 30000 });
+  await launch(['tilbud.pdf:quote']);
+  await p.waitForFunction(() => /tilbud\.pdf/.test(document.querySelector('#vwName').textContent));
+  assert((await p.$$('#vwTabs [role="tab"]')).length === 3, 'the same file got a second tab');
+  await p.click('#vwTabs [role="tab"]:has-text("agreement.pdf")');
+  assert(/agreement\.pdf/.test(await p.innerText('#vwName')), 'tab did not switch');
+  await p.waitForSelector('#viewer .vw-body:not([hidden]) .textLayer span', { timeout: 30000 });
+  assert(/Service agreement/.test(await p.innerText('#viewer .vw-body:not([hidden])')), 'wrong PDF shown');
+  await p.click('#vwTabs .vw-tab.on .vw-tab-x');
+  assert((await p.$$('#vwTabs [role="tab"]')).length === 2, 'tab not closed');
+  await p.click('#vwClose');
+  assert(!(await p.isVisible('#vwTabs')), 'strip still shown with one PDF');
+  await p.click('#vwClose');
+  assert(!(await p.$('#viewer')), 'reader still open after the last tab closed');
+  await done(p);
+});
+
 await test('a computer gets a note that LunaVerta can be installed, its button opens the install window, and it stays away once closed', async () => {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   await ctx.addInitScript(() => {
