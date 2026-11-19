@@ -817,6 +817,46 @@ await test('Publisher to PDF: a .pub file becomes a PDF with its pages and searc
   await done(p);
 });
 
+await test('Add % to prices: a unit price typed in the dialog or corrected afterwards updates the line and the sums; VAT stays the standard rate', async () => {
+  // in the dialog: line 1 (24 × 89,00) gets a unit price of 100
+  let p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', join(ROOT, 'samples', 'tilbud.pdf'));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup'); await p.click('#mkRvYes');
+  await p.waitForSelector('.mk-dialog[open]', { timeout: 30000 }); await p.check('input[name="mkBasis"][value="markup"]');
+  await p.fill('[data-u="0"]', '100');
+  let sums = await p.innerText('#mkSums');
+  assert(/7\.763,00/.test(sums) && /1\.940,75/.test(sums) && /9\.703,75/.test(sums), 'dialog sums: ' + sums);
+  await p.click('.mk-dialog [value="cancel"]');
+  // afterwards: 8 % on everything, then the first unit price corrected by hand to 100,00
+  await p.click('#edMarkup'); await p.click('#mkRvYes');
+  await p.waitForSelector('.mk-dialog[open]'); await p.check('input[name="mkBasis"][value="markup"]');
+  await p.fill('#mkAll', '8'); await p.click('.mk-dialog [value="ok"]');
+  await p.waitForSelector('.ed-edit', { timeout: 15000 });
+  await p.click('#edEditText'); await p.waitForTimeout(800);
+  const all = await p.$$('.ed-edit'); let unitInput = null;
+  for (const e of all) if (/96,12/.test(await e.inputValue())) unitInput = e;
+  assert(unitInput, 'no edit with the new unit price');
+  await unitInput.fill('100,00 kr.'); await unitInput.press('Tab');
+  await p.waitForFunction(() => [...document.querySelectorAll('.ed-edit')].some(e => /2\.400,00/.test(e.value)), null, { timeout: 10000 });
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#edSave')]);
+  const txt = (await pdfText(await readFile(await dl.path()))).replace(/\s+/g, ' ');
+  for (const v of ['100,00', '2.400,00', '8.192,04', '2.048,01', '10.240,05']) assert(txt.includes(v), `after correcting: missing ${v}: ` + txt.slice(0, 400));
+  await done(p);
+  // VAT a few øre off on the document: the new VAT is exactly 25 % of the new subtotal
+  const d = await PDFDocument.create(), f = await d.embedFont(StandardFonts.Helvetica), pg = d.addPage([595, 842]);
+  const put = (x, y, str, right) => pg.drawText(str, { x: right ? x - f.widthOfTextAtSize(str, 10) : x, y, size: 10, font: f });
+  [[700, 'Vare A', '2', '300,00', '600,00'], [680, 'Vare B', '4', '100,00', '400,00']].forEach(([y, n, q, u, tt]) => { put(40, y, n); put(300, y, q, 1); put(420, y, u, 1); put(540, y, tt, 1); });
+  put(380, 620, 'Subtotal'); put(540, 620, '1.000,00', 1); put(380, 605, 'Moms 25 %'); put(540, 605, '250,30', 1); put(380, 590, 'Total'); put(540, 590, '1.250,30', 1);
+  p = await page('/da/rediger-pdf/');
+  await p.setInputFiles('#fileInput', file('moms.pdf', Buffer.from(await d.save())));
+  await p.waitForSelector('#edMarkup', { timeout: 30000 }); await p.click('#edMarkup'); await p.click('#mkRvYes');
+  await p.waitForSelector('.mk-dialog[open]'); await p.check('input[name="mkBasis"][value="markup"]');
+  await p.fill('#mkAll', '10');
+  sums = await p.innerText('#mkSums');
+  assert(/1\.100,00/.test(sums) && /275,00/.test(sums) && /1\.375,00/.test(sums), 'VAT sums: ' + sums);
+  await done(p);
+});
+
 await test('every language has every interface text, with the same {placeholders} as English', async () => {
   const { runInNewContext } = await import('node:vm');
   const ctx = { window: {} };

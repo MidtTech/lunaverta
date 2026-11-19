@@ -1183,6 +1183,8 @@ h2 .beta { font-size: 12px; vertical-align: 3px; }
 .mk-mode b { color: var(--ink); font-size: 14.5px; }
 @media (max-width: 520px) { .mk-mode { grid-template-columns: 1fr; } }
 .mk-all { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 12px; font-weight: 500; }
+.mk-unit input { width: 92px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--ink); text-align: right; }
+.mk-over .mk-pct input { opacity: .45; }
 .mk-all input, .mk-pct input { width: 64px; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--ink); text-align: right; }
 .mk-wrap { max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
 .mk-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }

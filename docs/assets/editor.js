@@ -606,6 +606,7 @@ async function textRuns(page, pg, vp, layer, canvas, dpr) {
           [el, ...btns, badge].forEach(n => n.remove()); addHit(); updateFinish(); return;
         }
         state(false); updateFinish();
+        mkFollow(edit).catch(e => console.warn('Sums not updated', e));
       });
       layer.append(el, ...btns, badge); fit(); place(); state(false);
       el.addEventListener('input', place);
@@ -1109,13 +1110,33 @@ function mkFactor(scan, pct) {
   if (scan.basis === 'dg' && p > 0) return p < 100 ? 1 / (1 - p / 100) : 1;
   return 1 + p / 100;
 }
+// VAT is always the country's own rate, never worked out from the amounts: a rate written on the line
+// ("Moms 25 %") if it is one of the country's rates, else the country's rate closest to what the
+// amounts say, if it is close (rounding). Otherwise the VAT is left alone and the person is told.
+const VAT_RATES = { da: [25], sv: [25, 12, 6], no: [25, 15, 12], de: [19, 7], fr: [20, 10, 5.5, 2.1], es: [21, 10, 4], en: [25, 20, 21, 19, 5] };
+function mkVatRate(v, base, words, forced) {
+  const lang = (document.documentElement.lang || 'da').slice(0, 2), allowed = VAT_RATES[lang] || VAT_RATES.en;
+  const m = String(words || '').match(/(\d+(?:[.,]\d+)?)\s*%/), stated = m ? parseFloat(m[1].replace(',', '.')) : null;
+  if (stated != null && allowed.includes(stated)) return stated / 100;
+  const actual = base ? v / base * 100 : null;
+  if (actual == null) return forced ? allowed[0] / 100 : null;
+  const best = allowed.reduce((a, r) => (Math.abs(r - actual) < Math.abs(a - actual) ? r : a), allowed[0]);
+  return Math.abs(best - actual) <= .6 || forced ? best / 100 : null;
+}
+const mkUnit = row => row.forceUnit || (row.pair && row.pair.u) || null;
 function mkCompute(scan) {
   const out = new Map(); // token → new value
   let oldSum = 0, newSum = 0;
   const asLine = scan.mode === 'line';
   for (const b of scan.blocks) {
-    const f = asLine || b.fee ? 1 : mkFactor(scan, b.pct), [first, ...rest] = b.rows, G = mkTotal(first);
+    const [first, ...rest] = b.rows, G = mkTotal(first), unit = mkUnit(first);
+    // a price typed by the person wins over the %: the line's other amounts follow it in proportion
+    const over = b.fee ? null : b.over;
+    let f = asLine || b.fee ? 1 : mkFactor(scan, b.pct);
+    if (over != null) f = unit && unit.v ? over / unit.v : G.v ? over / G.v : 1;
     mkRow(first, f, out);
+    if (over != null && unit && first.pair && first.pair.q) { out.set(unit, mkRound(over, unit.places)); out.set(G, mkRound(over * first.pair.q.v, G.places)); }
+    else if (over != null && !unit) out.set(G, mkRound(over, G.places));
     if (rest.length) {
       const G2 = out.get(G), last = b.rows.at(-1), N = mkTotal(last);
       const disc = rest.filter(r => r !== last || !MK_NET.test(r.words)).map(r => mkTotal(r));
@@ -1136,8 +1157,8 @@ function mkCompute(scan) {
   let linePct = null;
   if (asLine) {
     const places = scan.blocks[0].total.places, pcts = new Set(scan.blocks.filter(b => !b.fee).map(b => b.pct || 0));
-    for (const b of scan.blocks) if (!b.fee) add += mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), places);
-    add = mkRound(add, places); newSum = mkRound(oldSum + add, places);
+    for (const b of scan.blocks) if (!b.fee && b.over == null) add += mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), places);
+    add = mkRound(add, places); newSum = mkRound(newSum + add, places);
     // the same % everywhere: the line can say which (not for DG, where the amount is not that % of the subtotal)
     if (pcts.size === 1 && !pcts.has(0) && scan.basis !== 'dg') linePct = [...pcts][0];
   }
@@ -1149,12 +1170,12 @@ function mkCompute(scan) {
     let nv = null, kind = '';
     // a kind the person picked: subtotal, VAT (its own rate of the subtotal) or total (worked out below)
     if (s.force === 'sub') { nv = newSum; kind = 'sub'; }
-    else if (s.force === 'vat') { const rate = oldSum ? Math.round(v / oldSum * 10000) / 10000 : 0; nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
+    else if (s.force === 'vat') { const rate = mkVatRate(v, oldSum, s.row.words, true); nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
     else if (s.force === 'total') kind = 'total';
     else if (near(v, oldSum)) { nv = newSum; kind = 'sub'; }
     else if (MK_VAT.test(s.row.words) && oldSum) {
-      const rate = Math.round(v / oldSum * 10000) / 10000;
-      if (rate > 0 && rate < .5 && Math.abs(rate * oldSum - v) < .02) { nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
+      const rate = mkVatRate(v, oldSum, s.row.words);
+      if (rate) { nv = mkRound(rate * newSum, s.tok.places); kind = 'vat'; vatOld = v; vatNew = nv; }
     }
     if (!s.force && nv === null && vatOld !== null && near(v, oldSum + vatOld)) { nv = newSum + vatNew; kind = 'total'; }
     if (!s.force && nv === null && vatOld === null && near(v, oldSum)) { nv = newSum; kind = 'sub'; }
@@ -1223,6 +1244,27 @@ async function mkLine(scan, res) {
   const right = tok.run.align === 'left' ? tok.run.x + hv.widthOfTextAtSize(tok.run.str.slice(0, tok.i0), size) + wAmt : tok.run.x + tok.run.w;
   const amtX = Math.max(x0 + hv.widthOfTextAtSize(label, size) + size, right - wAmt);
   return { P, y, size, below, items: [{ x: x0, text: label }, { x: amtX, text: amount }] };
+}
+// After the prices are in: a unit price corrected by hand with "Ret tekst" updates its line's amount
+// (price × quantity) and the subtotal, VAT and total on the page.
+async function mkFollow(edit) {
+  const M = S.mk; if (!M || !edit) return;
+  const scan = M.scan;
+  for (const b of scan.blocks) {
+    const row = b.rows[0], u = mkUnit(row); if (!u || b.fee) continue;
+    const r = u.run;
+    if (b.P.pg.id !== edit.pageId || Math.abs(r.x - edit.x) > 1.5 || Math.abs(r.y - edit.y) > 1.5) continue;
+    const idx = row.toks.filter(t => t.run === r && t.kind !== 'pct').indexOf(u);
+    const nt = mkTokens(edit.text, scan.dec).filter(t => t.kind !== 'pct')[idx];
+    if (!nt) return;
+    const res0 = mkCompute(scan), was = res0.out.has(u) ? res0.out.get(u) : u.v;
+    if (Math.abs(Math.abs(nt.v) - was) < 1e-9) return;
+    b.over = Math.abs(nt.v);
+    await mkApply(scan, mkCompute(scan));
+    refreshAfterFind();
+    app().toast(T('mk.followed'), true);
+    return;
+  }
 }
 // ---- "Have I read it right?" ----
 // Supplier documents differ, so before any % goes on, the page is shown with a coloured frame round
@@ -1377,7 +1419,7 @@ async function mkDialog(st) {
   d.className = 'pw-dialog mk-dialog';
   const lineRow = (b, i) => b.fee
     ? `<tr class="mk-fee"><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)} <span class="mk-tag">${esc(T('mk.role.fee'))}</span></td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct">${esc(T('mk.noPct'))}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td></tr>`
-    : `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
+    : `<tr><td class="mk-desc" title="${esc(b.label)}">${esc(b.label)}</td><td class="mk-num">${esc(fmt(b.total.v, b.total))}</td><td class="mk-pct"><input type="text" inputmode="decimal" data-i="${i}" aria-label="${esc(T('mk.pctFor', { name: b.label.slice(0, 40) }))}" placeholder="0"> %</td><td class="mk-unit">${mkUnit(b.rows[0]) ? `<input type="text" inputmode="decimal" data-u="${i}" aria-label="${esc(T('mk.unitFor', { name: b.label.slice(0, 40) }))}" placeholder="${esc(fmt(mkUnit(b.rows[0]).v, mkUnit(b.rows[0])))}">` : ''}</td><td class="mk-num mk-new" data-new="${i}"></td></tr>`;
   const canKeep = st.mine.length && st.found.keys.length;
   d.innerHTML = `<form method="dialog">
     <h2>${esc(T('mk.title'))} <span class="beta">${esc(T('beta'))}</span>${st.mine.length ? ` <span class="mk-mine">${esc(T('mk.mineN', { n: st.mine.length }))}</span>` : ''}</h2>
@@ -1390,7 +1432,7 @@ async function mkDialog(st) {
       <label><input type="radio" name="mkBasis" value="markup"${basis === 'markup' ? ' checked' : ''}> <span><b>${esc(T('mk.markup'))}</b>${esc(T('mk.markupD'))}</span></label></div>
     <p class="pw-note" id="mkIntro">${esc(T('mk.intro'))}</p>
     <div class="mk-all"><label for="mkAll" id="mkAllL">${esc(T('mk.all'))}</label><input type="text" id="mkAll" inputmode="decimal" placeholder="8"> %<button type="button" class="btn sm" id="mkAllGo">${esc(T('mk.allGo'))}</button></div>
-    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th class="mk-pct-h">${esc(T('mk.pct'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
+    <div class="mk-wrap"><table class="mk-table"><thead><tr><th>${esc(T('mk.line'))}</th><th class="mk-num">${esc(T('mk.now'))}</th><th class="mk-pct-h">${esc(T('mk.pct'))}</th><th class="mk-unit-h">${esc(T('mk.unitNew'))}</th><th class="mk-num mk-new-h">${esc(T('mk.new'))}</th></tr></thead><tbody>${scan.blocks.map(lineRow).join('')}</tbody></table></div>
     <dl class="mk-sums" id="mkSums"></dl>
     <p class="pw-note" id="mkWarn" hidden></p>
     ${canKeep ? `<label class="mk-keep"><input type="checkbox" id="mkKeep" checked> <span><b>${esc(T('mk.keep'))}</b>${esc(T('mk.keepD'))}</span></label>` : ''}
@@ -1405,9 +1447,12 @@ async function mkDialog(st) {
     const asLine = scan.mode === 'line';
     d.querySelector('#mkIntro').textContent = T(asLine ? 'mk.lineIntro' : 'mk.intro');
     d.querySelectorAll('[data-i]').forEach(inp => { scan.blocks[+inp.dataset.i].pct = pctOf(inp.value); });
-    scan.blocks.forEach(b => { if (b.fee) b.pct = 0; });
+    scan.blocks.forEach(b => { if (b.fee) b.pct = 0; b.over = null; });
+    // a unit price typed in: that line follows it, whatever its %
+    d.querySelectorAll('[data-u]').forEach(inp => { const b = scan.blocks[+inp.dataset.u], v = inp.value.trim(); if (v) { const t = mkTokens(v.replace(/\s/g, ''), scan.dec)[0]; if (t) b.over = Math.abs(t.v); } inp.closest('tr').classList.toggle('mk-over', b.over != null); });
     const res = mkCompute(scan);
-    scan.blocks.forEach((b, i) => { if (b.fee) return; d.querySelector(`[data-new="${i}"]`).textContent = !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
+    scan.blocks.forEach((b, i) => { const u = mkUnit(b.rows[0]), ui = d.querySelector(`[data-u="${i}"]`); if (ui && u) ui.placeholder = fmt(res.out.has(u) ? res.out.get(u) : u.v, u); });
+    scan.blocks.forEach((b, i) => { if (b.fee) return; d.querySelector(`[data-new="${i}"]`).textContent = b.over != null ? fmt(res.out.get(b.total), b.total) : !b.pct ? '' : asLine ? '+ ' + fmt(mkRound(b.total.v * (mkFactor(scan, b.pct) - 1), b.total.places), b.total) : fmt(res.out.get(b.total), b.total); });
     d.querySelector('.mk-new-h').textContent = T(asLine ? 'mk.lineAdd' : 'mk.new');
     const lineName = res.linePct === null ? T('mk.lineLabelMix') : T('mk.lineLabel', { p: String(res.linePct).replace('.', scan.dec) });
     const tok0 = scan.blocks[0].total;
@@ -1417,10 +1462,16 @@ async function mkDialog(st) {
     w.hidden = !odd && !over; w.textContent = [over ? T('mk.dg100') : '', odd ? T('mk.odd', { n: odd }) : ''].filter(Boolean).join(' ');
     return res;
   };
-  d.addEventListener('input', update); d.addEventListener('change', update);
+  d.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset && t.dataset.i != null) { const u = d.querySelector(`[data-u="${t.dataset.i}"]`); if (u) u.value = ''; }
+    if (t.dataset && t.dataset.u != null) { const p2 = d.querySelector(`[data-i="${t.dataset.u}"]`); if (p2) p2.value = ''; }
+    update();
+  });
+  d.addEventListener('change', update);
   d.querySelector('#mkAllGo').onclick = () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); update(); };
   // the field at the top fills every line as you type; a line can then be given its own %
-  d.querySelector('#mkAll').addEventListener('input', () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); });
+  d.querySelector('#mkAll').addEventListener('input', () => { const v = d.querySelector('#mkAll').value; d.querySelectorAll('[data-i]').forEach(inp => { inp.value = v; }); d.querySelectorAll('[data-u]').forEach(inp => { inp.value = ''; }); });
   d.querySelector('#mkAll').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); d.querySelector('#mkAllGo').click(); } });
   update();
   d.showModal(); d.querySelector('#mkAll').focus();
@@ -1437,6 +1488,7 @@ async function mkDialog(st) {
     mkRulesSave([set, ...all.filter(x => x.id !== set.id)]);
   }
   let n = await mkApply(scan, res);
+  S.mk = { scan }; // a unit price corrected afterwards with "Ret tekst" updates its line and the sums (mkFollow)
   const line = await mkLine(scan, res);
   if (line) {
     for (const it of line.items) S.texts.push({ id: ++uid, pageId: line.P.pg.id, x: it.x, y: line.y, size: line.size, rot: 0, text: it.text });
